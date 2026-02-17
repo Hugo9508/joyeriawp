@@ -43,14 +43,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(normalizedProducts, {
       headers: {
         'X-Cache': status,
-        // Cache de navegador/CDN: 1 minuto fresco, 2 minutos stale
         'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120'
       }
     });
   } catch (error: any) {
     console.error("API Products Route Error:", error.message);
-    
-    // Manejo de errores amigable para Hostinger (502 si es timeout del backend)
     const isTimeout = error.name === 'TimeoutError' || error.message.includes('timeout');
     const status = isTimeout ? 502 : 500;
     

@@ -69,7 +69,6 @@ export async function fetchWooCommerce(
 
   // 2. Single-Flight: Si ya hay una petición idéntica en curso, esperamos a esa
   if (method.toUpperCase() === "GET" && pendingRequests.has(cacheKey)) {
-    console.log(`[WooCommerce] Joining pending request: ${endpoint}`);
     return pendingRequests.get(cacheKey)!;
   }
 
@@ -102,7 +101,6 @@ export async function fetchWooCommerce(
     } catch (err: any) {
       // 3. STALE: Fallback
       if (method.toUpperCase() === "GET" && cached && now - cached.ts <= STALE_TTL_MS) {
-        console.warn(`[WooCommerce] Serving STALE: ${endpoint} due to error: ${err.message}`);
         return { data: cached.data, status: 'STALE' };
       }
       throw err;
