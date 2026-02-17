@@ -1,11 +1,11 @@
+
 /**
  * @fileOverview Núcleo de integración resiliente con WooCommerce REST API.
- * Implementa cache en memoria, timeout de seguridad y deduplicación (single-flight).
  */
 
 const TTL_MS = 120_000; // 2 min
 const STALE_TTL_MS = 600_000; // 10 min
-const TIMEOUT_MS = 15_000; // 15s
+const TIMEOUT_MS = 15_000;
 
 const memCache = new Map<string, { ts: number; data: any }>();
 const pendingRequests = new Map<string, Promise<any>>();
@@ -30,14 +30,13 @@ export async function fetchWooCommerce(
   method: string = "GET",
   body?: any
 ) {
-  // Soporte para ambos nombres de variables configurados en Hostinger
-  const apiUrl = process.env.WOOCOMMERCE_API_URL || process.env.WC_API_URL;
-  const consumerKey = process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.WC_CONSUMER_KEY;
-  const consumerSecret = process.env.WOOCOMMERCE_CONSUMER_SECRET || process.env.WC_CONSUMER_SECRET;
+  const apiUrl = process.env.WC_API_URL || process.env.WOOCOMMERCE_API_URL;
+  const consumerKey = process.env.WC_CONSUMER_KEY || process.env.WOOCOMMERCE_CONSUMER_KEY;
+  const consumerSecret = process.env.WC_CONSUMER_SECRET || process.env.WOOCOMMERCE_CONSUMER_SECRET;
 
   if (!apiUrl || !consumerKey || !consumerSecret) {
-    console.error("CRITICAL: Faltan credenciales de WooCommerce en el servidor.");
-    throw new Error("Configuración del servidor incompleta.");
+    console.error("ERROR: Faltan credenciales de WooCommerce en .env");
+    throw new Error("Configuración incompleta.");
   }
 
   const base = cleanBaseUrl(apiUrl);
@@ -55,12 +54,10 @@ export async function fetchWooCommerce(
   const now = Date.now();
   const cached = memCache.get(cacheKey);
 
-  // 1. HIT: Retornar cache fresco
   if (method.toUpperCase() === "GET" && cached && now - cached.ts <= TTL_MS) {
     return cached.data;
   }
 
-  // 2. Deduplicación (Single-flight)
   if (method.toUpperCase() === "GET" && pendingRequests.has(cacheKey)) {
     return pendingRequests.get(cacheKey);
   }
@@ -74,7 +71,6 @@ export async function fetchWooCommerce(
         headers: {
           Authorization: `Basic ${auth}`,
           "Content-Type": "application/json",
-          "User-Agent": "JoyeriaAlianza-BFF/1.0"
         },
         body: method.toUpperCase() === "GET" ? undefined : body ? JSON.stringify(body) : undefined,
         cache: "no-store",
@@ -83,7 +79,7 @@ export async function fetchWooCommerce(
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: response.statusText }));
-        throw new Error(`WooCommerce API ${response.status}: ${errorData.message || response.statusText}`);
+        throw new Error(`WooCommerce API Error: ${errorData.message || response.statusText}`);
       }
 
       const data = await response.json();
@@ -92,9 +88,7 @@ export async function fetchWooCommerce(
       }
       return data;
     } catch (err: any) {
-      // 3. FALLBACK STALE: Si falla, intentar devolver cache aunque sea viejo
       if (method.toUpperCase() === "GET" && cached && now - cached.ts <= STALE_TTL_MS) {
-        console.warn(`WARN: Sirviendo cache STALE para ${endpoint} debido a error: ${err.message}`);
         return cached.data;
       }
       throw err;

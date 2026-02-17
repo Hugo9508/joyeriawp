@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import { fetchWooCommerce } from '@/lib/woocommerce';
 
@@ -7,8 +8,7 @@ export async function GET() {
   try {
     const data = await fetchWooCommerce('products/categories', { 
       per_page: '100', 
-      hide_empty: 'true',
-      _fields: 'id,name,slug'
+      hide_empty: 'true'
     });
     
     const categories = Array.isArray(data) ? data.map((cat: any) => ({
@@ -19,7 +19,7 @@ export async function GET() {
 
     return NextResponse.json(categories, {
       headers: {
-        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'Cache-Control': 'no-store',
         'X-Runtime': 'nodejs'
       }
     });

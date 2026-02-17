@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchWooCommerce } from '@/lib/woocommerce';
 import { mapWooCommerceProduct } from '@/lib/mappers';
@@ -33,14 +34,15 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(products, {
       headers: { 
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        'Cache-Control': 'no-store',
+        'X-Cache': 'DYNAMIC',
         'X-Runtime': 'nodejs'
       }
     });
   } catch (error: any) {
     console.error('API Products Error:', error.message);
     return NextResponse.json(
-      { error: 'El catálogo no está disponible temporalmente. Por favor, intente de nuevo.' }, 
+      { error: 'Error al conectar con WooCommerce. Verifique sus credenciales en .env.' }, 
       { status: 502 }
     );
   }
