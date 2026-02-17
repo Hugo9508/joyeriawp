@@ -1,11 +1,28 @@
 /**
  * @fileOverview Núcleo de integración resiliente con WooCommerce REST API.
- * Implementa Single-Flight, Cache L1 y Resolución de Categorías optimizada.
+ * Implementa Single-Flight, Cache L1 y Bóveda de Credenciales Enmascaradas.
  */
 
-const TTL_MS = 120_000; // 2 min para productos
-const CATEGORY_TTL_MS = 3600_000; // 1 hora para categorías
+const TTL_MS = 120_000; 
+const CATEGORY_TTL_MS = 3600_000; 
 const TIMEOUT_MS = 15_000;
+
+// Bóveda de Respaldo (Enmascarada en Base64 para protección básica)
+// Nota: En producción, Hostinger leerá esto instantáneamente desde la RAM.
+const INTERNAL_VAULT = {
+  // Para actualizar: btoa("tu_dato") en la consola del navegador y pega aquí el resultado
+  u: "aHR0cHM6Ly9qb3llcmlhYmQuYTM4MC5jb20uYnI=", // URL: https://joyeriabd.a380.com.br
+  k: "Y2tfMGI0ZWRjMmZmOWZkNzVjNDU3ZjM4MGFkMzliNGFiMDIzYjA0Nzg2Mg==", // Coloca aquí tu Key en Base64
+  s: "Y3NfY2ExNjBiZDI4OGJkMzAwZDQ5YzFiM2UwYjFmMDUyYmYyMjgxYWYzOA=="  // Coloca aquí tu Secret en Base64
+};
+
+function decode(val: string) {
+  try {
+    return Buffer.from(val, 'base64').toString('utf-8');
+  } catch (e) {
+    return "";
+  }
+}
 
 // Cache en memoria
 const memCache = new Map<string, { ts: number; data: any }>();
@@ -29,14 +46,8 @@ function stableQuery(params: Record<string, string>) {
     .join("&");
 }
 
-/**
- * Resuelve un slug de categoría a su ID de WooCommerce usando un mapa en memoria.
- * Esto elimina la necesidad de una llamada extra a la API en cada filtro.
- */
 export async function getCategoryIdBySlug(slug: string): Promise<string | null> {
   const now = Date.now();
-  
-  // Si no tenemos el mapa o está expirado, lo refrescamos
   if (Object.keys(categorySlugMap).length === 0 || (now - lastCategoryFetch > CATEGORY_TTL_MS)) {
     try {
       const categories = await fetchWooCommerce('products/categories', { per_page: '100' });
@@ -52,7 +63,6 @@ export async function getCategoryIdBySlug(slug: string): Promise<string | null> 
       console.error("Error al refrescar mapa de categorías:", e);
     }
   }
-
   return categorySlugMap[slug]?.toString() || null;
 }
 
@@ -62,12 +72,18 @@ export async function fetchWooCommerce(
   method: string = "GET",
   body?: any
 ) {
-  const apiUrl = process.env.WC_API_URL || process.env.WOOCOMMERCE_API_URL;
-  const consumerKey = process.env.WC_CONSUMER_KEY || process.env.WOOCOMMERCE_CONSUMER_KEY;
-  const consumerSecret = process.env.WC_CONSUMER_SECRET || process.env.WOOCOMMERCE_CONSUMER_SECRET;
+  // 1. Intentar variables de entorno
+  let apiUrl = process.env.WC_API_URL || process.env.WOOCOMMERCE_API_URL;
+  let consumerKey = process.env.WC_CONSUMER_KEY || process.env.WOOCOMMERCE_CONSUMER_KEY;
+  let consumerSecret = process.env.WC_CONSUMER_SECRET || process.env.WOOCOMMERCE_CONSUMER_SECRET;
+
+  // 2. Fallback a Bóveda Interna si las variables no existen o están vacías
+  if (!apiUrl || apiUrl.length < 5) apiUrl = decode(INTERNAL_VAULT.u);
+  if (!consumerKey) consumerKey = decode(INTERNAL_VAULT.k);
+  if (!consumerSecret) consumerSecret = decode(INTERNAL_VAULT.s);
 
   if (!apiUrl || !consumerKey || !consumerSecret) {
-    throw new Error("CONFIG_MISSING: Faltan credenciales de WooCommerce.");
+    throw new Error("CONFIG_MISSING: No se detectaron credenciales ni en ENV ni en Vault.");
   }
 
   const base = cleanBaseUrl(apiUrl);
@@ -85,19 +101,16 @@ export async function fetchWooCommerce(
   const now = Date.now();
   const cached = memCache.get(cacheKey);
 
-  // HIT: Si el dato está en cache y es reciente
   if (method.toUpperCase() === "GET" && cached && now - cached.ts <= TTL_MS) {
     return cached.data;
   }
 
-  // SINGLE-FLIGHT: Evitar Thundering Herd
   if (method.toUpperCase() === "GET" && pendingRequests.has(cacheKey)) {
     return pendingRequests.get(cacheKey);
   }
 
   const fetcher = (async () => {
     const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64");
-
     try {
       const response = await fetch(url.toString(), {
         method,
@@ -116,16 +129,12 @@ export async function fetchWooCommerce(
       }
 
       const data = await response.json();
-      
       if (method.toUpperCase() === "GET") {
         memCache.set(cacheKey, { ts: Date.now(), data });
       }
-      
       return data;
     } catch (err: any) {
-      if (method.toUpperCase() === "GET" && cached) {
-        return cached.data; // Fallback STALE
-      }
+      if (method.toUpperCase() === "GET" && cached) return cached.data;
       throw err;
     } finally {
       pendingRequests.delete(cacheKey);

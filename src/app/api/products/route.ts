@@ -21,13 +21,11 @@ export async function GET(request: NextRequest) {
     
     if (search) params.search = search;
     
-    // RESOLUCIÓN OPTIMIZADA: Buscamos el ID en el mapa de memoria en lugar de llamar a la API
     if (categorySlug) {
       const categoryId = await getCategoryIdBySlug(categorySlug);
       if (categoryId) {
         params.category = categoryId;
       } else {
-        // Si no existe la categoría, devolvemos array vacío rápido sin llamar a Woo
         return NextResponse.json([], { headers: { 'X-Cache': 'RESOLVED-EMPTY' } });
       }
     }
