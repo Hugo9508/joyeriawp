@@ -1,7 +1,9 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchWooCommerce, getCategoryIdBySlug } from '@/lib/woocommerce';
 import { mapWooCommerceProduct } from '@/lib/mappers';
 
+// FORZAR RUNTIME NODEJS PARA COMPATIBILIDAD CON HOSTINGER (Evita Error 503)
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
@@ -37,13 +39,13 @@ export async function GET(request: NextRequest) {
       headers: { 
         'Cache-Control': 'no-store',
         'X-Cache': 'BFF-DIRECT',
-        'X-Runtime': 'nodejs'
+        'X-Runtime': 'nodejs-hostinger'
       }
     });
   } catch (error: any) {
     console.error('API Products Error:', error.message);
     return NextResponse.json({ 
-      error: "El catálogo no está disponible temporalmente. Por favor, intente de nuevo." 
+      error: "El catálogo no está disponible temporalmente." 
     }, { status: 502 });
   }
 }

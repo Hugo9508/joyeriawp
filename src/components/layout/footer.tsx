@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ export function Footer() {
               Joyeria Alianza
             </Link>
             <p className="text-white/60 text-sm font-light mb-8 max-w-sm">
-              Suscríbase a nuestro boletín para acceso exclusivo a nuevas colecciones, eventos y ofertas personalizadas de Joyeria Alianza.
+              Suscríbase a nuestro boletín para acceso exclusivo a nuevas colecciones y eventos de Joyeria Alianza.
             </p>
             <div className="flex border-b border-white/20 pb-2 max-w-xs">
               <Input
@@ -33,9 +34,6 @@ export function Footer() {
                 <p className="text-xs text-white/50 leading-relaxed">
                   Calle Arocena 1592<br/>Carrasco, Montevideo 11500
                 </p>
-                <a className="text-[10px] uppercase tracking-widest mt-2 underline decoration-white/30 hover:text-primary hover:decoration-primary" href="#">
-                  Cómo llegar
-                </a>
               </div>
               <div className="flex flex-col gap-2 mt-4">
                 <p className="text-sm font-light text-white/80">Horario</p>
@@ -47,7 +45,6 @@ export function Footer() {
             <div className="flex flex-col gap-6">
               <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Servicio al Cliente</h4>
               <Link className="text-sm font-light text-white/60 hover:text-white transition-colors" href="/contact">Contáctenos</Link>
-              <Link className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Envíos y Devoluciones</Link>
               <Link className="text-sm font-light text-white/60 hover:text-white transition-colors" href="/contact">Agendar Cita</Link>
               <Link className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Guía de Tallas</Link>
             </div>

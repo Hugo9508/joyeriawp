@@ -1,7 +1,7 @@
 
 # 📘 RUNBOOK MAESTRO: Joyeria Alianza (Headless WooCommerce)
 
-Este documento es la guía definitiva para el despliegue, mantenimiento y escalabilidad del ecosistema **Joyeria Alianza**.
+Este documento es la guía técnica definitiva para el despliegue, mantenimiento y escalabilidad del ecosistema **Joyeria Alianza**.
 
 ---
 
@@ -13,29 +13,27 @@ El proyecto utiliza un patrón **BFF (Backend for Frontend)** donde Next.js act�
 [ Usuario / Browser ] 
         ↕ (HTTPS)
 [ Next.js Frontend (Hostinger Node App) ] 
-    • Server Components: Renderizado directo (SEO)
-    • Route Handlers (/api/*): Proxy Seguro (BFF)
+    • Server Components: Renderizado directo (SEO/SSR)
+    • Route Handlers (/api/*): Proxy Seguro (BFF) + Cache L1
         ↕ (HTTPS + Basic Auth - Server to Server)
 [ WooCommerce REST API (WordPress Subdomain) ]
+    • Gestión de catálogo, stock e imágenes.
 ```
 
 ### Componentes y Responsabilidades
 | Componente | Responsabilidad | Secretos Manejados |
 | :--- | :--- | :--- |
 | **Frontend (Next.js)** | Interfaz de usuario, SEO, PRERENDERING. | Ninguno en el cliente. |
-| **BFF (/api/*)** | Proxy seguro, formateo de datos, ocultar llaves. | `WC_CONSUMER_KEY`, `WC_CONSUMER_SECRET`. |
-| **Backend (WP/WC)** | Base de datos de productos, pedidos y gestión. | Llaves de la API REST. |
+| **BFF (/api/*)** | Proxy seguro, cache in-memory, ocultar llaves. | `WC_CONSUMER_KEY`, `WC_CONSUMER_SECRET`. |
+| **Backend (WP/WC)** | Base de datos de productos y gestión. | Llaves de la API REST. |
 
 ---
 
 ## 2. Inventario de Endpoints (BFF)
-Estos son los puntos de acceso internos que utiliza la aplicación:
-
-- `GET /api/products`: Listado de productos (soporta `category`, `search`, `page`, `per_page`).
-- `GET /api/products/[id]`: Detalle de una pieza específica.
-- `GET /api/categories`: Listado de categorías activas en WooCommerce.
-- `GET /api/admin/dashboard`: Métricas de negocio (solo admin).
-- `POST /api/categories`: Creación de nuevas categorías (solo admin).
+Estos puntos de acceso internos garantizan que las llaves nunca salgan del servidor:
+- `GET /api/products`: Listado de productos (soporta `category`, `search`, `page`).
+- `GET /api/categories`: Listado de categorías activas (con cache de larga duración).
+- `GET /api/products/[id]`: Detalle técnico de una pieza.
 
 ---
 
@@ -43,38 +41,37 @@ Estos son los puntos de acceso internos que utiliza la aplicación:
 
 ### REGLA DE ORO: Versión de Node
 - **Versión Requerida:** `Node 20.x LTS`.
-- **Prohibido:** No usar Node 22 o superior (causa error `EBADENGINE`).
-- **Cómo corregir:** En el hPanel de Hostinger, ve a `Aplicación Node.js` -> `Versión de Node` y selecciona `20.x`. Luego haz clic en "Reinstalar dependencias".
+- **Prohibido:** No usar Node 22 (causa error `EBADENGINE`).
+- **Configuración:** En el hPanel de Hostinger, ve a `Aplicación Node.js` -> `Versión de Node` y selecciona `20.x`.
 
 ### Variables de Entorno (Environment Variables)
-Configura estas variables en el panel de Hostinger:
-- `WC_API_URL`: `https://joyeriabd.a380.com.br`
-- `WC_CONSUMER_KEY`: `ck_...` (Llave de WooCommerce)
-- `WC_CONSUMER_SECRET`: `cs_...` (Secreto de WooCommerce)
-- `NEXT_PUBLIC_SITE_URL`: `https://joyeria.a380.com.br`
-- `ADMIN_PASSWORD`: Clave para acceder a `/admin`.
+Configura estas variables en el panel de Hostinger para que el servidor las reconozca:
+- `WC_API_URL`: `https://joyeriabd.a380.com.br` (El backend de WordPress).
+- `WC_CONSUMER_KEY`: `ck_...` (Tu Consumer Key).
+- `WC_CONSUMER_SECRET`: `cs_...` (Tu Consumer Secret).
+- `NEXT_PUBLIC_SITE_URL`: `https://joyeria.a380.com.br` (Tu dominio público).
 
 ---
 
 ## 4. Validación Post-Deploy
 1. **Verificar SSL:** Ambas URLs deben cargar con `https`.
-2. **Prueba de API:** Accede a `https://joyeria.a380.com.br/api/products`. Debes ver un JSON con los productos.
-3. **Prueba SEO:** Haz clic derecho en la página de inicio -> "Ver código fuente". Los nombres de los productos deben aparecer en el HTML inicial.
-4. **Logs:** Si algo falla, revisa la sección "Logs" en el panel de Node.js de Hostinger.
+2. **Prueba de API:** Accede a `https://joyeria.a380.com.br/api/products`. Debes ver un JSON.
+3. **Prueba SEO:** `Ver código fuente` en el inicio; los nombres de productos deben aparecer en el HTML inicial.
+4. **Logs:** Si ves un error 503, revisa la sección "Logs" en el panel de Node.js; suele ser por falta de variables o puerto incorrecto.
 
 ---
 
-## 5. Seguridad y Cache
-- **LiteSpeed Cache:** En WordPress, excluye de la cache las rutas `/wp-json/*` para evitar datos obsoletos.
-- **Seguridad:** Las llaves `ck_` y `cs_` nunca deben subirse al repositorio de GitHub. Solo deben existir en el panel de Hostinger.
-- **Firewall:** Asegúrate de que el servidor de WordPress permita peticiones desde la IP del servidor de Next.js.
+## 5. Cache y Performance
+- **Single-Flight:** Implementado para evitar que múltiples peticiones idénticas saturen el servidor.
+- **Cache L1:** Los productos se guardan en la RAM del servidor por 2 minutos.
+- **LiteSpeed:** En WordPress, excluye `/wp-json/*` de la cache para evitar conflictos con el BFF.
 
 ---
 
 ## 6. Errores Comunes
-- **EBADENGINE:** Indica que Hostinger está usando Node 22. Cambia a Node 20.
-- **401 Unauthorized:** Las llaves `ck_` o `cs_` son incorrectas o el usuario no tiene permisos de API.
-- **Imágenes no cargan:** Verifica que `next.config.ts` permita el dominio del backend y que las imágenes tengan URLs absolutas.
+- **503 Service Unavailable:** El proceso Node se ha detenido o está en bucle. Revisa que `WC_API_URL` no apunte al mismo frontend.
+- **401 Unauthorized:** Las llaves `ck_` o `cs_` son incorrectas.
+- **Imágenes rotas:** Verifica que `next.config.ts` tenga el dominio del backend autorizado.
 
 ---
-*Documentación técnica consolidada para Joyeria Alianza.*
+*Documentación consolidada por Axion380 para Joyeria Alianza.*
