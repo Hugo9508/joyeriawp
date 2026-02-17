@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchWooCommerce } from '@/lib/woocommerce';
+import { fetchWooCommerce, getCategoryIdBySlug } from '@/lib/woocommerce';
 import { mapWooCommerceProduct } from '@/lib/mappers';
 
 export const runtime = 'nodejs';
@@ -7,8 +7,8 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const page = searchParams.get('page') || '1';
-  const per_page = searchParams.get('per_page') || '20'; // Reducido para Hostinger
-  const category = searchParams.get('category');
+  const per_page = searchParams.get('per_page') || '20';
+  const categorySlug = searchParams.get('category');
   const search = searchParams.get('search');
 
   try {
@@ -21,11 +21,14 @@ export async function GET(request: NextRequest) {
     
     if (search) params.search = search;
     
-    // Resolución de categoría si se provee slug
-    if (category) {
-      const categories = await fetchWooCommerce('products/categories', { slug: category });
-      if (categories && Array.isArray(categories) && categories.length > 0) {
-        params.category = categories[0].id.toString();
+    // RESOLUCIÓN OPTIMIZADA: Buscamos el ID en el mapa de memoria en lugar de llamar a la API
+    if (categorySlug) {
+      const categoryId = await getCategoryIdBySlug(categorySlug);
+      if (categoryId) {
+        params.category = categoryId;
+      } else {
+        // Si no existe la categoría, devolvemos array vacío rápido sin llamar a Woo
+        return NextResponse.json([], { headers: { 'X-Cache': 'RESOLVED-EMPTY' } });
       }
     }
 
@@ -41,15 +44,8 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('API Products Error:', error.message);
-    
-    let status = 502;
-    let message = "El catálogo no está disponible temporalmente.";
-
-    if (error.message.includes('CONFIG_MISSING')) {
-      status = 500;
-      message = "Error de configuración: Faltan credenciales en el servidor.";
-    }
-
-    return NextResponse.json({ error: message, details: error.message }, { status });
+    return NextResponse.json({ 
+      error: "El catálogo no está disponible temporalmente. Por favor, intente de nuevo." 
+    }, { status: 502 });
   }
 }
