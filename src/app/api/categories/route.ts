@@ -4,11 +4,12 @@ import { fetchWooCommerce } from '@/lib/woocommerce';
 export async function GET() {
   try {
     const wooCategories = await fetchWooCommerce('products/categories', {
-      hide_empty: 'false', // Mostramos todas en el admin
+      hide_empty: 'false',
       per_page: '100'
     });
 
-    const categories = wooCategories.map((cat: any) => ({
+    const categoriesArray = Array.isArray(wooCategories) ? wooCategories : [];
+    const categories = categoriesArray.map((cat: any) => ({
       name: cat.name,
       value: cat.slug,
       id: cat.id
@@ -16,7 +17,11 @@ export async function GET() {
 
     return NextResponse.json(categories);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("API Categories Error:", error.message);
+    return NextResponse.json(
+      { error: "Error al cargar categorías de WooCommerce." }, 
+      { status: 500 }
+    );
   }
 }
 
@@ -29,6 +34,10 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(newCategory);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("API Categories POST Error:", error.message);
+    return NextResponse.json(
+      { error: "Error al crear la categoría." }, 
+      { status: 500 }
+    );
   }
 }

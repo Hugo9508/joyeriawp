@@ -16,11 +16,17 @@ export const getProducts = async (filters: { search?: string, category?: string,
     const response = await fetch(`/api/products?${params.toString()}`, {
       cache: 'no-store'
     });
-    if (!response.ok) throw new Error('Error al cargar productos');
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.warn("Error en la API de productos:", errorData.error || response.statusText);
+      return []; // Devolvemos vacío en lugar de lanzar error para no romper la UI
+    }
+    
     const data = await response.json();
     return Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error("Error en getProducts:", error);
+    console.error("Error de red en getProducts:", error);
     return [];
   }
 };
@@ -30,10 +36,13 @@ export const getProductById = async (id: string): Promise<Product | null> => {
     const response = await fetch(`/api/products/${id}`, {
       cache: 'no-store'
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.warn(`Producto ${id} no encontrado o error en API`);
+      return null;
+    }
     return await response.json();
   } catch (error) {
-    console.error(`Error en getProductById (${id}):`, error);
+    console.error(`Error de red en getProductById (${id}):`, error);
     return null;
   }
 };
@@ -43,11 +52,14 @@ export const getCategories = async (): Promise<Category[]> => {
     const response = await fetch('/api/categories', {
       cache: 'no-store'
     });
-    if (!response.ok) throw new Error('Error al cargar categorías');
+    if (!response.ok) {
+      console.warn("Error en la API de categorías");
+      return [];
+    }
     const data = await response.json();
     return Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error("Error en getCategories:", error);
+    console.error("Error de red en getCategories:", error);
     return [];
   }
 };
@@ -59,7 +71,10 @@ export const saveCategory = async (data: { name: string, value: string }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!response.ok) throw new Error('Error al guardar categoría');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Error al guardar categoría');
+    }
     return await response.json();
   } catch (error) {
     console.error("Error al guardar categoría:", error);

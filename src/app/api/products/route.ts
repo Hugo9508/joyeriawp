@@ -15,10 +15,17 @@ export async function GET(request: NextRequest) {
     if (category) params.category = category;
 
     const wooProducts = await fetchWooCommerce('products', params);
-    const normalizedProducts = wooProducts.map(mapWooCommerceProduct);
+    
+    // Asegurarnos de que wooProducts sea un arreglo antes de mapear
+    const productsArray = Array.isArray(wooProducts) ? wooProducts : [];
+    const normalizedProducts = productsArray.map(mapWooCommerceProduct);
 
     return NextResponse.json(normalizedProducts);
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("API Products Error:", error.message);
+    return NextResponse.json(
+      { error: "No se pudieron cargar los productos. Verifique la configuración de WooCommerce." }, 
+      { status: 500 }
+    );
   }
 }
