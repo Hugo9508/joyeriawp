@@ -8,7 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { WhatsappIcon } from '@/components/icons';
-import { LayoutGrid, Eye, Package, Tag } from 'lucide-react';
+import { LayoutGrid, Eye, Package, Tag, Loader2 } from 'lucide-react';
 import { VirtualTryOn } from '@/components/virtual-try-on';
 import { WhatsAppProductButton } from '@/components/whatsapp-product-button';
 import { Badge } from '@/components/ui/badge';
@@ -49,19 +49,29 @@ function CollectionsContent() {
 
   useEffect(() => {
     async function loadData() {
-      const [prodData, catData] = await Promise.all([getProducts(), getCategories()]);
-      setAllProducts(prodData);
-      setAllCategories(catData);
-      setLoading(false);
+      setLoading(true);
+      try {
+        const [prodData, catData] = await Promise.all([
+          getProducts({ category: categoryFilter || undefined }), 
+          getCategories()
+        ]);
+        setAllProducts(prodData);
+        setAllCategories(catData);
+      } catch (error) {
+        console.error("Error cargando datos de colecciones:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     loadData();
-  }, []);
+  }, [categoryFilter]);
 
+  // Aplicamos un segundo filtro de seguridad en el cliente por si la API 
+  // devolvió más resultados de los esperados o para refinamiento instantáneo.
   const filteredProducts = useMemo(() => {
     if (!categoryFilter) return allProducts;
     return allProducts.filter(p => 
-      p.category === categoryFilter || 
-      (p.categories && p.categories.includes(categoryFilter))
+      p.categories && p.categories.includes(categoryFilter)
     );
   }, [allProducts, categoryFilter]);
 
@@ -80,73 +90,83 @@ function CollectionsContent() {
               <h2 className="text-3xl md:text-4xl font-light text-foreground tracking-tight">
                 Colección <span className="font-serif italic text-primary">Eterna</span>
               </h2>
+              {categoryFilter && (
+                <p className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Filtrando por: <span className="text-primary font-bold">{categoryFilter}</span>
+                </p>
+              )}
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
             {!loading ? (
-              filteredProducts.map((product) => (
-                <div key={product.id} className="group flex flex-col gap-4">
-                  <div className="relative aspect-[4/5] w-full overflow-hidden bg-secondary rounded-lg">
-                    <Link href={`/products/${product.id}`}>
-                        <Image
-                        src={product.images?.[0] || 'https://placehold.co/600x800?text=No+Img'}
-                        alt={product.name}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                        unoptimized
-                        />
-                    </Link>
-                    {product.isOnSale && (
-                      <Badge className="absolute top-4 left-4 bg-destructive text-white border-none text-[10px] uppercase tracking-widest shadow-md">
-                          <Tag className="w-3 h-3 mr-1" />
-                          Oferta
-                      </Badge>
-                    )}
-                    <div className="absolute top-3 right-3 z-10 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                      <VirtualTryOn product={product}>
-                        <Button size="icon" className="h-10 w-10 bg-white/90 rounded-full shadow-lg text-foreground">
-                            <Eye className="h-5 w-5" />
-                        </Button>
-                      </VirtualTryOn>
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-1 px-1">
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-base font-medium text-foreground">
-                        <Link href={`/products/${product.id}`}>{product.name}</Link>
-                      </h3>
-                      <div className="flex flex-col items-end">
-                        {product.isOnSale && (
-                          <span className="text-[10px] text-muted-foreground line-through">
-                            USD {product.regularPrice.toLocaleString()}
-                          </span>
-                        )}
-                        <span className="text-sm font-semibold text-primary">
-                          USD {product.price.usd.toLocaleString()}
-                        </span>
+              filteredProducts.length > 0 ? (
+                filteredProducts.map((product) => (
+                  <div key={product.id} className="group flex flex-col gap-4 animate-in fade-in duration-500">
+                    <div className="relative aspect-[4/5] w-full overflow-hidden bg-secondary rounded-lg">
+                      <Link href={`/products/${product.id}`}>
+                          <Image
+                          src={product.images?.[0] || 'https://placehold.co/600x800?text=No+Img'}
+                          alt={product.name}
+                          fill
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                          unoptimized
+                          />
+                      </Link>
+                      {product.isOnSale && (
+                        <Badge className="absolute top-4 left-4 bg-destructive text-white border-none text-[10px] uppercase tracking-widest shadow-md">
+                            <Tag className="w-3 h-3 mr-1" />
+                            Oferta
+                        </Badge>
+                      )}
+                      <div className="absolute top-3 right-3 z-10 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                        <VirtualTryOn product={product}>
+                          <Button size="icon" className="h-10 w-10 bg-white/90 rounded-full shadow-lg text-foreground">
+                              <Eye className="h-5 w-5" />
+                          </Button>
+                        </VirtualTryOn>
                       </div>
                     </div>
-                    <WhatsAppProductButton product={product} className="mt-3 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold uppercase tracking-widest h-10">
-                      Consultar
-                      <WhatsappIcon className="w-4 h-4 fill-current ml-2" />
-                    </WhatsAppProductButton>
+                    <div className="flex flex-col gap-1 px-1">
+                      <div className="flex justify-between items-start">
+                        <h3 className="text-sm md:text-base font-medium text-foreground">
+                          <Link href={`/products/${product.id}`}>{product.name}</Link>
+                        </h3>
+                        <div className="flex flex-col items-end">
+                          {product.isOnSale && (
+                            <span className="text-[10px] text-muted-foreground line-through">
+                              USD {product.regularPrice.toLocaleString()}
+                            </span>
+                          )}
+                          <span className="text-xs md:text-sm font-semibold text-primary">
+                            USD {product.price.usd.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                      <WhatsAppProductButton product={product} className="mt-3 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] md:text-xs font-bold uppercase tracking-widest h-10">
+                        Consultar
+                        <WhatsappIcon className="w-4 h-4 fill-current ml-2" />
+                      </WhatsAppProductButton>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="col-span-full flex flex-col items-center justify-center py-20 text-muted-foreground">
+                    <Package className="h-16 w-16 opacity-10 mb-4" />
+                    <p>No se encontraron piezas en esta categoría.</p>
+                    <Button variant="link" asChild className="mt-4">
+                      <Link href="/collections">Ver toda la colección</Link>
+                    </Button>
                 </div>
-              ))
+              )
             ) : (
               Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="aspect-[4/5] bg-muted animate-pulse rounded-lg" />
+                <div key={i} className="aspect-[4/5] bg-muted animate-pulse rounded-lg flex items-center justify-center">
+                   <Loader2 className="h-8 w-8 animate-spin opacity-20" />
+                </div>
               ))
             )}
           </div>
-
-          {!loading && filteredProducts.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                  <Package className="h-16 w-16 opacity-10 mb-4" />
-                  <p>No se encontraron piezas.</p>
-              </div>
-          )}
         </section>
       </div>
     </div>
@@ -155,7 +175,7 @@ function CollectionsContent() {
 
 export default function CollectionsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando colección...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-background"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>}>
       <CollectionsContent />
     </Suspense>
   );

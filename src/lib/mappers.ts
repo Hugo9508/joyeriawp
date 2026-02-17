@@ -16,8 +16,8 @@ function normalizeImageUrl(url: string): string {
 /**
  * Procesa la descripción de WooCommerce para convertir shortcodes de video en HTML nativo.
  */
-function processDescription(html: string): string {
-  if (!html) return '';
+function processDescription(html: any): string {
+  if (typeof html !== 'string') return '';
 
   // 1. Convertir shortcode [video src="..."] o [video mp4="..."]
   let processed = html.replace(/\[video[^\]]*\]/g, (match) => {
@@ -68,6 +68,8 @@ function isSaleActive(wooProduct: any): boolean {
 }
 
 export function mapWooCommerceProduct(wooProduct: any): Product {
+  if (!wooProduct) throw new Error("Producto inválido");
+
   const regularPrice = parseFloat(wooProduct.regular_price || wooProduct.price || "0");
   const promoPrice = wooProduct.sale_price ? parseFloat(wooProduct.sale_price) : undefined;
   const activeSale = isSaleActive(wooProduct);
@@ -78,7 +80,8 @@ export function mapWooCommerceProduct(wooProduct: any): Product {
   if (wooProduct.stock_status === 'onbackorder') stockStatus = 'on_backorder';
 
   const getAttr = (name: string) => {
-    return wooProduct.attributes?.find((a: any) => 
+    if (!wooProduct.attributes || !Array.isArray(wooProduct.attributes)) return '';
+    return wooProduct.attributes.find((a: any) => 
       a.name.toLowerCase() === name.toLowerCase() || 
       a.slug === `pa_${name.toLowerCase()}`
     )?.options?.[0] || '';
@@ -86,7 +89,7 @@ export function mapWooCommerceProduct(wooProduct: any): Product {
 
   return {
     id: wooProduct.id.toString(),
-    name: wooProduct.name,
+    name: wooProduct.name || 'Sin nombre',
     brand: 'Joyeria Alianza',
     description: processDescription(wooProduct.description || ''),
     shortDescription: processDescription(wooProduct.short_description || ''),
@@ -111,8 +114,8 @@ export function mapWooCommerceProduct(wooProduct: any): Product {
     },
     imageIds: [],
     images: wooProduct.images?.map((img: any) => normalizeImageUrl(img.src)) || [],
-    slug: wooProduct.slug,
-    sku: wooProduct.sku,
-    isBestseller: wooProduct.featured
+    slug: wooProduct.slug || '',
+    sku: wooProduct.sku || '',
+    isBestseller: !!wooProduct.featured
   };
 }
