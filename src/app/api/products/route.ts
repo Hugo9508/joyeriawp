@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchWooCommerce, getCategoryIdBySlug } from '@/lib/woocommerce';
 import { mapWooCommerceProduct } from '@/lib/mappers';
@@ -26,12 +27,19 @@ export async function GET(request: NextRequest) {
       if (categoryId) {
         params.category = categoryId;
       } else {
+        // Si no existe la categoría, devolvemos vacío en lugar de error
         return NextResponse.json([]);
       }
     }
 
     const data = await fetchWooCommerce('products', params);
-    const products = Array.isArray(data) ? data.map(mapWooCommerceProduct) : [];
+    
+    if (!Array.isArray(data)) {
+        console.error("WooCommerce devolvió un formato no esperado:", data);
+        return NextResponse.json({ error: "Formato de datos inválido" }, { status: 502 });
+    }
+
+    const products = data.map(mapWooCommerceProduct);
 
     return NextResponse.json(products, {
       headers: { 
@@ -40,10 +48,10 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error: any) {
-    console.error('API Products Error Detail:', error.message);
-    // Devolvemos el mensaje de error real para diagnosticar
+    console.error('API Products Critical Failure:', error.message);
     return NextResponse.json({ 
-      error: error.message || "Error de conexión con el catálogo." 
-    }, { status: 500 });
+      error: "Error de conexión con el catálogo.",
+      detail: error.message 
+    }, { status: 502 });
   }
 }

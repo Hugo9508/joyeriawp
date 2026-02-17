@@ -1,3 +1,4 @@
+
 /**
  * @fileOverview Núcleo de integración blindado con WooCommerce REST API.
  * Credenciales inyectadas directamente para máxima estabilidad en Hostinger.
@@ -5,8 +6,9 @@
 
 const TTL_MS = 120_000; 
 const CATEGORY_TTL_MS = 3600_000;
-const TIMEOUT_MS = 30_000; // Aumentado a 30 segundos para evitar 502 por lentitud
+const TIMEOUT_MS = 30_000; 
 
+// VAULT: Credenciales quemadas en Base64 para evitar dependencia de .env en Hostinger
 const VAULT = {
   u: "aHR0cHM6Ly9qb3llcmlhYmQuYTM4MC5jb20uYnI=", 
   k: "Y2tfOGNjZDY3ZGI3ZmNlZGIwMmU3ZDAyZTZkMmYyNDRhODI2MzY2MGM5Ng==", 
@@ -17,6 +19,7 @@ function decode(val: string) {
   try {
     return Buffer.from(val, 'base64').toString('utf-8');
   } catch (e) {
+    console.error("Fallo al decodificar VAULT:", e);
     return "";
   }
 }
@@ -72,6 +75,10 @@ export async function fetchWooCommerce(
   body?: any
 ) {
   const base = cleanBaseUrl(WOO_BASE_URL);
+  if (!base || !WOO_CK || !WOO_CS) {
+    throw new Error("Configuración de WooCommerce incompleta en la bóveda.");
+  }
+
   const url = new URL(`${base}/wp-json/wc/v3/${endpoint}`);
 
   if (method.toUpperCase() === "GET") {
@@ -102,7 +109,7 @@ export async function fetchWooCommerce(
         headers: {
           Authorization: `Basic ${auth}`,
           "Content-Type": "application/json",
-          "User-Agent": "JoyeriaAlianza-BFF/1.0" // Identificador para evitar bloqueos
+          "User-Agent": "JoyeriaAlianza-BFF/1.0"
         },
         body: method.toUpperCase() === "GET" ? undefined : body ? JSON.stringify(body) : undefined,
         cache: "no-store",
@@ -112,7 +119,7 @@ export async function fetchWooCommerce(
       if (!response.ok) {
         const errorText = await response.text();
         console.error(`WOO_RAW_ERROR: ${response.status} - ${errorText}`);
-        throw new Error(`WOO_API_FAIL: ${response.status}`);
+        throw new Error(`WOO_API_FAIL: ${response.status} - ${errorText.substring(0, 100)}`);
       }
 
       const data = await response.json();
@@ -123,7 +130,9 @@ export async function fetchWooCommerce(
       
       return data;
     } catch (err: any) {
+      console.error(`FETCH_ERROR (${endpoint}):`, err.message);
       if (method.toUpperCase() === "GET" && cached) {
+        console.warn(`Sirviendo datos STALE para ${endpoint} debido a error.`);
         return cached.data;
       }
       throw err;
