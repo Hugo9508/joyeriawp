@@ -1,3 +1,4 @@
+
 import { Product, Category } from "@/lib/products";
 
 /**
@@ -18,9 +19,8 @@ export const getProducts = async (filters: { search?: string, category?: string,
     });
     
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.warn("Error en la API de productos:", errorData.error || response.statusText);
-      return []; // Devolvemos vacío en lugar de lanzar error para no romper la UI
+      console.warn("API de productos no disponible o credenciales faltantes.");
+      return []; 
     }
     
     const data = await response.json();
@@ -37,7 +37,7 @@ export const getProductById = async (id: string): Promise<Product | null> => {
       cache: 'no-store'
     });
     if (!response.ok) {
-      console.warn(`Producto ${id} no encontrado o error en API`);
+      console.warn(`Producto ${id} no encontrado.`);
       return null;
     }
     return await response.json();
@@ -53,7 +53,7 @@ export const getCategories = async (): Promise<Category[]> => {
       cache: 'no-store'
     });
     if (!response.ok) {
-      console.warn("Error en la API de categorías");
+      console.warn("API de categorías no disponible.");
       return [];
     }
     const data = await response.json();
