@@ -62,7 +62,15 @@ export function Footer() {
         </div>
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-white/10 gap-4">
           <p className="text-[10px] text-white/30 uppercase tracking-widest">
-            © {new Date().getFullYear()} Joyeria Alianza. Todos los derechos reservados.
+            © 2026 Joyeria Alianza. Todos los derechos reservados. Desarrollado por{" "}
+            <a 
+              href="https://axion380.com.br" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:text-primary transition-colors underline decoration-white/10"
+            >
+              Axion380
+            </a>
           </p>
           <div className="flex gap-6">
             <Link className="text-[10px] text-white/30 hover:text-white uppercase tracking-widest transition-colors" href="#">Política de Privacidad</Link>
