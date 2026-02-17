@@ -29,6 +29,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 alt={product.name}
                 fill
                 className="object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
+                unoptimized
             />
         </Link>
         <div className="absolute top-4 right-4 flex flex-col gap-2">

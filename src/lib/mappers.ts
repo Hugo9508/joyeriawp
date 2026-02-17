@@ -1,6 +1,19 @@
 import { Product, StockStatus } from './products';
 
 /**
+ * Normaliza las URLs de las imágenes para asegurar que siempre tengan el dominio del backend.
+ */
+function normalizeImageUrl(url: string): string {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  
+  const baseUrl = process.env.WC_API_URL || 'https://joyeriabd.a380.com.br';
+  const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  
+  return url.startsWith('/') ? `${cleanBaseUrl}${url}` : `${cleanBaseUrl}/${url}`;
+}
+
+/**
  * Procesa la descripción de WooCommerce para convertir shortcodes de video en HTML nativo.
  */
 function processDescription(html: string): string {
@@ -97,7 +110,7 @@ export function mapWooCommerceProduct(wooProduct: any): Product {
       size: getAttr('talla') || 'A medida'
     },
     imageIds: [],
-    images: wooProduct.images?.map((img: any) => img.src) || [],
+    images: wooProduct.images?.map((img: any) => normalizeImageUrl(img.src)) || [],
     slug: wooProduct.slug,
     sku: wooProduct.sku,
     isBestseller: wooProduct.featured
