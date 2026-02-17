@@ -1,8 +1,6 @@
-
 import { NextResponse } from 'next/server';
 import { fetchWooCommerce } from '@/lib/woocommerce';
 
-// FORZAR RUNTIME NODEJS PARA COMPATIBILIDAD CON HOSTINGER (Evita Error 503)
 export const runtime = 'nodejs';
 
 export async function GET() {
@@ -21,14 +19,13 @@ export async function GET() {
     return NextResponse.json(categories, {
       headers: {
         'Cache-Control': 'no-store',
-        'X-Cache': 'BFF-DIRECT-CAT',
-        'X-Runtime': 'nodejs-hostinger'
+        'X-Cache': 'BFF-CAT'
       }
     });
   } catch (error: any) {
-    console.error('API Categories Error:', error.message);
+    console.error('API Categories Error Detail:', error.message);
     return NextResponse.json({ 
-      error: 'Categorías no disponibles.'
-    }, { status: 502 });
+      error: error.message || "Error al cargar categorías."
+    }, { status: 500 });
   }
 }
