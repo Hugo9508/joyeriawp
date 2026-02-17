@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchWooCommerce } from '@/lib/woocommerce';
 import { mapWooCommerceProduct } from '@/lib/mappers';
 
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const search = searchParams.get('search') || '';
@@ -19,7 +21,6 @@ export async function GET(request: NextRequest) {
     
     if (search) queryParams.search = search;
     
-    // 1. Resolución de Categoría (Usa el cache de fetchWooCommerce)
     if (categorySlug) {
       try {
         const { data: catData } = await fetchWooCommerce('products/categories', { slug: categorySlug });
@@ -31,7 +32,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 2. Obtener Productos con Single-Flight y Cache
     const { data, status } = await fetchWooCommerce('products', queryParams);
     
     const productsArray = Array.isArray(data) ? data : [];

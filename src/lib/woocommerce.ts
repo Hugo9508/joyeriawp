@@ -1,10 +1,10 @@
 /**
  * @fileOverview Helper para realizar peticiones autenticadas a la WooCommerce REST API desde el servidor,
- * con timeout + cache en memoria + fallback STALE + Single-Flight (deduplicación).
+ * con timeout + cache en memoria + fallback STALE + Single-Flight.
  */
 
-const TTL_MS = 120_000; // 2 min (fresh)
-const STALE_TTL_MS = 600_000; // 10 min (fallback)
+const TTL_MS = 120_000; // 2 min
+const STALE_TTL_MS = 600_000; // 10 min
 const TIMEOUT_MS = 15_000;
 
 const memCache = new Map<string, { ts: number; data: any }>();
@@ -34,17 +34,13 @@ export async function fetchWooCommerce(
   method: string = "GET",
   body?: any
 ): Promise<FetchWooResult> {
-  // Soporte para ambos nombres de variables (Hostinger vs Local)
-  const apiUrl = process.env.WOOCOMMERCE_API_URL || process.env.WC_API_URL;
-  const consumerKey = process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.WC_CONSUMER_KEY;
-  const consumerSecret = process.env.WOOCOMMERCE_CONSUMER_SECRET || process.env.WC_CONSUMER_SECRET;
+  // Unificamos lectura de variables: Prioridad a WC_* (según tu panel actual)
+  const apiUrl = process.env.WC_API_URL || process.env.WOOCOMMERCE_API_URL;
+  const consumerKey = process.env.WC_CONSUMER_KEY || process.env.WOOCOMMERCE_CONSUMER_KEY;
+  const consumerSecret = process.env.WC_CONSUMER_SECRET || process.env.WOOCOMMERCE_CONSUMER_SECRET;
 
   if (!apiUrl || !consumerKey || !consumerSecret) {
-    const missing = [];
-    if (!apiUrl) missing.push("API_URL");
-    if (!consumerKey) missing.push("CONSUMER_KEY");
-    if (!consumerSecret) missing.push("CONSUMER_SECRET");
-    throw new Error(`Faltan credenciales de WooCommerce en Hostinger: ${missing.join(", ")}`);
+    throw new Error(`Faltan credenciales de WooCommerce (WC_API_URL, etc) en el panel de Hostinger.`);
   }
 
   const base = cleanBaseUrl(apiUrl);
@@ -62,17 +58,16 @@ export async function fetchWooCommerce(
   const now = Date.now();
   const cached = memCache.get(cacheKey);
   
-  // 1. HIT: Cache fresco
   if (method.toUpperCase() === "GET" && cached && now - cached.ts <= TTL_MS) {
     return { data: cached.data, status: 'HIT' };
   }
 
-  // 2. Single-Flight: Si ya hay una petición idéntica en curso, esperamos a esa
   if (method.toUpperCase() === "GET" && pendingRequests.has(cacheKey)) {
     return pendingRequests.get(cacheKey)!;
   }
 
   const fetchPromise = (async (): Promise<FetchWooResult> => {
+    // IMPORTANTE: Aseguramos que Buffer esté disponible forzando runtime 'nodejs' en los Handlers
     const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64");
 
     try {
@@ -89,7 +84,7 @@ export async function fetchWooCommerce(
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: response.statusText }));
-        throw new Error(`HTTP ${response.status}: ${errorData.message || response.statusText}`);
+        throw new Error(`WC_API_ERROR: ${errorData.message || response.statusText}`);
       }
 
       const data = await response.json();
@@ -99,7 +94,6 @@ export async function fetchWooCommerce(
       
       return { data, status: 'MISS' };
     } catch (err: any) {
-      // 3. STALE: Fallback si falla Woo pero tenemos algo en cache (hasta 10 min)
       if (method.toUpperCase() === "GET" && cached && now - cached.ts <= STALE_TTL_MS) {
         return { data: cached.data, status: 'STALE' };
       }

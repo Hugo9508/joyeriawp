@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { fetchWooCommerce } from '@/lib/woocommerce';
 
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     const { data, status } = await fetchWooCommerce('products/categories', {
