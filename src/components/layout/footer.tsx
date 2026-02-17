@@ -9,10 +9,10 @@ export function Footer() {
         <div className="flex flex-col lg:flex-row justify-between gap-16 mb-20">
           <div className="lg:w-1/3">
             <Link className="font-headline text-3xl tracking-[0.1em] uppercase mb-8 block" href="/">
-              Aurum Luz
+              Joyeria Alianza
             </Link>
             <p className="text-white/60 text-sm font-light mb-8 max-w-sm">
-              Suscríbase a nuestro boletín para acceso exclusivo a nuevas colecciones, eventos y ofertas personalizadas.
+              Suscríbase a nuestro boletín para acceso exclusivo a nuevas colecciones, eventos y ofertas personalizadas de Joyeria Alianza.
             </p>
             <div className="flex border-b border-white/20 pb-2 max-w-xs">
               <Input
@@ -57,13 +57,12 @@ export function Footer() {
               <a className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Instagram</a>
               <a className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Pinterest</a>
               <a className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Facebook</a>
-              <a className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">WeChat</a>
             </div>
           </div>
         </div>
         <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-white/10 gap-4">
           <p className="text-[10px] text-white/30 uppercase tracking-widest">
-            © <Link href="https://axion380.com.br" target="_blank" className="hover:text-white transition-colors">Axion380</Link> Todos los derechos reservados.
+            © {new Date().getFullYear()} Joyeria Alianza. Todos los derechos reservados.
           </p>
           <div className="flex gap-6">
             <Link className="text-[10px] text-white/30 hover:text-white uppercase tracking-widest transition-colors" href="#">Política de Privacidad</Link>

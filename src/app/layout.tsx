@@ -18,8 +18,8 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: 'AurumLuz Digital - Alta Joyería en Montevideo',
-  description: 'Descubra joyas que capturan los momentos efímeros de la luz. Diseñadas para la musa moderna.',
+  title: 'Joyeria Alianza - Alta Joyería en Montevideo',
+  description: 'Descubra piezas únicas que celebran la unión y el brillo eterno. Joyeria Alianza: tradición y elegancia en el corazón de Carrasco.',
 };
 
 export default function RootLayout({
@@ -28,7 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="light">
+    <html lang="es" className="light">
       <body
         className={cn(
           'min-h-screen bg-background font-body antialiased',
@@ -41,6 +41,7 @@ export default function RootLayout({
           <main className="flex-grow">{children}</main>
           <Footer />
         </div>
+        <div id="modal-root"></div>
         <WhatsappButton />
         <Toaster />
       </body>

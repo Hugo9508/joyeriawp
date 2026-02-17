@@ -7,7 +7,6 @@ function processDescription(html: string): string {
   if (!html) return '';
 
   // 1. Convertir shortcode [video src="..."] o [video mp4="..."]
-  // Formatos: [video src="..."], [video mp4="..."], [video poster="..." mp4="..."]
   let processed = html.replace(/\[video[^\]]*\]/g, (match) => {
     const srcMatch = match.match(/(?:src|mp4)=["']([^"']+)["']/);
     const posterMatch = match.match(/poster=["']([^"']+)["']/);
@@ -75,7 +74,7 @@ export function mapWooCommerceProduct(wooProduct: any): Product {
   return {
     id: wooProduct.id.toString(),
     name: wooProduct.name,
-    brand: 'Aurum Luz',
+    brand: 'Joyeria Alianza',
     description: processDescription(wooProduct.description || ''),
     shortDescription: processDescription(wooProduct.short_description || ''),
     price: {

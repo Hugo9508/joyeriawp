@@ -113,7 +113,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="mt-12">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6">Garantía Aurum</h3>
+            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-6">Garantía Alianza</h3>
             <div className="grid grid-cols-2 gap-6">
               <div className="flex items-center gap-3">
                 <ShieldCheck className="text-primary h-6 w-6" />

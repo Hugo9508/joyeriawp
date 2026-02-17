@@ -49,10 +49,10 @@ export default function Home() {
             Alta Joyería Montevideo
           </h2>
           <h1 className="font-headline text-4xl leading-tight text-white md:text-7xl lg:text-8xl mb-6 md:mb-8 max-w-5xl animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            Luminosidad <span className="italic font-light">Etérea</span>
+            Unión Eternamente <span className="italic font-light">Brillante</span>
           </h1>
           <p className="mb-8 md:mb-12 max-w-sm md:max-w-lg text-xs md:text-sm font-light leading-relaxed md:leading-loose tracking-wide text-gray-200 md:text-base animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-            Descubra piezas únicas diseñadas para capturar la luz y celebrar sus momentos más memorables.
+            En Joyeria Alianza, cada pieza es una promesa de amor y excelencia. Descubra nuestra colección curada en el corazón de Carrasco.
           </p>
           <div className="flex animate-fade-in-up flex-col gap-4 md:flex-row" style={{ animationDelay: '0.6s' }}>
             <Button asChild size="lg" variant="outline" className="bg-white text-foreground hover:bg-primary hover:text-white border-none uppercase tracking-[0.2em] font-bold text-[10px] md:text-xs">
@@ -110,10 +110,8 @@ export default function Home() {
         <div className="max-w-screen-xl mx-auto px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center gap-16 md:gap-24">
             <div className="w-full lg:w-1/2 relative group/video flex justify-center">
-              {/* Decorative background element */}
               <div className="absolute -inset-4 bg-primary/5 rounded-[2rem] rotate-6 scale-105 blur-2xl group-hover/video:rotate-0 group-hover/video:scale-100 transition-all duration-1000"></div>
               
-              {/* Tilted Video Container */}
               <div className="relative aspect-[4/5] w-full max-w-[450px] overflow-hidden shadow-2xl rounded-2xl bg-black -rotate-3 hover:rotate-0 transition-transform duration-1000 ease-out border border-white/20">
                 <video 
                   src="https://goods-vod.kwcdn.com/goods-video/0e228c94bc3d1c6c36af1a3af452246bf4d61994.f30.mp4"
@@ -128,10 +126,10 @@ export default function Home() {
             </div>
             
             <div className="w-full lg:w-1/2 text-center lg:text-left z-10">
-              <span className="block text-primary text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase mb-4">Experiencia Personalizada</span>
-              <h2 className="font-headline text-3xl md:text-5xl lg:text-6xl text-foreground leading-tight mb-8">Joyas con alma y propósito</h2>
+              <span className="block text-primary text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase mb-4">Legado Alianza</span>
+              <h2 className="font-headline text-3xl md:text-5xl lg:text-6xl text-foreground leading-tight mb-8">El arte de la orfebrería</h2>
               <p className="text-base md:text-xl font-light leading-relaxed mb-8 md:mb-12 text-muted-foreground max-w-xl mx-auto lg:mx-0">
-                Cada pieza en Aurum Luz es seleccionada por su calidad excepcional y su capacidad para contar una historia única. Nuestro compromiso es brindarle no solo una joya, sino una herencia eterna.
+                Cada pieza en Joyeria Alianza es seleccionada por su calidad excepcional y su capacidad para contar una historia de unión. Nuestro compromiso es brindarle no solo una joya, sino un símbolo eterno.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button asChild size="lg" className="bg-foreground text-background hover:bg-primary uppercase tracking-[0.2em] font-bold text-[10px] h-14 px-10 transition-all duration-300">

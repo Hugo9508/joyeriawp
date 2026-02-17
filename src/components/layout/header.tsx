@@ -32,7 +32,6 @@ export function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Evitar renderizado inconsistente durante la hidratación en rutas admin
   if (isAdmin) {
     return null;
   }
@@ -74,7 +73,7 @@ export function Header() {
                     <div className="flex flex-col h-full pt-4">
                         <Link href="/" className="flex items-center gap-2 mb-10">
                             <Gem className="text-primary h-6 w-6" />
-                            <span className="font-headline text-2xl tracking-widest uppercase">Aurum Luz</span>
+                            <span className="font-headline text-2xl tracking-widest uppercase">Joyeria Alianza</span>
                         </Link>
                         <nav className="flex flex-col gap-8">
                             {navLinks.map(link => (
@@ -95,7 +94,7 @@ export function Header() {
           <div className="flex-shrink-0 flex items-center justify-center absolute left-1/2 transform -translate-x-1/2">
             <Link href="/" className="flex flex-col items-center group/logo transition-all duration-300">
                 <span className={logoClasses}>
-                    Aurum Luz
+                    Joyeria Alianza
                 </span>
             </Link>
           </div>

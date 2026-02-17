@@ -1,5 +1,4 @@
-
-# 💎 AurumLuz Digital (Headless Boutique)
+# 💎 Joyeria Alianza (Headless Boutique)
 
 Proyecto de alta joyería basado en **Next.js 15** (Frontend) y **WooCommerce** (Backend).
 

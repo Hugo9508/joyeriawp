@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ReactNode, useState, useEffect } from 'react';
@@ -41,7 +40,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <Gem className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="font-headline text-lg tracking-widest uppercase">Aurum Admin</span>
+              <span className="font-headline text-lg tracking-widest uppercase text-foreground">Alianza Admin</span>
             </Link>
           </div>
           <div className="flex-1 px-4">
@@ -97,7 +96,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <div className="p-6 border-b">
                     <Link href="/admin" className="flex items-center gap-3">
                         <Gem className="h-6 w-6 text-primary" />
-                        <span className="font-headline text-xl tracking-widest uppercase">Aurum Admin</span>
+                        <span className="font-headline text-xl tracking-widest uppercase">Alianza Admin</span>
                     </Link>
                 </div>
                 <nav className="flex-1 p-4 space-y-2">
@@ -140,7 +139,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             </div>
             <Avatar className="h-10 w-10 border-2 border-primary/20">
               <AvatarImage src="https://picsum.photos/seed/admin/100" />
-              <AvatarFallback>AD</AvatarFallback>
+              <AvatarFallback>AA</AvatarFallback>
             </Avatar>
           </div>
         </header>

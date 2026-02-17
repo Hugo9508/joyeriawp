@@ -1,7 +1,6 @@
+# 📘 RUNBOOK MAESTRO: Joyeria Alianza (Headless WooCommerce)
 
-# 📘 RUNBOOK MAESTRO: AurumLuz Digital (Headless WooCommerce)
-
-Este documento es la guía definitiva para el despliegue y mantenimiento del ecosistema **AurumLuz**.
+Este documento es la guía definitiva para el despliegue y mantenimiento del ecosistema **Joyeria Alianza**.
 
 ---
 
@@ -25,7 +24,7 @@ El proyecto utiliza un patrón **BFF (Backend for Frontend)** donde Next.js act�
 
 ### REGLA DE ORO: Versión de Node
 - **Innegociable:** Debe usar **Node 20.x LTS**.
-- **Prohibido:** No usar Node 22.x ni versiones superiores, ya que generan errores de pre-renderizado y mismatch de motores.
+- **Prohibido:** No usar Node 22.x ni versiones superiores.
 
 ### Checklist de Seguridad
 - Las llaves `ck_` y `cs_` NUNCA deben estar en el código.
@@ -50,8 +49,8 @@ El proyecto utiliza un patrón **BFF (Backend for Frontend)** donde Next.js act�
 ---
 
 ## 4. Validación Post-Deploy
-- **Salud del API:** Acceder a `https://joyeria.a380.com.br/api/products`. Debe retornar JSON.
+- **Salud del API:** Acceder a `https://joyeria.a380.com.br/api/products`.
 - **Prueba SEO:** `Clic Derecho -> Ver código fuente`. El contenido debe estar en el HTML.
 
 ---
-*Desarrollado con precisión por IDX para AurumLuz.*
+*Desarrollado con precisión por IDX para Joyeria Alianza.*

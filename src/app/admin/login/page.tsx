@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -28,7 +27,7 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        toast({ title: "Acceso Concedido", description: "Bienvenido al panel de control." });
+        toast({ title: "Acceso Concedido", description: "Bienvenido al panel de control de Alianza." });
         router.push('/admin');
         router.refresh();
       } else {
@@ -53,7 +52,7 @@ export default function LoginPage() {
             <Gem className="text-primary-foreground h-6 w-6" />
           </div>
           <div className="text-center">
-            <CardTitle className="font-headline text-2xl tracking-widest uppercase">Aurum Admin</CardTitle>
+            <CardTitle className="font-headline text-2xl tracking-widest uppercase">Alianza Admin</CardTitle>
             <CardDescription>Ingrese la clave maestra de la boutique</CardDescription>
           </div>
         </CardHeader>
