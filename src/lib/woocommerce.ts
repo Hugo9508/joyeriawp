@@ -1,15 +1,13 @@
-
 /**
  * @fileOverview Núcleo de integración resiliente con WooCommerce REST API.
- * Implementa Single-Flight, Cache L1 y Bóveda de Credenciales Directa para Hostinger.
+ * Prioriza la Bóveda Interna Directa para evitar fallos de variables de entorno en Hostinger.
  */
 
 const TTL_MS = 120_000; // 2 minutos para productos
 const CATEGORY_TTL_MS = 3600_000; // 1 hora para categorías
 const TIMEOUT_MS = 15_000; // 15 segundos de timeout
 
-// Bóveda Interna Primaria (Prioridad 1)
-// Estas credenciales son las finales extraídas de tu panel de Hostinger.
+// Bóveda Interna de Credenciales (Fuente Primaria de Verdad)
 const INTERNAL_VAULT = {
   u: "aHR0cHM6Ly9qb3llcmlhYmQuYTM4MC5jb20uYnI=", // https://joyeriabd.a380.com.br
   k: "Y2tfOGNjZDY3ZGI3ZmNlZGIwMmU3ZDAyZTZkMmYyNDRhODI2MzY2MGM5Ng==", // ck_8ccd67...
@@ -23,6 +21,11 @@ function decode(val: string) {
     return "";
   }
 }
+
+// Valores decodificados listos para usar
+export const WOO_BASE_URL = decode(INTERNAL_VAULT.u);
+const WOO_CK = decode(INTERNAL_VAULT.k);
+const WOO_CS = decode(INTERNAL_VAULT.s);
 
 const memCache = new Map<string, { ts: number; data: any }>();
 const pendingRequests = new Map<string, Promise<any>>();
@@ -70,13 +73,13 @@ export async function fetchWooCommerce(
   method: string = "GET",
   body?: any
 ) {
-  // CONFIGURACIÓN DIRECTA: Consumimos de la bóveda interna para máxima estabilidad en Hostinger
-  const apiUrl = process.env.WC_API_URL || decode(INTERNAL_VAULT.u);
-  const consumerKey = process.env.WC_CONSUMER_KEY || decode(INTERNAL_VAULT.k);
-  const consumerSecret = process.env.WC_CONSUMER_SECRET || decode(INTERNAL_VAULT.s);
+  // CONSUMO DIRECTO DE BÓVEDA (Ignora .env si la bóveda tiene datos)
+  const apiUrl = WOO_BASE_URL;
+  const consumerKey = WOO_CK;
+  const consumerSecret = WOO_CS;
 
   if (!apiUrl || !consumerKey || !consumerSecret) {
-    throw new Error("VAULT_INCOMPLETE: Credenciales de WooCommerce no encontradas.");
+    throw new Error("VAULT_ERROR: Credenciales críticas de WooCommerce no configuradas.");
   }
 
   const base = cleanBaseUrl(apiUrl);
@@ -130,7 +133,7 @@ export async function fetchWooCommerce(
       return data;
     } catch (err: any) {
       if (method.toUpperCase() === "GET" && cached) {
-        console.warn(`Fallback a STALE data para ${endpoint} debido a: ${err.message}`);
+        console.warn(`Fallback a datos STALE para ${endpoint} por error: ${err.message}`);
         return cached.data;
       }
       throw err;

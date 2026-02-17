@@ -1,4 +1,5 @@
 import { Product, StockStatus } from './products';
+import { WOO_BASE_URL } from './woocommerce';
 
 /**
  * Normaliza las URLs de las imágenes para asegurar que siempre tengan el dominio del backend.
@@ -7,7 +8,7 @@ function normalizeImageUrl(url: string): string {
   if (!url) return '';
   if (url.startsWith('http')) return url;
   
-  const baseUrl = process.env.WC_API_URL || 'https://joyeriabd.a380.com.br';
+  const baseUrl = WOO_BASE_URL;
   const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
   
   return url.startsWith('/') ? `${cleanBaseUrl}${url}` : `${cleanBaseUrl}/${url}`;
@@ -19,7 +20,6 @@ function normalizeImageUrl(url: string): string {
 function processDescription(html: any): string {
   if (typeof html !== 'string') return '';
 
-  // 1. Convertir shortcode [video src="..."] o [video mp4="..."]
   let processed = html.replace(/\[video[^\]]*\]/g, (match) => {
     const srcMatch = match.match(/(?:src|mp4)=["']([^"']+)["']/);
     const posterMatch = match.match(/poster=["']([^"']+)["']/);
@@ -39,7 +39,6 @@ function processDescription(html: any): string {
     return '';
   });
 
-  // 2. Asegurar que los videos nativos <video> tengan clases de estilo
   processed = processed.replace(/<video/g, '<video controls preload="metadata" playsinline class="my-6 aspect-video w-full rounded-lg bg-black"');
 
   return processed;
