@@ -8,9 +8,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { WhatsappIcon } from '@/components/icons';
-import { LayoutGrid, Eye, Package } from 'lucide-react';
+import { LayoutGrid, Eye, Package, Tag } from 'lucide-react';
 import { VirtualTryOn } from '@/components/virtual-try-on';
 import { WhatsAppProductButton } from '@/components/whatsapp-product-button';
+import { Badge } from '@/components/ui/badge';
 
 function FilterContent({ categories }: { categories: Category[] }) {
     return (
@@ -96,6 +97,12 @@ function CollectionsContent() {
                         unoptimized
                         />
                     </Link>
+                    {product.isOnSale && (
+                      <Badge className="absolute top-4 left-4 bg-destructive text-white border-none text-[10px] uppercase tracking-widest shadow-md">
+                          <Tag className="w-3 h-3 mr-1" />
+                          Oferta
+                      </Badge>
+                    )}
                     <div className="absolute top-3 right-3 z-10 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                       <VirtualTryOn product={product}>
                         <Button size="icon" className="h-10 w-10 bg-white/90 rounded-full shadow-lg text-foreground">
@@ -109,9 +116,16 @@ function CollectionsContent() {
                       <h3 className="text-base font-medium text-foreground">
                         <Link href={`/products/${product.id}`}>{product.name}</Link>
                       </h3>
-                      <span className="text-sm font-semibold text-primary">
-                        $U {(product.price?.uyu || product.regularPrice).toLocaleString()}
-                      </span>
+                      <div className="flex flex-col items-end">
+                        {product.isOnSale && (
+                          <span className="text-[10px] text-muted-foreground line-through">
+                            USD {product.regularPrice.toLocaleString()}
+                          </span>
+                        )}
+                        <span className="text-sm font-semibold text-primary">
+                          USD {product.price.usd.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
                     <WhatsAppProductButton product={product} className="mt-3 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold uppercase tracking-widest h-10">
                       Consultar

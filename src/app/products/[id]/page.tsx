@@ -4,14 +4,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
-import { ChevronRight, Truck, ShieldCheck } from 'lucide-react';
+import { ChevronRight, Truck, ShieldCheck, Tag } from 'lucide-react';
 import { WhatsappIcon } from '@/components/icons';
 import { WhatsAppProductButton } from '@/components/whatsapp-product-button';
 
-/**
- * Página de Producto (Server Component)
- * Carga los datos directamente del servidor para un SEO óptimo en Hostinger.
- */
 async function getProduct(id: string) {
   try {
     const data = await fetchWooCommerce(`products/${id}`);
@@ -60,16 +56,35 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
 
           <h1 className="font-headline text-3xl md:text-5xl text-foreground font-medium mb-4">{product.name}</h1>
           
-          <div className="flex items-center gap-4 mb-8">
-            <span className="font-headline text-3xl text-primary">USD {product.price.usd.toLocaleString()}</span>
-            <Badge variant="outline" className={`${statusColor} uppercase tracking-widest font-bold`}>
-              {statusLabel}
-            </Badge>
+          <div className="flex items-center flex-wrap gap-4 mb-8">
+            <div className="flex flex-col">
+              {product.isOnSale && (
+                <span className="text-sm text-muted-foreground line-through decoration-destructive/40">
+                  USD {product.regularPrice.toLocaleString()}
+                </span>
+              )}
+              <span className="font-headline text-3xl text-primary">USD {product.price.usd.toLocaleString()}</span>
+            </div>
+            
+            <div className="flex gap-2">
+              <Badge variant="outline" className={`${statusColor} uppercase tracking-widest font-bold`}>
+                {statusLabel}
+              </Badge>
+              {product.isOnSale && (
+                <Badge className="bg-destructive text-destructive-foreground uppercase tracking-widest font-bold border-none shadow-sm animate-pulse">
+                  <Tag className="w-3 h-3 mr-1" />
+                  Oferta
+                </Badge>
+              )}
+            </div>
           </div>
 
-          <div className="mb-10">
+          <div className="mb-10 prose prose-sm max-w-none text-muted-foreground">
             <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-3">Descripción</h3>
-            <p className="text-sm leading-relaxed text-muted-foreground">{product.description}</p>
+            <div 
+              className="description-content space-y-4"
+              dangerouslySetInnerHTML={{ __html: product.description }} 
+            />
           </div>
 
           {product.material && (

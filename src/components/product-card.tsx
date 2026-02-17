@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { VirtualTryOn } from "@/components/virtual-try-on";
+import { Tag } from "lucide-react";
 
 interface ProductCardProps {
   product: Product;
@@ -30,11 +31,19 @@ export function ProductCard({ product }: ProductCardProps) {
                 className="object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
             />
         </Link>
-        {product.isBestseller && (
-            <Badge variant="secondary" className="absolute top-4 right-4 text-xs uppercase tracking-widest shadow-sm">
-                Más Vendido
-            </Badge>
-        )}
+        <div className="absolute top-4 right-4 flex flex-col gap-2">
+          {product.isBestseller && (
+              <Badge variant="secondary" className="text-[10px] uppercase tracking-widest shadow-sm">
+                  Más Vendido
+              </Badge>
+          )}
+          {product.isOnSale && (
+              <Badge className="bg-destructive text-white border-none text-[10px] uppercase tracking-widest shadow-md">
+                  <Tag className="w-3 h-3 mr-1" />
+                  Oferta
+              </Badge>
+          )}
+        </div>
         <div className="absolute inset-x-0 bottom-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-2">
             <VirtualTryOn product={product}>
               <Button variant="secondary" className="w-full backdrop-blur-sm bg-white/80 hover:bg-white text-foreground">
@@ -53,9 +62,16 @@ export function ProductCard({ product }: ProductCardProps) {
         <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
           {product.material} • {product.stone}
         </p>
-        <p className="text-primary font-medium">
-          USD {product.price.usd.toLocaleString()} / UYU {product.price.uyu.toLocaleString()}
-        </p>
+        <div className="flex flex-col items-center justify-center">
+          {product.isOnSale && (
+            <span className="text-xs text-muted-foreground line-through opacity-60">
+              USD {product.regularPrice.toLocaleString()}
+            </span>
+          )}
+          <p className="text-primary font-bold">
+            USD {product.price.usd.toLocaleString()}
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -18,6 +18,7 @@ export interface Product {
   };
   regularPrice: number;
   promoPrice?: number;
+  isOnSale: boolean;
   stockStatus: StockStatus;
   stockQuantity: number;
   category: string;
