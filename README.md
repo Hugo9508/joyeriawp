@@ -1,32 +1,37 @@
 
-# Aurum Luz - Joyería Digital (Headless WooCommerce)
+# 💎 Aurum Luz - Joyería Digital (Headless)
 
-Este proyecto es el frontend profesional de **Aurum Luz**, conectado vía REST API a un backend de WooCommerce en Hostinger.
+Este es el panel de control y tienda profesional de **Aurum Luz**, conectada a tu inventario de WooCommerce en Hostinger.
 
-## Configuración de Despliegue (Hostinger Node.js App)
+## 🚀 Acceso al Panel de Control (Admin)
 
-Para que la tienda funcione correctamente, debes configurar las siguientes **Variables de Entorno** en el panel de Hostinger (sección "Variables de entorno"):
+Para gestionar tu tienda, usa estos datos:
 
-| Nombre | Valor sugerido / Ejemplo |
+| Detalle | Información |
 | :--- | :--- |
-| `WC_API_URL` | `https://joyeriabd.a380.com.br` |
-| `WC_CONSUMER_KEY` | (Tu clave ck_ generada en WordPress) |
-| `WC_CONSUMER_SECRET` | (Tu clave cs_ generada en WordPress) |
-| `NEXT_PUBLIC_SITE_URL` | `https://joyeria.a380.com.br` |
+| **Link de Acceso** | [https://joyeria.a380.com.br/admin](https://joyeria.a380.com.br/admin) |
+| **Usuario** | (No requiere, solo contraseña) |
+| **Contraseña Maestra** | La que configuraste en Hostinger como `ADMIN_PASSWORD` (Por defecto: `admin123`) |
 
-## Instrucciones de Despliegue en Hostinger
+---
 
-1. **Preset del Framework:** Selecciona `Next.js`.
-2. **Versión de Node:** Selecciona `20.x`.
-3. **Comando de Compilación (Build):** `npm run build`
-4. **Comando de Inicio (Start):** `npm run start`
+## ⚙️ Configuración en Hostinger (Variables de Entorno)
 
-## Sobre las advertencias de NPM (npm warn deprecated)
-Durante el despliegue es común ver advertencias sobre `rimraf`, `inflight` o `glob`. Estas son dependencias secundarias de las librerías de Next.js/Genkit y **son completamente seguras de ignorar**. No afectan la estabilidad ni el rendimiento del sitio.
+Para que la tienda funcione, debes entrar al panel de Hostinger (Sección "Aplicación Node.js" -> "Variables de entorno") y asegurarte de tener estos 5 valores:
 
-## Estructura del Proyecto
-- **Next.js 15 (App Router)**: Máximo rendimiento y SEO.
-- **Headless Architecture**: Los datos viven en WordPress, la UI en Next.js.
-- **WhatsApp Integration**: Consultas directas con SKU y link de producto.
+1. `WC_API_URL`: `https://joyeriabd.a380.com.br`
+2. `WC_CONSUMER_KEY`: (Tu llave secreta de WordPress que empieza con `ck_`)
+3. `WC_CONSUMER_SECRET`: (Tu llave secreta de WordPress que empieza con `cs_`)
+4. `NEXT_PUBLIC_SITE_URL`: `https://joyeria.a380.com.br`
+5. `ADMIN_PASSWORD`: (La contraseña que tú elijas para entrar al panel `/admin`)
 
-Desarrollado con ❤️ para Aurum Luz por Axion380.
+---
+
+## 🛠️ ¿Qué puedes hacer en el Panel Admin?
+- **Dashboard:** Ver el valor total en dólares de todo tu inventario.
+- **Inventario:** Ver qué piezas están agotadas o bajo pedido.
+- **Categorías:** Crear nuevas secciones (ej. "Colección Verano") sin entrar a WordPress.
+- **WhatsApp:** Cambiar el número de contacto de toda la tienda en un solo lugar.
+
+---
+Desarrollado con ❤️ para Aurum Luz.
