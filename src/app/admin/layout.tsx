@@ -1,9 +1,10 @@
+
 'use client';
 
 import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Briefcase, Settings, Gem, Home, Menu, LayoutDashboard, Search, Bell, LogOut, Tags } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Settings, Gem, Home, Menu, LayoutDashboard, Bell, LogOut, Tags } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -19,13 +20,16 @@ const navItems = [
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
+  const router = useRouter();
+  const isLoginPage = pathname === '/admin/login';
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  if (isLoginPage) return <>{children}</>;
 
-  if (!mounted) return null;
+  const handleLogout = async () => {
+    await fetch('/api/admin/logout', { method: 'POST' });
+    router.push('/admin/login');
+    router.refresh();
+  };
 
   return (
     <div className="grid min-h-screen w-full md:grid-cols-[240px_1fr] lg:grid-cols-[280px_1fr] bg-background">
@@ -64,17 +68,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
           <div className="mt-auto p-6 space-y-4">
              <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2">Estado del Sistema</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2">Estado</p>
                 <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                    <span className="text-xs font-medium">Demo Operativo</span>
+                    <span className="text-xs font-medium">BFF Conectado</span>
                 </div>
              </div>
-             <Button asChild variant="outline" className="w-full justify-start h-11 px-4 border-primary/10 hover:bg-muted">
-                <Link href="/">
-                    <LogOut className="mr-3 h-4 w-4" />
-                    Cerrar Sesión
-                </Link>
+             <Button onClick={handleLogout} variant="outline" className="w-full justify-start h-11 px-4 border-destructive/10 text-destructive hover:bg-destructive/5">
+                <LogOut className="mr-3 h-4 w-4" />
+                Cerrar Sesión
              </Button>
           </div>
         </div>
@@ -117,30 +119,23 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     })}
                 </nav>
                 <div className="p-6">
-                    <Button asChild variant="outline" className="w-full">
-                        <Link href="/">
-                            <Home className="mr-2 h-4 w-4" />
-                            Tienda
-                        </Link>
+                    <Button onClick={handleLogout} variant="outline" className="w-full text-destructive">
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Salir
                     </Button>
                 </div>
               </SheetContent>
             </Sheet>
             <div className="hidden sm:flex items-center gap-2 bg-muted/50 rounded-full px-3 py-1.5 border border-primary/5">
-                <Search className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Cmd + K</span>
+                <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Sesión Activa</span>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden sm:flex flex-col items-end">
-                <span className="text-xs font-bold uppercase tracking-widest">Admin Demo</span>
-                <span className="text-[9px] text-primary font-medium tracking-tighter">Boutique Montevideo</span>
-            </div>
             <div className="relative">
                 <Button variant="ghost" size="icon" className="rounded-full hover:bg-muted">
                     <Bell className="h-5 w-5" />
-                    <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-primary text-[8px] border-2 border-background">3</Badge>
+                    <Badge className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center bg-primary text-[8px] border-2 border-background">1</Badge>
                 </Button>
             </div>
             <Avatar className="h-10 w-10 border-2 border-primary/20">
