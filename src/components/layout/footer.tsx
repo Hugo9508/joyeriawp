@@ -46,16 +46,14 @@ export function Footer() {
             </div>
             <div className="flex flex-col gap-6">
               <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Servicio al Cliente</h4>
-              <Link className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Contáctenos</Link>
+              <Link className="text-sm font-light text-white/60 hover:text-white transition-colors" href="/contact">Contáctenos</Link>
               <Link className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Envíos y Devoluciones</Link>
-              <Link className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Agendar Cita</Link>
+              <Link className="text-sm font-light text-white/60 hover:text-white transition-colors" href="/contact">Agendar Cita</Link>
               <Link className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Guía de Tallas</Link>
-              <Link className="text-sm font-light text-white/60 hover:text-white transition-colors" href="/admin">Admin</Link>
             </div>
             <div className="flex flex-col gap-6">
               <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Social</h4>
               <a className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Instagram</a>
-              <a className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Pinterest</a>
               <a className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Facebook</a>
             </div>
           </div>

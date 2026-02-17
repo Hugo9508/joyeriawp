@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Gem, Heart, Menu, Search, User } from "lucide-react";
+import { Gem, Heart, Menu, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -44,8 +44,8 @@ export function Header() {
   );
   
   const logoClasses = cn(
-      "font-headline tracking-[0.2em] uppercase font-light transition-all duration-300",
-      isHome && !isScrolled ? "text-2xl md:text-3xl" : "text-lg md:text-xl"
+    "font-headline tracking-[0.2em] uppercase font-light transition-all duration-300",
+    isHome && !isScrolled ? "text-2xl md:text-3xl" : "text-lg md:text-xl"
   );
 
   return (
@@ -84,7 +84,6 @@ export function Header() {
                         </nav>
                         <div className="mt-auto pb-10">
                             <p className="text-[10px] text-muted-foreground uppercase tracking-widest mb-4">Montevideo, Uruguay</p>
-                            <Link href="/admin" className="text-xs font-semibold uppercase tracking-widest text-primary">Panel Admin</Link>
                         </div>
                     </div>
                 </SheetContent>
@@ -112,12 +111,6 @@ export function Header() {
             <Button variant="ghost" size="icon" className="hover:text-primary h-9 w-9">
               <Heart className="h-4 w-4 md:h-5 md:w-5" />
               <span className="sr-only">Favoritos</span>
-            </Button>
-             <Button asChild variant="ghost" size="icon" className="hover:text-primary h-9 w-9">
-              <Link href="/admin">
-                <User className="h-4 w-4 md:h-5 md:w-5" />
-                <span className="sr-only">Admin</span>
-              </Link>
             </Button>
           </div>
         </div>
