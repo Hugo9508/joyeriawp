@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchWooCommerce } from '@/lib/woocommerce';
 import { mapWooCommerceProduct } from '@/lib/mappers';
@@ -8,7 +7,7 @@ export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const page = searchParams.get('page') || '1';
-  const per_page = searchParams.get('per_page') || '20';
+  const per_page = searchParams.get('per_page') || '20'; // Reducido para Hostinger
   const category = searchParams.get('category');
   const search = searchParams.get('search');
 
@@ -22,6 +21,7 @@ export async function GET(request: NextRequest) {
     
     if (search) params.search = search;
     
+    // Resolución de categoría si se provee slug
     if (category) {
       const categories = await fetchWooCommerce('products/categories', { slug: category });
       if (categories && Array.isArray(categories) && categories.length > 0) {
@@ -41,9 +41,15 @@ export async function GET(request: NextRequest) {
     });
   } catch (error: any) {
     console.error('API Products Error:', error.message);
-    return NextResponse.json(
-      { error: 'Error al conectar con WooCommerce. Verifique sus credenciales en .env.' }, 
-      { status: 502 }
-    );
+    
+    let status = 502;
+    let message = "El catálogo no está disponible temporalmente.";
+
+    if (error.message.includes('CONFIG_MISSING')) {
+      status = 500;
+      message = "Error de configuración: Faltan credenciales en el servidor.";
+    }
+
+    return NextResponse.json({ error: message, details: error.message }, { status });
   }
 }

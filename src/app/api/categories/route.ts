@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { fetchWooCommerce } from '@/lib/woocommerce';
 
@@ -20,11 +19,15 @@ export async function GET() {
     return NextResponse.json(categories, {
       headers: {
         'Cache-Control': 'no-store',
+        'X-Cache': 'DYNAMIC',
         'X-Runtime': 'nodejs'
       }
     });
   } catch (error: any) {
     console.error('API Categories Error:', error.message);
-    return NextResponse.json({ error: 'Categorías no disponibles' }, { status: 502 });
+    return NextResponse.json({ 
+      error: 'Categorías no disponibles',
+      details: error.message 
+    }, { status: 502 });
   }
 }
