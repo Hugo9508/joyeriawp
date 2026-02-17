@@ -12,10 +12,10 @@ const TIMEOUT_MS = 15_000;
 const INTERNAL_VAULT = {
   // URL: https://joyeriabd.a380.com.br
   u: "aHR0cHM6Ly9qb3llcmlhYmQuYTM4MC5jb20uYnI=", 
-  // Key: ck_0b4edc2ff9fd75c457f380ad39b4ab023b047862
-  k: "Y2tfMGI0ZWRjMmZmOWZkNzVjNDU3ZjM4MGFkMzliNGFiMDIzYjA0Nzg2Mg==", 
-  // Secret: cs_ca160bd288bd300d49c1b3e0b1f052bf2281af3a
-  s: "Y3NfY2ExNjBiZDI4OGJkMzAwZDQ5YzFiM2UwYjFmMDUyYmYyMjgxYWYzOA=="  
+  // Key: ck_8ccd67db7fcedb02e7d02e6d2f244a8263660c96
+  k: "Y2tfOGNjZDY3ZGI3ZmNlZGIwMmU3ZDAyZTZkMmYyNDRhODI2MzY2MGM5Ng==", 
+  // Secret: cs_145cb75ef15baa027ada78edab63da876876f38
+  s: "Y3NfMTQ1Y2I3NWVmMTViYWEwMjdhZGE3OGVkYWI2M2RhODc2ODc2ZjM4"  
 };
 
 function decode(val: string) {
