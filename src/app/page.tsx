@@ -106,30 +106,41 @@ export default function Home() {
       </section>
 
       {/* Experience Section */}
-      <section className="bg-secondary py-16 md:py-24 border-t">
+      <section className="bg-secondary py-16 md:py-32 border-t overflow-hidden">
         <div className="max-w-screen-xl mx-auto px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-center gap-10 md:gap-16 lg:gap-24">
-            <div className="w-full lg:w-1/2 relative">
-              <div className="aspect-[4/5] overflow-hidden shadow-lg rounded-lg bg-black">
+          <div className="flex flex-col lg:flex-row items-center gap-16 md:gap-24">
+            <div className="w-full lg:w-1/2 relative group/video flex justify-center">
+              {/* Decorative background element */}
+              <div className="absolute -inset-4 bg-primary/5 rounded-[2rem] rotate-6 scale-105 blur-2xl group-hover/video:rotate-0 group-hover/video:scale-100 transition-all duration-1000"></div>
+              
+              {/* Tilted Video Container */}
+              <div className="relative aspect-[4/5] w-full max-w-[450px] overflow-hidden shadow-2xl rounded-2xl bg-black -rotate-3 hover:rotate-0 transition-transform duration-1000 ease-out border border-white/20">
                 <video 
                   src="https://goods-vod.kwcdn.com/goods-video/0e228c94bc3d1c6c36af1a3af452246bf4d61994.f30.mp4"
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover scale-110 group-hover/video:scale-100 transition-transform duration-1000"
                   autoPlay
                   muted
                   loop
                   playsInline
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-60"></div>
               </div>
             </div>
-            <div className="w-full lg:w-1/2 text-center lg:text-left">
+            
+            <div className="w-full lg:w-1/2 text-center lg:text-left z-10">
               <span className="block text-primary text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase mb-4">Experiencia Personalizada</span>
-              <h2 className="font-headline text-2xl md:text-5xl text-foreground leading-tight mb-6">Joyas con alma y propósito</h2>
-              <p className="text-base md:text-lg font-light leading-relaxed mb-6 md:mb-8 text-muted-foreground">
-                Cada pieza en Aurum Luz es seleccionada por su calidad excepcional y su capacidad para contar una historia única. Nuestro compromiso es brindarle no solo una joya, sino una herencia.
+              <h2 className="font-headline text-3xl md:text-5xl lg:text-6xl text-foreground leading-tight mb-8">Joyas con alma y propósito</h2>
+              <p className="text-base md:text-xl font-light leading-relaxed mb-8 md:mb-12 text-muted-foreground max-w-xl mx-auto lg:mx-0">
+                Cada pieza en Aurum Luz es seleccionada por su calidad excepcional y su capacidad para contar una historia única. Nuestro compromiso es brindarle no solo una joya, sino una herencia eterna.
               </p>
-              <Button asChild size="lg" className="bg-foreground text-background hover:bg-primary uppercase tracking-[0.2em] font-bold text-[10px]">
-                  <Link href="/collections">Ir a Colecciones</Link>
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <Button asChild size="lg" className="bg-foreground text-background hover:bg-primary uppercase tracking-[0.2em] font-bold text-[10px] h-14 px-10 transition-all duration-300">
+                    <Link href="/collections">Ir a Colecciones</Link>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="border-primary/20 text-foreground hover:bg-primary/5 uppercase tracking-[0.2em] font-bold text-[10px] h-14 px-10">
+                    <Link href="/contact">Agendar Cita</Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
