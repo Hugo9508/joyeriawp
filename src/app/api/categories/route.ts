@@ -19,15 +19,14 @@ export async function GET() {
     return NextResponse.json(categories, {
       headers: {
         'Cache-Control': 'no-store',
-        'X-Cache': 'DYNAMIC',
+        'X-Cache': 'BFF-DIRECT-CAT',
         'X-Runtime': 'nodejs'
       }
     });
   } catch (error: any) {
     console.error('API Categories Error:', error.message);
     return NextResponse.json({ 
-      error: 'Categorías no disponibles',
-      details: error.message 
+      error: 'Categorías no disponibles temporalmente.'
     }, { status: 502 });
   }
 }

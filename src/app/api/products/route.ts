@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       if (categoryId) {
         params.category = categoryId;
       } else {
-        return NextResponse.json([], { headers: { 'X-Cache': 'RESOLVED-EMPTY' } });
+        return NextResponse.json([], { headers: { 'X-Cache': 'EMPTY-CATEGORY' } });
       }
     }
 
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(products, {
       headers: { 
         'Cache-Control': 'no-store',
-        'X-Cache': 'DYNAMIC',
+        'X-Cache': 'BFF-DIRECT',
         'X-Runtime': 'nodejs'
       }
     });

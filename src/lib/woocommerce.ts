@@ -1,19 +1,21 @@
 /**
  * @fileOverview Núcleo de integración resiliente con WooCommerce REST API.
- * Implementa Single-Flight, Cache L1 y Bóveda de Credenciales Enmascaradas.
+ * Implementa Single-Flight, Cache L1 y Bóveda de Credenciales Directa.
  */
 
 const TTL_MS = 120_000; 
 const CATEGORY_TTL_MS = 3600_000; 
 const TIMEOUT_MS = 15_000;
 
-// Bóveda de Respaldo (Enmascarada en Base64 para protección básica)
-// Nota: En producción, Hostinger leerá esto instantáneamente desde la RAM.
+// Bóveda Interna Primaria (Prioridad 1)
+// Las credenciales se consumen directamente desde aquí para evitar fallos de lectura de .env en hosting compartido.
 const INTERNAL_VAULT = {
-  // Para actualizar: btoa("tu_dato") en la consola del navegador y pega aquí el resultado
-  u: "aHR0cHM6Ly9qb3llcmlhYmQuYTM4MC5jb20uYnI=", // URL: https://joyeriabd.a380.com.br
-  k: "Y2tfMGI0ZWRjMmZmOWZkNzVjNDU3ZjM4MGFkMzliNGFiMDIzYjA0Nzg2Mg==", // Coloca aquí tu Key en Base64
-  s: "Y3NfY2ExNjBiZDI4OGJkMzAwZDQ5YzFiM2UwYjFmMDUyYmYyMjgxYWYzOA=="  // Coloca aquí tu Secret en Base64
+  // URL: https://joyeriabd.a380.com.br
+  u: "aHR0cHM6Ly9qb3llcmlhYmQuYTM4MC5jb20uYnI=", 
+  // Key: ck_0b4edc2ff9fd75c457f380ad39b4ab023b047862
+  k: "Y2tfMGI0ZWRjMmZmOWZkNzVjNDU3ZjM4MGFkMzliNGFiMDIzYjA0Nzg2Mg==", 
+  // Secret: cs_ca160bd288bd300d49c1b3e0b1f052bf2281af3a
+  s: "Y3NfY2ExNjBiZDI4OGJkMzAwZDQ5YzFiM2UwYjFmMDUyYmYyMjgxYWYzOA=="  
 };
 
 function decode(val: string) {
@@ -24,7 +26,7 @@ function decode(val: string) {
   }
 }
 
-// Cache en memoria
+// Cache en memoria para evitar colisiones (Single-Flight)
 const memCache = new Map<string, { ts: number; data: any }>();
 const pendingRequests = new Map<string, Promise<any>>();
 
@@ -72,18 +74,13 @@ export async function fetchWooCommerce(
   method: string = "GET",
   body?: any
 ) {
-  // 1. Intentar variables de entorno
-  let apiUrl = process.env.WC_API_URL || process.env.WOOCOMMERCE_API_URL;
-  let consumerKey = process.env.WC_CONSUMER_KEY || process.env.WOOCOMMERCE_CONSUMER_KEY;
-  let consumerSecret = process.env.WC_CONSUMER_SECRET || process.env.WOOCOMMERCE_CONSUMER_SECRET;
-
-  // 2. Fallback a Bóveda Interna si las variables no existen o están vacías
-  if (!apiUrl || apiUrl.length < 5) apiUrl = decode(INTERNAL_VAULT.u);
-  if (!consumerKey) consumerKey = decode(INTERNAL_VAULT.k);
-  if (!consumerSecret) consumerSecret = decode(INTERNAL_VAULT.s);
+  // CONFIGURACIÓN DIRECTA: Consumimos de la bóveda interna ignorando el .env para máxima estabilidad
+  const apiUrl = decode(INTERNAL_VAULT.u);
+  const consumerKey = decode(INTERNAL_VAULT.k);
+  const consumerSecret = decode(INTERNAL_VAULT.s);
 
   if (!apiUrl || !consumerKey || !consumerSecret) {
-    throw new Error("CONFIG_MISSING: No se detectaron credenciales ni en ENV ni en Vault.");
+    throw new Error("VAULT_INCOMPLETE: Las credenciales internas no están configuradas correctamente.");
   }
 
   const base = cleanBaseUrl(apiUrl);
@@ -95,16 +92,19 @@ export async function fetchWooCommerce(
     });
   }
 
+  // Generar key de cache estable
   const query = stableQuery(Object.fromEntries(url.searchParams.entries()));
   const cacheKey = `${method.toUpperCase()} ${url.origin}${url.pathname}${query ? `?${query}` : ""}`;
 
   const now = Date.now();
   const cached = memCache.get(cacheKey);
 
+  // 1. HIT de Cache L1
   if (method.toUpperCase() === "GET" && cached && now - cached.ts <= TTL_MS) {
     return cached.data;
   }
 
+  // 2. Single-Flight: Deduplicación de peticiones en curso
   if (method.toUpperCase() === "GET" && pendingRequests.has(cacheKey)) {
     return pendingRequests.get(cacheKey);
   }
@@ -117,6 +117,7 @@ export async function fetchWooCommerce(
         headers: {
           Authorization: `Basic ${auth}`,
           "Content-Type": "application/json",
+          "Cache-Control": "no-cache"
         },
         body: method.toUpperCase() === "GET" ? undefined : body ? JSON.stringify(body) : undefined,
         cache: "no-store",
@@ -129,12 +130,18 @@ export async function fetchWooCommerce(
       }
 
       const data = await response.json();
+      
       if (method.toUpperCase() === "GET") {
         memCache.set(cacheKey, { ts: Date.now(), data });
       }
+      
       return data;
     } catch (err: any) {
-      if (method.toUpperCase() === "GET" && cached) return cached.data;
+      // Fallback a Cache Stale si el backend falla o hay timeout
+      if (method.toUpperCase() === "GET" && cached) {
+        console.warn(`Fallback a STALE data para ${endpoint} debido a: ${err.message}`);
+        return cached.data;
+      }
       throw err;
     } finally {
       pendingRequests.delete(cacheKey);
