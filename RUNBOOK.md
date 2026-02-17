@@ -1,3 +1,4 @@
+
 # 📘 RUNBOOK MAESTRO: Joyeria Alianza (Headless WooCommerce)
 
 Este documento es la guía definitiva para el despliegue y mantenimiento del ecosistema **Joyeria Alianza**.
@@ -25,10 +26,10 @@ El proyecto utiliza un patrón **BFF (Backend for Frontend)** donde Next.js act�
 ### REGLA DE ORO: Versión de Node
 - **Innegociable:** Debe usar **Node 20.x LTS**.
 - **Prohibido:** No usar Node 22.x ni versiones superiores.
+- **Por qué:** Hostinger Node Apps tiene mejor estabilidad y soporte para dependencias críticas en la versión 20.x.
 
-### Checklist de Seguridad
-- Las llaves `ck_` y `cs_` NUNCA deben estar en el código.
-- El cliente solo habla con `/api/*`. El servidor Next.js es el único que conoce las llaves.
+### Corrección de Advertencias (Warnings)
+Las advertencias `rimraf`, `inflight` y `glob` son normales en ecosistemas grandes de Node. Se han mitigado actualizando las dependencias raíz, pero si persisten en el build, no afectan la funcionalidad. Lo importante es que el **Build Trace** termine correctamente.
 
 ---
 
@@ -50,7 +51,7 @@ El proyecto utiliza un patrón **BFF (Backend for Frontend)** donde Next.js act�
 
 ## 4. Validación Post-Deploy
 - **Salud del API:** Acceder a `https://joyeria.a380.com.br/api/products`.
-- **Prueba SEO:** `Clic Derecho -> Ver código fuente`. El contenido debe estar en el HTML.
+- **Prueba SEO:** `Ver código fuente` en el navegador. Las imágenes deben tener el atributo `unoptimized`.
 
 ---
 *Desarrollado con precisión por IDX para Joyeria Alianza.*
