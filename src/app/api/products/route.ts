@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { fetchWooCommerce } from '@/lib/woocommerce';
 import { mapWooCommerceProduct } from '@/lib/mappers';
 
+// Forzar runtime Node.js para estabilidad en Hostinger y soporte de Buffer
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
@@ -9,7 +10,7 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get('search') || '';
   const categorySlug = searchParams.get('category') || '';
   const page = searchParams.get('page') || '1';
-  const per_page = searchParams.get('per_page') || '20';
+  const per_page = searchParams.get('per_page') || '20'; // Bajar default para evitar timeout
 
   try {
     const queryParams: any = { 
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
     
     if (search) queryParams.search = search;
     
+    // Resolución de categoría si se provee slug
     if (categorySlug) {
       try {
         const { data: catData } = await fetchWooCommerce('products/categories', { slug: categorySlug });

@@ -34,7 +34,7 @@ export async function fetchWooCommerce(
   method: string = "GET",
   body?: any
 ): Promise<FetchWooResult> {
-  // Unificamos lectura de variables: Prioridad a WC_* (según tu panel actual)
+  // Soporte dual para variables de entorno (WC_* y WOOCOMMERCE_*)
   const apiUrl = process.env.WC_API_URL || process.env.WOOCOMMERCE_API_URL;
   const consumerKey = process.env.WC_CONSUMER_KEY || process.env.WOOCOMMERCE_CONSUMER_KEY;
   const consumerSecret = process.env.WC_CONSUMER_SECRET || process.env.WOOCOMMERCE_CONSUMER_SECRET;
@@ -58,16 +58,18 @@ export async function fetchWooCommerce(
   const now = Date.now();
   const cached = memCache.get(cacheKey);
   
+  // 1. HIT de cache
   if (method.toUpperCase() === "GET" && cached && now - cached.ts <= TTL_MS) {
     return { data: cached.data, status: 'HIT' };
   }
 
+  // 2. Single-Flight (Deduplicación de peticiones en curso)
   if (method.toUpperCase() === "GET" && pendingRequests.has(cacheKey)) {
     return pendingRequests.get(cacheKey)!;
   }
 
   const fetchPromise = (async (): Promise<FetchWooResult> => {
-    // IMPORTANTE: Aseguramos que Buffer esté disponible forzando runtime 'nodejs' en los Handlers
+    // IMPORTANTE: Buffer solo está disponible en runtime 'nodejs'
     const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64");
 
     try {
@@ -94,7 +96,9 @@ export async function fetchWooCommerce(
       
       return { data, status: 'MISS' };
     } catch (err: any) {
+      // 3. Fallback STALE (si Woo falla o hay timeout)
       if (method.toUpperCase() === "GET" && cached && now - cached.ts <= STALE_TTL_MS) {
+        console.warn(`WooCommerce latente/caído. Usando cache STALE para: ${endpoint}`);
         return { data: cached.data, status: 'STALE' };
       }
       throw err;

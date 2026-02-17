@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchWooCommerce } from '@/lib/woocommerce';
 
+// Forzar runtime Node.js para estabilidad en Hostinger
 export const runtime = 'nodejs';
 
 export async function GET() {
