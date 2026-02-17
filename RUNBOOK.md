@@ -70,4 +70,11 @@ Configura estas variables en el panel de Hostinger:
 - **Firewall:** Asegúrate de que el servidor de WordPress permita peticiones desde la IP del servidor de Next.js.
 
 ---
+
+## 6. Errores Comunes
+- **EBADENGINE:** Indica que Hostinger está usando Node 22. Cambia a Node 20.
+- **401 Unauthorized:** Las llaves `ck_` o `cs_` son incorrectas o el usuario no tiene permisos de API.
+- **Imágenes no cargan:** Verifica que `next.config.ts` permita el dominio del backend y que las imágenes tengan URLs absolutas.
+
+---
 *Documentación técnica consolidada para Joyeria Alianza.*
