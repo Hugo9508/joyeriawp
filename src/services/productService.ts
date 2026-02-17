@@ -83,6 +83,7 @@ export const saveCategory = async (data: { name: string, value: string }) => {
 
 export const deleteCategory = async (idOrSlug: string) => {
   try {
+    // Intentamos obtener el ID numérico si es posible, o pasamos el slug
     const response = await fetch(`/api/categories?id=${idOrSlug}`, {
       method: 'DELETE',
     });
