@@ -41,3 +41,25 @@ export async function POST(request: Request) {
     );
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    
+    if (!id) {
+      return NextResponse.json({ error: "ID de categoría requerido." }, { status: 400 });
+    }
+
+    // Nota: WooCommerce requiere el ID numérico para eliminar. 
+    // Si pasas el slug, este endpoint podría fallar dependiendo de la lógica de negocio.
+    const deletedCategory = await fetchWooCommerce(`products/categories/${id}`, { force: 'true' }, 'DELETE');
+    return NextResponse.json(deletedCategory);
+  } catch (error: any) {
+    console.error("API Categories DELETE Error:", error.message);
+    return NextResponse.json(
+      { error: "Error al eliminar la categoría de WooCommerce." }, 
+      { status: 500 }
+    );
+  }
+}

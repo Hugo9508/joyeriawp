@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { getProducts, getCategories } from '@/services/productService';
 import { Product, Category } from '@/lib/products';
@@ -9,7 +8,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { WhatsappIcon } from '@/components/icons';
-import { LayoutGrid, Eye, Package, Info } from 'lucide-react';
+import { LayoutGrid, Eye, Package } from 'lucide-react';
 import { VirtualTryOn } from '@/components/virtual-try-on';
 import { WhatsAppProductButton } from '@/components/whatsapp-product-button';
 
@@ -39,7 +38,7 @@ function FilterContent({ categories }: { categories: Category[] }) {
     );
 }
 
-export default function CollectionsPage() {
+function CollectionsContent() {
   const searchParams = useSearchParams();
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
@@ -137,5 +136,13 @@ export default function CollectionsPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+export default function CollectionsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Cargando colección...</div>}>
+      <CollectionsContent />
+    </Suspense>
   );
 }

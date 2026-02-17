@@ -1,4 +1,3 @@
-
 import { Product, Category } from "@/lib/products";
 
 /**
@@ -78,6 +77,22 @@ export const saveCategory = async (data: { name: string, value: string }) => {
     return await response.json();
   } catch (error) {
     console.error("Error al guardar categoría:", error);
+    throw error;
+  }
+};
+
+export const deleteCategory = async (idOrSlug: string) => {
+  try {
+    const response = await fetch(`/api/categories?id=${idOrSlug}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Error al eliminar categoría');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Error al eliminar categoría:", error);
     throw error;
   }
 };
