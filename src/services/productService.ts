@@ -18,7 +18,7 @@ export const getProducts = async (filters: { search?: string, category?: string,
     });
     
     if (!response.ok) {
-      console.warn("API de productos no disponible o credenciales faltantes.");
+      console.warn("API de productos no disponible. Verifique variables de entorno.");
       return []; 
     }
     
@@ -35,10 +35,7 @@ export const getProductById = async (id: string): Promise<Product | null> => {
     const response = await fetch(`/api/products/${id}`, {
       cache: 'no-store'
     });
-    if (!response.ok) {
-      console.warn(`Producto ${id} no encontrado.`);
-      return null;
-    }
+    if (!response.ok) return null;
     return await response.json();
   } catch (error) {
     console.error(`Error de red en getProductById (${id}):`, error);
@@ -51,10 +48,7 @@ export const getCategories = async (): Promise<Category[]> => {
     const response = await fetch('/api/categories', {
       cache: 'no-store'
     });
-    if (!response.ok) {
-      console.warn("API de categorías no disponible.");
-      return [];
-    }
+    if (!response.ok) return [];
     const data = await response.json();
     return Array.isArray(data) ? data : [];
   } catch (error) {
@@ -81,10 +75,9 @@ export const saveCategory = async (data: { name: string, value: string }) => {
   }
 };
 
-export const deleteCategory = async (idOrSlug: string) => {
+export const deleteCategory = async (id: number | string) => {
   try {
-    // Intentamos obtener el ID numérico si es posible, o pasamos el slug
-    const response = await fetch(`/api/categories?id=${idOrSlug}`, {
+    const response = await fetch(`/api/categories?id=${id}`, {
       method: 'DELETE',
     });
     if (!response.ok) {

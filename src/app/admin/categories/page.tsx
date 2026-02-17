@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, Pencil, Trash2, Tags, Loader2 } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Loader2 } from 'lucide-react';
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -61,7 +61,10 @@ export default function AdminCategoriesPage() {
     
     setIsSaving(true);
     try {
-      await saveCategory({ name: catName, value: catValue.toLowerCase().trim().replace(/\s+/g, '-') });
+      await saveCategory({ 
+        name: catName, 
+        value: catValue.toLowerCase().trim().replace(/\s+/g, '-') 
+      });
       toast({ title: "Éxito", description: "Categoría guardada correctamente." });
       setIsFormOpen(false);
       setCatName('');
@@ -82,14 +85,16 @@ export default function AdminCategoriesPage() {
     setIsFormOpen(true);
   };
 
-  const handleDelete = async (value: string) => {
-    if (!confirm("¿Eliminar esta categoría? Los productos asociados podrían dejar de aparecer correctamente.")) return;
+  const handleDelete = async (id: number | undefined) => {
+    if (!id) return;
+    if (!confirm("¿Eliminar esta categoría permanentemente?")) return;
+    
     try {
-      await deleteCategory(value);
-      toast({ title: "Eliminado", description: "Categoría removida.", variant: "destructive" });
+      await deleteCategory(id);
+      toast({ title: "Eliminado", description: "Categoría removida correctamente.", variant: "destructive" });
       fetchCategories();
     } catch (error) {
-      toast({ title: "Error", description: "No se pudo eliminar.", variant: "destructive" });
+      toast({ title: "Error", description: "No se pudo eliminar de WooCommerce.", variant: "destructive" });
     }
   };
 
@@ -98,7 +103,7 @@ export default function AdminCategoriesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-light tracking-tight text-foreground">Gestión de Categorías</h1>
-          <p className="text-sm text-muted-foreground mt-1">Organice su catálogo creando secciones personalizadas.</p>
+          <p className="text-sm text-muted-foreground mt-1">Organice su catálogo sincronizado con WooCommerce.</p>
         </div>
         <Dialog open={isFormOpen} onOpenChange={(open) => {
             setIsFormOpen(open);
@@ -132,7 +137,7 @@ export default function AdminCategoriesPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="value">Identificador (Slug)</Label>
+                <Label htmlFor="value">Slug (Identificador)</Label>
                 <Input 
                   id="value" 
                   value={catValue} 
@@ -140,7 +145,6 @@ export default function AdminCategoriesPage() {
                   placeholder="ej-relojes-lujo" 
                   disabled={!!editingCategory}
                 />
-                <p className="text-[10px] text-muted-foreground uppercase">El identificador no se puede cambiar después de creado.</p>
               </div>
               <DialogFooter>
                 <DialogClose asChild>
@@ -161,7 +165,7 @@ export default function AdminCategoriesPage() {
           <TableHeader className="bg-muted/50">
             <TableRow>
               <TableHead>Nombre</TableHead>
-              <TableHead>Identificador</TableHead>
+              <TableHead>Slug</TableHead>
               <TableHead className="w-[100px] text-center">Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -179,7 +183,7 @@ export default function AdminCategoriesPage() {
                     <Button variant="ghost" size="icon" onClick={() => handleEdit(cat)} className="h-8 w-8 text-primary">
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(cat.value)} className="h-8 w-8 text-destructive">
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(cat.id)} className="h-8 w-8 text-destructive">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
