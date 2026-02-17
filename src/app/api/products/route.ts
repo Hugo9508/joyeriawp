@@ -7,8 +7,6 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get('search') || '';
   const categorySlug = searchParams.get('category') || '';
   const page = searchParams.get('page') || '1';
-  
-  // Reducimos per_page a 20 para mejorar performance y estabilidad en Hostinger
   const per_page = searchParams.get('per_page') || '20';
 
   try {
@@ -21,7 +19,7 @@ export async function GET(request: NextRequest) {
     
     if (search) queryParams.search = search;
     
-    // 1. Resolución de Categoría
+    // 1. Resolución de Categoría (Usa el cache de fetchWooCommerce)
     if (categorySlug) {
       try {
         const { data: catData } = await fetchWooCommerce('products/categories', { slug: categorySlug });
@@ -33,13 +31,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 2. Obtener Productos con el nuevo fetch optimizado
+    // 2. Obtener Productos con Single-Flight y Cache
     const { data, status } = await fetchWooCommerce('products', queryParams);
     
     const productsArray = Array.isArray(data) ? data : [];
     const normalizedProducts = productsArray.map(mapWooCommerceProduct);
 
-    // 3. Respuesta con Headers de Cache y Diagnóstico
     return NextResponse.json(normalizedProducts, {
       headers: {
         'X-Cache': status,
@@ -49,11 +46,9 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error("API Products Route Error:", error.message);
     const isTimeout = error.name === 'TimeoutError' || error.message.includes('timeout');
-    const status = isTimeout ? 502 : 500;
-    
     return NextResponse.json(
       { error: "El catálogo no está disponible temporalmente. Por favor, intente de nuevo." }, 
-      { status }
+      { status: isTimeout ? 502 : 500 }
     );
   }
 }

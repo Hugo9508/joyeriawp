@@ -99,7 +99,7 @@ export async function fetchWooCommerce(
       
       return { data, status: 'MISS' };
     } catch (err: any) {
-      // 3. STALE: Fallback
+      // 3. STALE: Fallback si falla Woo pero tenemos algo en cache (hasta 10 min)
       if (method.toUpperCase() === "GET" && cached && now - cached.ts <= STALE_TTL_MS) {
         return { data: cached.data, status: 'STALE' };
       }
