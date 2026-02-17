@@ -12,13 +12,18 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get('search');
 
   try {
-    const params: any = { page, per_page, status: 'publish' };
+    const params: any = { 
+      page, 
+      per_page, 
+      status: 'publish',
+      _fields: 'id,name,slug,sku,price,regular_price,sale_price,on_sale,stock_status,stock_quantity,categories,images,attributes,description,short_description,featured'
+    };
+    
     if (search) params.search = search;
     
-    // Si hay categoría, primero resolvemos el ID
     if (category) {
       const categories = await fetchWooCommerce('products/categories', { slug: category });
-      if (categories && categories.length > 0) {
+      if (categories && Array.isArray(categories) && categories.length > 0) {
         params.category = categories[0].id.toString();
       }
     }
@@ -27,10 +32,16 @@ export async function GET(request: NextRequest) {
     const products = Array.isArray(data) ? data.map(mapWooCommerceProduct) : [];
 
     return NextResponse.json(products, {
-      headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' }
+      headers: { 
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        'X-Runtime': 'nodejs'
+      }
     });
   } catch (error: any) {
     console.error('API Products Error:', error.message);
-    return NextResponse.json({ error: 'Catálogo temporalmente no disponible' }, { status: 502 });
+    return NextResponse.json(
+      { error: 'El catálogo no está disponible temporalmente. Por favor, intente de nuevo.' }, 
+      { status: 502 }
+    );
   }
 }
