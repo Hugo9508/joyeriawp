@@ -1,6 +1,6 @@
 /**
  * @fileOverview Helper para realizar peticiones autenticadas a la WooCommerce REST API desde el servidor,
- * con timeout + cache en memoria + fallback STALE.
+ * con timeout + cache en memoria + fallback STALE + Single-Flight (deduplicación).
  */
 
 const TTL_MS = 120_000; // 2 min (fresh)
@@ -8,6 +8,7 @@ const STALE_TTL_MS = 600_000; // 10 min (fallback)
 const TIMEOUT_MS = 15_000;
 
 const memCache = new Map<string, { ts: number; data: any }>();
+const pendingRequests = new Map<string, Promise<FetchWooResult>>();
 
 function cleanBaseUrl(input: string) {
   const withProto = input.startsWith("http") ? input : `https://${input}`;
@@ -33,12 +34,17 @@ export async function fetchWooCommerce(
   method: string = "GET",
   body?: any
 ): Promise<FetchWooResult> {
-  const apiUrl = process.env.WC_API_URL;
-  const consumerKey = process.env.WC_CONSUMER_KEY;
-  const consumerSecret = process.env.WC_CONSUMER_SECRET;
+  // Soporte para ambos nombres de variables (Hostinger vs Local)
+  const apiUrl = process.env.WOOCOMMERCE_API_URL || process.env.WC_API_URL;
+  const consumerKey = process.env.WOOCOMMERCE_CONSUMER_KEY || process.env.WC_CONSUMER_KEY;
+  const consumerSecret = process.env.WOOCOMMERCE_CONSUMER_SECRET || process.env.WC_CONSUMER_SECRET;
 
   if (!apiUrl || !consumerKey || !consumerSecret) {
-    throw new Error("Faltan credenciales de WooCommerce en las variables de entorno del servidor.");
+    const missing = [];
+    if (!apiUrl) missing.push("API_URL");
+    if (!consumerKey) missing.push("CONSUMER_KEY");
+    if (!consumerSecret) missing.push("CONSUMER_SECRET");
+    throw new Error(`Faltan credenciales de WooCommerce en Hostinger: ${missing.join(", ")}`);
   }
 
   const base = cleanBaseUrl(apiUrl);
@@ -50,7 +56,6 @@ export async function fetchWooCommerce(
     });
   }
 
-  // Cache key estable (endpoint + params ordenados)
   const query = stableQuery(Object.fromEntries(url.searchParams.entries()));
   const cacheKey = `${method.toUpperCase()} ${url.origin}${url.pathname}${query ? `?${query}` : ""}`;
 
@@ -59,46 +64,56 @@ export async function fetchWooCommerce(
   
   // 1. HIT: Cache fresco
   if (method.toUpperCase() === "GET" && cached && now - cached.ts <= TTL_MS) {
-    console.log(`[WooCommerce Cache] HIT: ${endpoint}`);
     return { data: cached.data, status: 'HIT' };
   }
 
-  const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64");
-
-  try {
-    // 2. MISS: Petición real con Timeout
-    const startTime = performance.now();
-    const response = await fetch(url.toString(), {
-      method,
-      headers: {
-        Authorization: `Basic ${auth}`,
-        "Content-Type": "application/json",
-      },
-      body: method.toUpperCase() === "GET" ? undefined : body ? JSON.stringify(body) : undefined,
-      cache: "no-store",
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: response.statusText }));
-      throw new Error(`HTTP ${response.status}: ${errorData.message || response.statusText}`);
-    }
-
-    const data = await response.json();
-    const duration = (performance.now() - startTime).toFixed(0);
-    console.log(`[WooCommerce Fetch] MISS: ${endpoint} - ${duration}ms`);
-
-    if (method.toUpperCase() === "GET") {
-      memCache.set(cacheKey, { ts: now, data });
-    }
-    
-    return { data, status: 'MISS' };
-  } catch (err: any) {
-    // 3. STALE: Fallback a cache antiguo si falla la red o hay timeout
-    if (method.toUpperCase() === "GET" && cached && now - cached.ts <= STALE_TTL_MS) {
-      console.warn(`[WooCommerce Cache] STALE: Serving fallback for ${endpoint} due to error: ${err.message}`);
-      return { data: cached.data, status: 'STALE' };
-    }
-    throw err;
+  // 2. Single-Flight: Si ya hay una petición idéntica en curso, esperamos a esa
+  if (method.toUpperCase() === "GET" && pendingRequests.has(cacheKey)) {
+    console.log(`[WooCommerce] Joining pending request: ${endpoint}`);
+    return pendingRequests.get(cacheKey)!;
   }
+
+  const fetchPromise = (async (): Promise<FetchWooResult> => {
+    const auth = Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64");
+
+    try {
+      const response = await fetch(url.toString(), {
+        method,
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/json",
+        },
+        body: method.toUpperCase() === "GET" ? undefined : body ? JSON.stringify(body) : undefined,
+        cache: "no-store",
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: response.statusText }));
+        throw new Error(`HTTP ${response.status}: ${errorData.message || response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (method.toUpperCase() === "GET") {
+        memCache.set(cacheKey, { ts: now, data });
+      }
+      
+      return { data, status: 'MISS' };
+    } catch (err: any) {
+      // 3. STALE: Fallback
+      if (method.toUpperCase() === "GET" && cached && now - cached.ts <= STALE_TTL_MS) {
+        console.warn(`[WooCommerce] Serving STALE: ${endpoint} due to error: ${err.message}`);
+        return { data: cached.data, status: 'STALE' };
+      }
+      throw err;
+    } finally {
+      pendingRequests.delete(cacheKey);
+    }
+  })();
+
+  if (method.toUpperCase() === "GET") {
+    pendingRequests.set(cacheKey, fetchPromise);
+  }
+
+  return fetchPromise;
 }

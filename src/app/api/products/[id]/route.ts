@@ -9,10 +9,15 @@ export async function GET(
   const { id } = await params;
 
   try {
-    const wooProduct = await fetchWooCommerce(`products/${id}`);
-    const normalizedProduct = mapWooCommerceProduct(wooProduct);
+    const { data, status } = await fetchWooCommerce(`products/${id}`);
+    const normalizedProduct = mapWooCommerceProduct(data);
 
-    return NextResponse.json(normalizedProduct);
+    return NextResponse.json(normalizedProduct, {
+      headers: {
+        'X-Cache': status,
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
+      }
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
