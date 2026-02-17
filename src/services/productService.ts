@@ -14,10 +14,11 @@ export const getProducts = async (filters: { search?: string, category?: string,
 
   try {
     const response = await fetch(`/api/products?${params.toString()}`, {
-      cache: 'no-store' // Asegura datos frescos en el catálogo
+      cache: 'no-store'
     });
-    if (!response.ok) throw new Error('Error al cargar productos desde la API');
-    return await response.json();
+    if (!response.ok) throw new Error('Error al cargar productos');
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error("Error en getProducts:", error);
     return [];
@@ -43,7 +44,8 @@ export const getCategories = async (): Promise<Category[]> => {
       cache: 'no-store'
     });
     if (!response.ok) throw new Error('Error al cargar categorías');
-    return await response.json();
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error("Error en getCategories:", error);
     return [];

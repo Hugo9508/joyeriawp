@@ -6,7 +6,7 @@ export type Category = {
   id?: number;
 };
 
-export type Product = {
+export interface Product {
   id: string;
   name: string;
   brand: string;
@@ -35,6 +35,4 @@ export type Product = {
   slug: string;
   sku?: string;
   isBestseller?: boolean;
-};
-
-// No exportamos datos estáticos (mock) para asegurar que la app use siempre la API de WooCommerce.
+}
