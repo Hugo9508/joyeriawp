@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -20,9 +19,14 @@ export default function Home() {
 
   useEffect(() => {
     async function loadFeatured() {
-      const allProducts = await getProducts();
-      setFeaturedProducts(allProducts.slice(0, 3));
-      setLoading(false);
+      try {
+        const allProducts = await getProducts({ per_page: 3 });
+        setFeaturedProducts(allProducts);
+      } catch (error) {
+        console.error("Error cargando destacados:", error);
+      } finally {
+        setLoading(false);
+      }
     }
     loadFeatured();
   }, []);
@@ -82,11 +86,17 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 md:gap-y-16">
             {!loading ? (
-              featuredProducts.map((product, index) => (
-                <div key={product.id} className={index === 1 ? 'lg:mt-16' : ''}>
-                    <ProductCard product={product} />
+              featuredProducts.length > 0 ? (
+                featuredProducts.map((product, index) => (
+                  <div key={product.id} className={index === 1 ? 'lg:mt-16' : ''}>
+                      <ProductCard product={product} />
+                  </div>
+                ))
+              ) : (
+                <div className="col-span-full py-20 text-center text-muted-foreground">
+                    Próximamente nuevas piezas en nuestro catálogo.
                 </div>
-              ))
+              )
             ) : (
                 <div className="col-span-full py-20 text-center text-muted-foreground animate-pulse">
                     Cargando piezas exclusivas...
