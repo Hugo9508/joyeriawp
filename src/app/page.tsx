@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Product } from '@/lib/products';
 
 const heroImage = PlaceHolderImages.find(p => p.id === 'hero-1');
-const personalizedServiceImage = PlaceHolderImages.find(p => p.id === 'service-1');
 
 export default function Home() {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -111,14 +110,15 @@ export default function Home() {
         <div className="max-w-screen-xl mx-auto px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center gap-10 md:gap-16 lg:gap-24">
             <div className="w-full lg:w-1/2 relative">
-              <div className="aspect-[4/5] overflow-hidden shadow-lg rounded-lg">
-                {personalizedServiceImage && <Image
-                  alt={personalizedServiceImage.description}
+              <div className="aspect-[4/5] overflow-hidden shadow-lg rounded-lg bg-black">
+                <video 
+                  src="https://goods-vod.kwcdn.com/goods-video/0e228c94bc3d1c6c36af1a3af452246bf4d61994.f30.mp4"
                   className="w-full h-full object-cover"
-                  src={personalizedServiceImage.imageUrl}
-                  width={600}
-                  height={750}
-                />}
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                />
               </div>
             </div>
             <div className="w-full lg:w-1/2 text-center lg:text-left">
