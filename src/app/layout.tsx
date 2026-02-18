@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Manrope, Playfair_Display } from 'next/font/google';
 import './globals.css';
@@ -6,6 +7,7 @@ import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { WhatsappButton } from '@/components/whatsapp-button';
+import { ChatWidget } from '@/components/chat-widget';
 
 const manrope = Manrope({
   subsets: ['latin'],
@@ -42,6 +44,7 @@ export default function RootLayout({
           <Footer />
         </div>
         <div id="modal-root"></div>
+        <ChatWidget />
         <WhatsappButton />
         <Toaster />
       </body>
