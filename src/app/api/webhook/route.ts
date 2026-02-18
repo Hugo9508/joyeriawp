@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * @fileOverview Webhook principal para recibir respuestas desde n8n/WhatsApp.
- * Ruta: /api/webhook
+ * Ruta definitiva: /api/webhook
  */
 
 export async function POST(req: NextRequest) {
@@ -14,9 +14,8 @@ export async function POST(req: NextRequest) {
     console.log('📥 Mensaje de WhatsApp recibido vía n8n:', body);
 
     /**
-     * NOTA: Este endpoint recibe la información. 
-     * Para que el Chat en la web se actualice solo, el servidor de sockets 
-     * configurado en appSettings debe emitir el evento 'new_message'.
+     * NOTA: Este endpoint recibe la información desde n8n.
+     * El formato esperado es: { text, senderName, phoneNumber, timestamp }
      */
 
     return NextResponse.json({ 
@@ -30,11 +29,10 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Soporte para pruebas rápidas
 export async function GET() {
   return NextResponse.json({ 
     status: "online", 
     endpoint: "/api/webhook",
-    message: "Listo para recibir POST desde n8n" 
+    message: "Listo para recibir POST desde n8n (WhatsApp -> Chat)" 
   });
 }

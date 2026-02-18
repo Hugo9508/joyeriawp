@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -61,7 +62,7 @@ export function ChatWidget() {
 
     // LÓGICA DE TEST: Escuchar simulaciones desde el Panel Admin
     const handleTestMessage = (e: any) => {
-      const { text, senderName } = e.detail;
+      const { text } = e.detail;
       setIsOpen(true);
       addMessage(text, 'agent');
     };
@@ -115,7 +116,7 @@ export function ChatWidget() {
 
   const validateUruguayPhone = (phone: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
-    return /^09\d{7}$/.test(cleanPhone);
+    return cleanPhone.length === 9 && cleanPhone.startsWith('0');
   };
 
   const handleOnboardingSubmit = (e: React.FormEvent) => {
@@ -125,7 +126,7 @@ export function ChatWidget() {
     if (!onboardingData.name.trim() || !onboardingData.phone.trim()) return;
 
     if (!validateUruguayPhone(onboardingData.phone)) {
-      setPhoneError("El número debe comenzar con 0 y tener exactamente 9 dígitos.");
+      setPhoneError("Ingrese 9 dígitos (ej: 099 123 456).");
       return;
     }
 
@@ -201,7 +202,7 @@ export function ChatWidget() {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Phone className="text-primary h-8 w-8" />
             </div>
-            <h4 className="text-lg font-headline">Identificación</h4>
+            <h4 className="text-lg font-headline text-foreground">Identificación</h4>
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
               Por favor, ingrese sus datos para comenzar la asesoría personalizada.
             </p>
@@ -226,12 +227,8 @@ export function ChatWidget() {
                 value={onboardingData.phone}
                 onChange={(e) => {
                   let val = e.target.value.replace(/\D/g, '');
-                  if (val.length > 0 && val[0] !== '0') {
-                    val = '';
-                  }
-                  if (val.length > 9) {
-                    val = val.slice(0, 9);
-                  }
+                  if (val.length > 0 && val[0] !== '0') val = '';
+                  if (val.length > 9) val = val.slice(0, 9);
                   setOnboardingData({...onboardingData, phone: val});
                   if (phoneError) setPhoneError(null);
                 }}
