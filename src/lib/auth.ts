@@ -2,12 +2,13 @@
 import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 
-// Secreto para firmar el JWT. Se mantiene fijo para evitar problemas de persistencia en Hostinger.
+// Secreto para firmar el JWT.
 const JWT_SECRET = new TextEncoder().encode('alianza-secret-boutique-2026-key');
 const COOKIE_NAME = 'alianza_admin_session';
 
 /**
- * Crea una sesión JWT y la guarda en una cookie segura.
+ * Crea una sesión JWT y la guarda en una cookie.
+ * Se desactiva el flag 'secure' estrictamente para asegurar compatibilidad con el proxy de Hostinger.
  */
 export async function createSession() {
   const session = await new SignJWT({ authenticated: true })
@@ -19,9 +20,10 @@ export async function createSession() {
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, session, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false, // Desactivado para garantizar que funcione en Hostinger/Proxies
     sameSite: 'lax',
     path: '/',
+    maxAge: 60 * 60 * 2, // 2 horas
   });
 }
 
@@ -29,11 +31,11 @@ export async function createSession() {
  * Recupera y verifica la sesión actual.
  */
 export async function getSession() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get(COOKIE_NAME)?.value;
-  if (!session) return null;
-
   try {
+    const cookieStore = await cookies();
+    const session = cookieStore.get(COOKIE_NAME)?.value;
+    if (!session) return null;
+
     const { payload } = await jwtVerify(session, JWT_SECRET);
     return payload;
   } catch (error) {
