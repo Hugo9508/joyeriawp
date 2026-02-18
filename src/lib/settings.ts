@@ -2,7 +2,7 @@
 /**
  * @fileOverview Configuración centralizada de la aplicación.
  * URL de la Boutique: https://joyeria.a380.com.br
- * Webhook para n8n: https://joyeria.a380.com.br/api/chat/webhook
+ * Webhook para n8n: https://joyeria.a380.com.br/api/webhook
  */
 
 export const appSettings = {
