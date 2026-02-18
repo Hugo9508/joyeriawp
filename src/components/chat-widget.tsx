@@ -107,19 +107,9 @@ export function ChatWidget() {
   };
 
   const validateUruguayPhone = (phone: string) => {
-    // Limpiar caracteres no numéricos
+    // Validar exactamente 9 dígitos comenzando con 0
     const cleanPhone = phone.replace(/\D/g, '');
-    
-    // Formatos válidos Uruguay Mobile:
-    // 09X XXX XXX (9 dígitos)
-    // 9X XXX XXX (8 dígitos)
-    // 598 9X XXX XXX (11 dígitos)
-    
-    const isMobile = /^09[1-9]\d{6}$/.test(cleanPhone);
-    const isMobileNoZero = /^9[1-9]\d{6}$/.test(cleanPhone);
-    const isIntl = /^5989[1-9]\d{6}$/.test(cleanPhone);
-
-    return isMobile || isMobileNoZero || isIntl;
+    return /^09\d{7}$/.test(cleanPhone);
   };
 
   const handleOnboardingSubmit = (e: React.FormEvent) => {
@@ -129,7 +119,7 @@ export function ChatWidget() {
     if (!onboardingData.name.trim() || !onboardingData.phone.trim()) return;
 
     if (!validateUruguayPhone(onboardingData.phone)) {
-      setPhoneError("Formato incorrecto. Por favor, use un número de Uruguay (ej: 099 123 456).");
+      setPhoneError("Formato incorrecto. Debe comenzar con 0 y tener 9 dígitos (ej: 099 123 456).");
       return;
     }
 
@@ -227,12 +217,18 @@ export function ChatWidget() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="userPhone" className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Su WhatsApp</Label>
+              <Label htmlFor="userPhone" className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">Su WhatsApp (9 dígitos)</Label>
               <Input
                 id="userPhone"
                 value={onboardingData.phone}
                 onChange={(e) => {
-                  setOnboardingData({...onboardingData, phone: e.target.value});
+                  let val = e.target.value.replace(/\D/g, ''); // Solo números
+                  if (val.length > 0 && val[0] !== '0') {
+                    // No permite empezar con nada que no sea 0
+                    return;
+                  }
+                  if (val.length > 9) val = val.slice(0, 9); // Máximo 9 dígitos
+                  setOnboardingData({...onboardingData, phone: val});
                   if (phoneError) setPhoneError(null);
                 }}
                 placeholder="099 123 456"
@@ -254,7 +250,7 @@ export function ChatWidget() {
               <Alert variant="destructive" className="py-2 px-3 bg-destructive/5 border-destructive/20 mt-2">
                 <AlertDescription className="text-[10px] leading-tight flex items-start gap-2">
                   <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                  <span>Sugerencia: Ingrese 9 dígitos para números de Uruguay (ej: 099 444 555).</span>
+                  <span>Sugerencia: El número debe comenzar con 0 y tener exactamente 9 dígitos.</span>
                 </AlertDescription>
               </Alert>
             )}
