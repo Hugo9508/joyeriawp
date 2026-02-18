@@ -1,11 +1,27 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
 
-export function middleware(request: NextRequest) {
-  // Middleware simplificado: bloquea el acceso a cualquier ruta de admin o api/admin
-  if (request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/api/admin')) {
-    return NextResponse.redirect(new URL('/', request.url));
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/request';
+import { getSession } from '@/lib/auth';
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Si intenta acceder a /admin (excepto login)
+  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.redirect(new URL('/admin/login', request.url));
+    }
   }
+
+  // Protegemos las APIs de administración
+  if (pathname.startsWith('/api/admin') && pathname !== '/api/admin/login') {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
+    }
+  }
+
   return NextResponse.next();
 }
 
