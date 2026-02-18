@@ -1,8 +1,6 @@
-
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
   const { toast } = useToast();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -28,10 +25,14 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        toast({ title: "Acceso Concedido", description: "Iniciando sesión en el panel de control..." });
-        // Redirección inmediata y actualización de estado
-        router.push('/admin');
-        setTimeout(() => router.refresh(), 100);
+        toast({ 
+          title: "Acceso Concedido", 
+          description: "Desbloqueando panel de control...",
+        });
+        
+        // Usamos window.location para forzar una carga limpia de la sesión y las cookies
+        // Esto es más robusto en Hostinger para evitar bucles de redirección
+        window.location.href = '/admin';
       } else {
         toast({ 
           title: "Acceso Denegado", 
@@ -63,7 +64,7 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="password" title="Ingrese su contraseña maestra">Clave Maestra</Label>
+              <Label htmlFor="password">Clave Maestra</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
