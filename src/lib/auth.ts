@@ -2,28 +2,27 @@
 import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 
-// Secreto para firmar el JWT.
 const JWT_SECRET = new TextEncoder().encode('alianza-secret-boutique-2026-key');
 const COOKIE_NAME = 'alianza_admin_session';
 
 /**
  * Crea una sesión JWT y la guarda en una cookie.
- * Se desactiva el flag 'secure' estrictamente para asegurar compatibilidad con el proxy de Hostinger.
+ * Configuración optimizada para funcionar tanto en local (Studio) como en producción.
  */
 export async function createSession() {
   const session = await new SignJWT({ authenticated: true })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('2h')
+    .setExpirationTime('4h') // Aumentamos a 4 horas para mayor comodidad
     .sign(JWT_SECRET);
 
   const cookieStore = await cookies();
   cookieStore.set(COOKIE_NAME, session, {
     httpOnly: true,
-    secure: false, // Desactivado para garantizar que funcione en Hostinger/Proxies
+    secure: false, // Importante para que funcione en previsualizaciones sin HTTPS estricto
     sameSite: 'lax',
     path: '/',
-    maxAge: 60 * 60 * 2, // 2 horas
+    maxAge: 60 * 60 * 4,
   });
 }
 
