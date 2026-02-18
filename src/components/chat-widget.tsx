@@ -5,11 +5,12 @@ import { appSettings } from '@/lib/settings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Send, User, MessageSquare, Loader2, Phone, CheckCircle2 } from 'lucide-react';
+import { X, Send, User, MessageSquare, Loader2, Phone, CheckCircle2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { io, Socket } from 'socket.io-client';
 import { sendMessageToEvolutionAction } from '@/app/actions/chat';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 type Message = {
   id: string;
@@ -28,6 +29,7 @@ export function ChatWidget() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingData, setOnboardingData] = useState({ name: '', phone: '' });
+  const [phoneError, setPhoneError] = useState<string | null>(null);
   
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -104,13 +106,36 @@ export function ChatWidget() {
     ]);
   };
 
+  const validateUruguayPhone = (phone: string) => {
+    // Limpiar caracteres no numéricos
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // Formatos válidos Uruguay Mobile:
+    // 09X XXX XXX (9 dígitos)
+    // 9X XXX XXX (8 dígitos)
+    // 598 9X XXX XXX (11 dígitos)
+    
+    const isMobile = /^09[1-9]\d{6}$/.test(cleanPhone);
+    const isMobileNoZero = /^9[1-9]\d{6}$/.test(cleanPhone);
+    const isIntl = /^5989[1-9]\d{6}$/.test(cleanPhone);
+
+    return isMobile || isMobileNoZero || isIntl;
+  };
+
   const handleOnboardingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setPhoneError(null);
+
     if (!onboardingData.name.trim() || !onboardingData.phone.trim()) return;
+
+    if (!validateUruguayPhone(onboardingData.phone)) {
+      setPhoneError("Formato incorrecto. Por favor, use un número de Uruguay (ej: 099 123 456).");
+      return;
+    }
 
     const data = { 
       name: onboardingData.name.trim(), 
-      phone: onboardingData.phone.trim() 
+      phone: onboardingData.phone.trim().replace(/\s+/g, '') 
     };
     
     localStorage.setItem('alianza_user_info', JSON.stringify(data));
@@ -206,12 +231,34 @@ export function ChatWidget() {
               <Input
                 id="userPhone"
                 value={onboardingData.phone}
-                onChange={(e) => setOnboardingData({...onboardingData, phone: e.target.value})}
-                placeholder="598 99 123 456"
-                className="bg-background border-primary/10 h-12"
+                onChange={(e) => {
+                  setOnboardingData({...onboardingData, phone: e.target.value});
+                  if (phoneError) setPhoneError(null);
+                }}
+                placeholder="099 123 456"
+                className={cn(
+                  "bg-background border-primary/10 h-12",
+                  phoneError && "border-destructive focus-visible:ring-destructive"
+                )}
                 required
               />
+              {phoneError && (
+                <div className="flex items-center gap-1.5 mt-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <AlertCircle className="h-3 w-3 text-destructive" />
+                  <p className="text-[10px] text-destructive font-bold uppercase tracking-tighter">{phoneError}</p>
+                </div>
+              )}
             </div>
+            
+            {phoneError && (
+              <Alert variant="destructive" className="py-2 px-3 bg-destructive/5 border-destructive/20 mt-2">
+                <AlertDescription className="text-[10px] leading-tight flex items-start gap-2">
+                  <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
+                  <span>Sugerencia: Ingrese 9 dígitos para números de Uruguay (ej: 099 444 555).</span>
+                </AlertDescription>
+              </Alert>
+            )}
+
             <Button type="submit" className="w-full h-12 text-xs font-bold uppercase tracking-widest mt-4">
               Comenzar Asesoría
             </Button>
