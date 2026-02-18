@@ -2,8 +2,7 @@
 import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 
-// Secreto para firmar el JWT. En producción debería ser una variable, 
-// pero usamos uno fijo para evitar errores de sesión en Hostinger.
+// Secreto para firmar el JWT. Se mantiene fijo para evitar problemas de persistencia en Hostinger.
 const JWT_SECRET = new TextEncoder().encode('alianza-secret-boutique-2026-key');
 const COOKIE_NAME = 'alianza_admin_session';
 
@@ -51,8 +50,8 @@ export async function deleteSession() {
 }
 
 /**
- * Verifica la contraseña de acceso.
- * He configurado 'admin123' como predeterminada fija para evitar fallos de Hostinger env.
+ * Verifica la contraseña de acceso maestra.
+ * Contraseña: admin123
  */
 export function verifyPassword(password: string) {
   const MASTER_PASSWORD = 'admin123'; 

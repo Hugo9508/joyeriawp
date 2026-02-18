@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Gem, Loader2 } from 'lucide-react';
+import { Gem, Loader2, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
@@ -27,50 +28,56 @@ export default function LoginPage() {
       });
 
       if (res.ok) {
-        toast({ title: "Acceso Concedido", description: "Bienvenido al panel de control de Alianza." });
+        toast({ title: "Acceso Concedido", description: "Iniciando sesión en el panel de control..." });
+        // Redirección inmediata y actualización de estado
         router.push('/admin');
-        router.refresh();
+        setTimeout(() => router.refresh(), 100);
       } else {
         toast({ 
           title: "Acceso Denegado", 
-          description: "Contraseña incorrecta.", 
+          description: "Contraseña incorrecta. Por favor, intente de nuevo.", 
           variant: "destructive" 
         });
       }
     } catch (error) {
-      toast({ title: "Error", description: "Ocurrió un problema al conectar.", variant: "destructive" });
+      toast({ title: "Error", description: "No se pudo conectar con el servidor.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-md border-primary/20 shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 font-body">
+      <Card className="w-full max-w-md border-primary/20 shadow-2xl bg-card/80 backdrop-blur-md">
         <CardHeader className="space-y-4 flex flex-col items-center">
-          <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-            <Gem className="text-primary-foreground h-6 w-6" />
+          <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
+            <Gem className="text-primary-foreground h-7 w-7" />
           </div>
           <div className="text-center">
-            <CardTitle className="font-headline text-2xl tracking-widest uppercase">Alianza Admin</CardTitle>
-            <CardDescription>Ingrese la clave maestra de la boutique</CardDescription>
+            <CardTitle className="font-headline text-3xl tracking-widest uppercase mb-1">Alianza Admin</CardTitle>
+            <CardDescription className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground/60">
+              Control de Boutique • Acceso Restringido
+            </CardDescription>
           </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="bg-muted/50 border-primary/10"
-                required
-              />
+              <Label htmlFor="password" title="Ingrese su contraseña maestra">Clave Maestra</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-muted/50 border-primary/10 pl-10 h-12 focus-visible:ring-primary"
+                  required
+                />
+              </div>
             </div>
-            <Button type="submit" className="w-full h-11" disabled={isLoading}>
+            <Button type="submit" className="w-full h-12 text-xs font-bold uppercase tracking-widest" disabled={isLoading}>
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Desbloquear Panel"}
             </Button>
           </form>
