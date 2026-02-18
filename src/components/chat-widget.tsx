@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, Send, User, MessageSquare, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { io, Socket } from 'socket.io-client';
+import { sendMessageToEvolutionAction } from '@/app/actions/chat';
 
 type Message = {
   id: string;
@@ -33,7 +34,7 @@ export function ChatWidget() {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    // Conexión Socket.io para tiempo real
+    // Conexión Socket.io para tiempo real (solo escucha, no expone el envío)
     socketRef.current = io(appSettings.socketUrl);
 
     socketRef.current.on('new_message', (data: any) => {
@@ -42,11 +43,11 @@ export function ChatWidget() {
       }
     });
 
-    // Escuchar evento de apertura con mensaje de producto
     const handleOpenChat = (e: any) => {
       setIsOpen(true);
       if (e.detail?.message) {
-        sendMessage(e.detail.message);
+        // Los mensajes de producto se envían automáticamente al abrir
+        handleSendMessage(e.detail.message);
       }
     };
 
@@ -78,30 +79,23 @@ export function ChatWidget() {
     ]);
   };
 
-  const sendMessage = async (text: string) => {
+  const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
-    // Solo añadir a la UI si es un mensaje manual del usuario
-    // (Los mensajes automáticos de producto ya vienen con el sender correcto si se disparan aquí)
     addMessage(text, 'user');
     setIsSending(true);
 
     try {
-      const response = await fetch(appSettings.webhookUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phoneNumber: appSettings.whatsAppNumber,
-          text: text,
-          senderName: 'Cliente Boutique Web',
-        }),
-      });
-
-      if (!response.ok) throw new Error('Error al enviar mensaje');
+      // Usamos la SERVER ACTION en lugar de un fetch directo
+      // Esto oculta la URL de n8n de la pestaña de Network del navegador
+      const result = await sendMessageToEvolutionAction(text);
+      
+      if (!result.success) {
+        throw new Error(result.error);
+      }
     } catch (error) {
-      console.warn('Fallo en Webhook, usando fallback wa.me');
-      // No abrimos ventana aquí para no interrumpir la UI del chat, 
-      // pero el mensaje ya quedó registrado en el estado local.
+      console.warn('Fallo en el envío seguro:', error);
+      // Podrías mostrar un pequeño aviso de error aquí si lo deseas
     } finally {
       setIsSending(false);
       setInputValue('');
@@ -112,7 +106,6 @@ export function ChatWidget() {
 
   return (
     <div className="fixed bottom-24 right-6 w-[350px] sm:w-[400px] h-[550px] bg-background border border-primary/20 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-[100] animate-in slide-in-from-bottom-5 duration-300">
-      {/* Header */}
       <div className="bg-primary p-4 flex items-center justify-between text-primary-foreground shadow-md">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -131,7 +124,6 @@ export function ChatWidget() {
         </Button>
       </div>
 
-      {/* Messages */}
       <ScrollArea className="flex-1 p-4 bg-secondary/30">
         <div className="space-y-4" ref={scrollRef}>
           {messages.map((msg) => (
@@ -150,15 +142,19 @@ export function ChatWidget() {
               </span>
             </div>
           ))}
+          {isSending && (
+            <div className="mr-auto bg-card p-3 rounded-2xl text-[10px] text-muted-foreground animate-pulse italic">
+              Enviando a Maya...
+            </div>
+          )}
         </div>
       </ScrollArea>
 
-      {/* Input */}
       <div className="p-4 border-t border-primary/10 bg-background">
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            sendMessage(inputValue);
+            handleSendMessage(inputValue);
           }}
           className="flex gap-2"
         >
