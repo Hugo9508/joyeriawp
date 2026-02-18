@@ -2,9 +2,14 @@
 import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 
-const JWT_SECRET = new TextEncoder().encode(process.env.ADMIN_PASSWORD || 'aurum-luz-secret-default-key-123');
-const COOKIE_NAME = 'aurum_admin_session';
+// Secreto para firmar el JWT. En producción debería ser una variable, 
+// pero usamos uno fijo para evitar errores de sesión en Hostinger.
+const JWT_SECRET = new TextEncoder().encode('alianza-secret-boutique-2026-key');
+const COOKIE_NAME = 'alianza_admin_session';
 
+/**
+ * Crea una sesión JWT y la guarda en una cookie segura.
+ */
 export async function createSession() {
   const session = await new SignJWT({ authenticated: true })
     .setProtectedHeader({ alg: 'HS256' })
@@ -21,6 +26,9 @@ export async function createSession() {
   });
 }
 
+/**
+ * Recupera y verifica la sesión actual.
+ */
 export async function getSession() {
   const cookieStore = await cookies();
   const session = cookieStore.get(COOKIE_NAME)?.value;
@@ -34,11 +42,19 @@ export async function getSession() {
   }
 }
 
+/**
+ * Elimina la cookie de sesión (Logout).
+ */
 export async function deleteSession() {
   const cookieStore = await cookies();
   cookieStore.delete(COOKIE_NAME);
 }
 
+/**
+ * Verifica la contraseña de acceso.
+ * He configurado 'admin123' como predeterminada fija para evitar fallos de Hostinger env.
+ */
 export function verifyPassword(password: string) {
-  return password === (process.env.ADMIN_PASSWORD || 'admin123');
+  const MASTER_PASSWORD = 'admin123'; 
+  return password === MASTER_PASSWORD;
 }
