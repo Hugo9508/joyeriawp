@@ -10,7 +10,6 @@ import { cn } from '@/lib/utils';
 import { io, Socket } from 'socket.io-client';
 import { sendMessageToEvolutionAction } from '@/app/actions/chat';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 type Message = {
   id: string;
@@ -52,12 +51,20 @@ export function ChatWidget() {
       setUserInfo(JSON.parse(saved));
     }
 
+    // Conexión a Socket (Producción)
     socketRef.current = io(appSettings.socketUrl);
     socketRef.current.on('new_message', (data: any) => {
       if (data.type === 'whatsapp_incoming' || (data.sender && data.sender.includes(appSettings.whatsAppNumber))) {
         addMessage(data.text, 'agent');
       }
     });
+
+    // LÓGICA DE TEST: Escuchar simulaciones desde el Panel Admin
+    const handleTestMessage = (e: any) => {
+      const { text, senderName } = e.detail;
+      setIsOpen(true);
+      addMessage(text, 'agent');
+    };
 
     const handleOpenChat = (e: any) => {
       setIsOpen(true);
@@ -72,6 +79,7 @@ export function ChatWidget() {
       }
     };
 
+    window.addEventListener('simulate-whatsapp-message', handleTestMessage);
     window.addEventListener('open-chat-with-message', handleOpenChat);
     window.addEventListener('open-chat-only', () => {
       setIsOpen(true);
@@ -82,6 +90,7 @@ export function ChatWidget() {
 
     return () => {
       socketRef.current?.disconnect();
+      window.removeEventListener('simulate-whatsapp-message', handleTestMessage);
       window.removeEventListener('open-chat-with-message', handleOpenChat);
     };
   }, []);
