@@ -68,6 +68,7 @@ export function Footer() {
             </a>
           </p>
           <div className="flex gap-6">
+            <Link className="text-[10px] text-white/30 hover:text-white uppercase tracking-widest transition-colors" href="/admin">Acceso Admin</Link>
             <Link className="text-[10px] text-white/30 hover:text-white uppercase tracking-widest transition-colors" href="#">Política de Privacidad</Link>
             <Link className="text-[10px] text-white/30 hover:text-white uppercase tracking-widest transition-colors" href="#">Términos y Condiciones</Link>
           </div>
