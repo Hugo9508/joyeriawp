@@ -47,13 +47,11 @@ export function ChatWidget() {
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    // Recuperar info del usuario si existe
     const saved = localStorage.getItem('alianza_user_info');
     if (saved) {
       setUserInfo(JSON.parse(saved));
     }
 
-    // Conexión Socket.io
     socketRef.current = io(appSettings.socketUrl);
     socketRef.current.on('new_message', (data: any) => {
       if (data.type === 'whatsapp_incoming' || (data.sender && data.sender.includes(appSettings.whatsAppNumber))) {
@@ -65,8 +63,8 @@ export function ChatWidget() {
       setIsOpen(true);
       const text = e.detail?.message;
       
-      // Si el usuario no está identificado, guardamos el mensaje en espera
-      if (!saved && !userInfo) {
+      const currentSaved = localStorage.getItem('alianza_user_info');
+      if (!currentSaved && !userInfo) {
         setPendingMessage(text || null);
         setShowOnboarding(true);
       } else if (text) {
@@ -107,7 +105,6 @@ export function ChatWidget() {
   };
 
   const validateUruguayPhone = (phone: string) => {
-    // Validar exactamente 9 dígitos comenzando con 0
     const cleanPhone = phone.replace(/\D/g, '');
     return /^09\d{7}$/.test(cleanPhone);
   };
@@ -119,20 +116,19 @@ export function ChatWidget() {
     if (!onboardingData.name.trim() || !onboardingData.phone.trim()) return;
 
     if (!validateUruguayPhone(onboardingData.phone)) {
-      setPhoneError("Formato incorrecto. Debe comenzar con 0 y tener 9 dígitos (ej: 099 123 456).");
+      setPhoneError("El número debe comenzar con 0 y tener exactamente 9 dígitos.");
       return;
     }
 
     const data = { 
       name: onboardingData.name.trim(), 
-      phone: onboardingData.phone.trim().replace(/\s+/g, '') 
+      phone: onboardingData.phone.trim()
     };
     
     localStorage.setItem('alianza_user_info', JSON.stringify(data));
     setUserInfo(data);
     setShowOnboarding(false);
 
-    // Si había un mensaje de producto en espera, lo enviamos ahora
     if (pendingMessage) {
       handleSendMessage(pendingMessage, data);
       setPendingMessage(null);
@@ -172,7 +168,6 @@ export function ChatWidget() {
 
   return (
     <div className="fixed bottom-24 right-6 w-[350px] sm:w-[400px] h-[550px] bg-background border border-primary/20 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-[100] animate-in slide-in-from-bottom-5 duration-300">
-      {/* Header */}
       <div className="bg-primary p-4 flex items-center justify-between text-primary-foreground shadow-md">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -192,15 +187,14 @@ export function ChatWidget() {
       </div>
 
       {showOnboarding ? (
-        /* Formulario de Identificación */
         <div className="flex-1 p-8 flex flex-col justify-center bg-secondary/20">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Phone className="text-primary h-8 w-8" />
             </div>
-            <h4 className="text-lg font-headline">Antes de comenzar...</h4>
+            <h4 className="text-lg font-headline">Identificación</h4>
             <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-              Por favor, identifíquese para que nuestro equipo pueda responderle directamente a su WhatsApp.
+              Por favor, ingrese sus datos para comenzar la asesoría personalizada.
             </p>
           </div>
 
@@ -222,12 +216,13 @@ export function ChatWidget() {
                 id="userPhone"
                 value={onboardingData.phone}
                 onChange={(e) => {
-                  let val = e.target.value.replace(/\D/g, ''); // Solo números
+                  let val = e.target.value.replace(/\D/g, '');
                   if (val.length > 0 && val[0] !== '0') {
-                    // No permite empezar con nada que no sea 0
-                    return;
+                    val = '';
                   }
-                  if (val.length > 9) val = val.slice(0, 9); // Máximo 9 dígitos
+                  if (val.length > 9) {
+                    val = val.slice(0, 9);
+                  }
                   setOnboardingData({...onboardingData, phone: val});
                   if (phoneError) setPhoneError(null);
                 }}
@@ -246,22 +241,12 @@ export function ChatWidget() {
               )}
             </div>
             
-            {phoneError && (
-              <Alert variant="destructive" className="py-2 px-3 bg-destructive/5 border-destructive/20 mt-2">
-                <AlertDescription className="text-[10px] leading-tight flex items-start gap-2">
-                  <AlertCircle className="h-3 w-3 mt-0.5 shrink-0" />
-                  <span>Sugerencia: El número debe comenzar con 0 y tener exactamente 9 dígitos.</span>
-                </AlertDescription>
-              </Alert>
-            )}
-
             <Button type="submit" className="w-full h-12 text-xs font-bold uppercase tracking-widest mt-4">
               Comenzar Asesoría
             </Button>
           </form>
         </div>
       ) : (
-        /* Historial de Chat */
         <>
           <ScrollArea className="flex-1 p-4 bg-secondary/30">
             <div className="space-y-4" ref={scrollRef}>
