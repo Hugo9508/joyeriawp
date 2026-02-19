@@ -5,9 +5,8 @@ import { appSettings } from '@/lib/settings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Send, User, Loader2, Phone, CheckCircle2, Terminal, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Send, User, Loader2, Phone, CheckCircle2, Terminal, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { io, Socket } from 'socket.io-client';
 import { sendMessageAction } from '@/app/actions/chat';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -52,19 +51,12 @@ export function ChatWidget() {
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const debugScrollRef = useRef<HTMLDivElement>(null);
-  const socketRef = useRef<Socket | null>(null);
   const { toast } = useToast();
 
+  // Carga inicial y listeners de eventos globales
   useEffect(() => {
     const saved = localStorage.getItem('alianza_user_info');
     if (saved) setUserInfo(JSON.parse(saved));
-
-    socketRef.current = io(appSettings.siteUrl);
-    socketRef.current.on('new_message', (data: any) => {
-      if (data.type === 'whatsapp_incoming') {
-        addMessage(data.text, 'agent');
-      }
-    });
 
     const handleOpenWithMsg = (e: any) => {
       setIsOpen(true);
@@ -86,11 +78,43 @@ export function ChatWidget() {
     window.addEventListener('open-chat-only', handleOpenOnly);
 
     return () => {
-      socketRef.current?.disconnect();
       window.removeEventListener('open-chat-with-message', handleOpenWithMsg);
       window.removeEventListener('open-chat-only', handleOpenOnly);
     };
   }, []);
+
+  // Polling: Consulta mensajes nuevos cada 2.5 segundos si hay un usuario identificado
+  useEffect(() => {
+    if (!userInfo?.phone || !isOpen) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/messages?phone=${userInfo.phone}`);
+        if (!res.ok) return;
+        
+        const data = await res.json();
+        if (data.messages && data.messages.length > 0) {
+          data.messages.forEach((msg: any) => {
+            setMessages(prev => {
+              // Evitar duplicados por ID
+              if (prev.some(m => m.id === msg.id)) return prev;
+              
+              return [...prev, {
+                id: msg.id,
+                text: msg.text,
+                sender: 'agent',
+                timestamp: new Date(msg.timestamp)
+              }];
+            });
+          });
+        }
+      } catch (err) {
+        // Silencioso en polling para no interrumpir UX
+      }
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [userInfo?.phone, isOpen]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -124,7 +148,7 @@ export function ChatWidget() {
 
   const handleOnboarding = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!onboardingForm.name.trim() || onboardingForm.phone.length < 9) return;
+    if (!onboardingForm.name.trim() || onboardingForm.phone.length < 8) return;
 
     const data = { name: onboardingForm.name.trim(), phone: onboardingForm.phone };
     localStorage.setItem('alianza_user_info', JSON.stringify(data));
@@ -148,7 +172,6 @@ export function ChatWidget() {
       senderPhone: user.phone
     });
 
-    // Registrar log de diagnóstico
     addDebugLog(result.success, result.debug, result.error);
 
     if (result.success) {
@@ -178,7 +201,7 @@ export function ChatWidget() {
             <h3 className="text-sm font-bold uppercase tracking-widest">{appSettings.chatAgentName}</h3>
             <div className="flex items-center gap-1.5 text-[9px] uppercase font-bold opacity-80">
               <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-              Asesoría en vivo
+              Boutique en vivo
             </div>
           </div>
         </div>
@@ -188,7 +211,7 @@ export function ChatWidget() {
             size="icon" 
             onClick={() => setShowDebug(!showDebug)} 
             className={cn("h-8 w-8 hover:bg-white/10", showDebug ? "text-white" : "text-white/50")}
-            title="Consola de Diagnóstico"
+            title="Diagnóstico de Red"
           >
             <Terminal className="h-4 w-4" />
           </Button>
@@ -204,7 +227,7 @@ export function ChatWidget() {
           <div className="absolute inset-0 z-50 bg-slate-950/95 text-green-400 font-mono text-[10px] p-4 flex flex-col border-b border-white/10 overflow-hidden animate-in fade-in duration-200">
             <div className="flex items-center justify-between mb-2 border-b border-green-400/20 pb-2">
               <span className="flex items-center gap-2 uppercase tracking-widest font-bold">
-                <Terminal className="h-3 w-3" /> Consola de Diagnóstico n8n
+                <Terminal className="h-3 w-3" /> Monitor de Tráfico
               </span>
               <button onClick={() => setShowDebug(false)} className="hover:text-white"><X className="h-3 w-3" /></button>
             </div>
@@ -220,13 +243,12 @@ export function ChatWidget() {
                         {log.success ? "SUCCESS" : "ERROR"}
                       </span>
                     </div>
-                    {log.error && <div className="text-red-400 mb-1">Reason: {log.error}</div>}
+                    {log.error && <div className="text-red-400 mb-1">Error: {log.error}</div>}
                     <div className="text-slate-400 text-[9px] mb-1">
-                      Status: <span className="text-white">{log.data?.status || 'N/A'}</span> | 
-                      Duration: <span className="text-white">{log.data?.duration || 'N/A'}</span>
+                      Latencia: <span className="text-white">{log.data?.duration || 'N/A'}</span>
                     </div>
                     <details className="mt-1 cursor-pointer">
-                      <summary className="hover:text-white/80 opacity-60">Payload Enviado</summary>
+                      <summary className="hover:text-white/80 opacity-60">JSON Enviado</summary>
                       <pre className="bg-black/50 p-2 rounded mt-1 overflow-x-auto text-[8px] text-white/90">
                         {JSON.stringify(log.data?.payload, null, 2)}
                       </pre>
@@ -250,8 +272,8 @@ export function ChatWidget() {
               <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Phone className="text-primary h-6 w-6" />
               </div>
-              <h4 className="text-lg font-headline">Identificación</h4>
-              <p className="text-xs text-muted-foreground mt-2">Ingrese sus datos para una atención personalizada.</p>
+              <h4 className="text-lg font-headline">Asesoría Directa</h4>
+              <p className="text-xs text-muted-foreground mt-2">Identifíquese para recibir atención personalizada de un experto.</p>
             </div>
 
             <form onSubmit={handleOnboarding} className="space-y-4">
@@ -260,23 +282,23 @@ export function ChatWidget() {
                 <Input
                   value={onboardingForm.name}
                   onChange={e => setOnboardingForm({...onboardingForm, name: e.target.value})}
-                  placeholder="Nombre completo"
+                  placeholder="Su nombre"
                   className="h-12 bg-background border-primary/10"
                   required
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase tracking-widest font-bold opacity-60">Teléfono (Uruguay)</Label>
+                <Label className="text-[10px] uppercase tracking-widest font-bold opacity-60">WhatsApp</Label>
                 <Input
                   value={onboardingForm.phone}
-                  onChange={e => setOnboardingForm({...onboardingForm, phone: e.target.value.replace(/\D/g, '').slice(0, 9)})}
-                  placeholder="099 123 456"
+                  onChange={e => setOnboardingForm({...onboardingForm, phone: e.target.value.replace(/\D/g, '')})}
+                  placeholder="Ej: 59895435644"
                   className="h-12 bg-background border-primary/10"
                   required
                 />
               </div>
               <Button type="submit" className="w-full h-12 text-xs font-bold uppercase tracking-widest">
-                Conectar con Asesor
+                Iniciar Conversación
               </Button>
             </form>
           </div>
@@ -302,7 +324,7 @@ export function ChatWidget() {
                 ))}
                 {isSending && (
                   <div className="text-[10px] text-muted-foreground animate-pulse italic pl-2">
-                    Enviando mensaje a {appSettings.chatAgentName}...
+                    Transmitiendo a la boutique...
                   </div>
                 )}
               </div>
@@ -316,7 +338,7 @@ export function ChatWidget() {
                 <Input
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Escriba su consulta aquí..."
+                  placeholder="Escriba su consulta..."
                   className="flex-1 bg-secondary/30 border-none rounded-full px-4 h-10 text-sm focus-visible:ring-1 focus-visible:ring-primary"
                   disabled={isSending}
                 />
@@ -331,9 +353,9 @@ export function ChatWidget() {
               </form>
               {userInfo && (
                 <div className="flex items-center justify-center gap-2 mt-3 opacity-40">
-                  <CheckCircle2 className="h-2.5 w-2.5 text-green-600" />
+                  <CheckCircle className="h-2.5 w-2.5 text-green-600" />
                   <span className="text-[8px] uppercase font-bold tracking-widest">
-                    Identificado como {userInfo.name}
+                    Canal activo: {userInfo.phone}
                   </span>
                   <button 
                     onClick={() => { localStorage.removeItem('alianza_user_info'); setUserInfo(null); setShowOnboarding(true); }}
