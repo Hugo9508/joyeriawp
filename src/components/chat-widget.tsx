@@ -52,6 +52,7 @@ export function ChatWidget() {
   const [debugLogs, setDebugLogs] = useState<DebugLog[]>([]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const debugScrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -141,10 +142,11 @@ export function ChatWidget() {
   }, [userInfo?.phone, isOpen]);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages, showOnboarding, isOpen]);
+    // ✅ Auto-scroll al último mensaje usando scrollIntoView (funciona con ScrollArea)
+    setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 50);
+  }, [messages, showOnboarding, needsInlineOnboarding, isOpen, isTyping]);
 
   const addMessage = (text: string, sender: 'user' | 'agent') => {
     setMessages(prev => [...prev, {
@@ -421,6 +423,8 @@ export function ChatWidget() {
                     <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 )}
+                {/* ✅ Ancla para auto-scroll al final */}
+                <div ref={bottomRef} />
               </div>
             </ScrollArea>
 
