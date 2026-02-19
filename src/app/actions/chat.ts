@@ -3,13 +3,15 @@
 import { appSettings } from '@/lib/settings';
 
 /**
- * @fileOverview Acción de servidor para enviar mensajes a n8n con diagnóstico extendido.
+ * @fileOverview Acción de servidor para enviar mensajes a n8n (flujo sincrónico).
+ * n8n espera la respuesta de Dify y la devuelve directamente en el mismo request.
  */
 
 export async function sendMessageAction(payload: {
   text: string;
   senderName: string;
   senderPhone: string;
+  conversationId?: string;
 }) {
   if (!payload.text.trim()) return { success: false, error: 'El mensaje está vacío.' };
 
@@ -21,7 +23,9 @@ export async function sendMessageAction(payload: {
       text: payload.text,
       senderName: payload.senderName,
       senderPhone: payload.senderPhone,
-      storeNumber: appSettings.whatsAppNumber
+      storeNumber: appSettings.whatsAppNumber,
+      // ✅ FIX #1: conversation_id viaja con cada mensaje para mantener contexto Dify
+      conversation_id: payload.conversationId || '',
     },
     metadata: {
       platform: 'web_boutique',
@@ -32,24 +36,25 @@ export async function sendMessageAction(payload: {
   try {
     const response = await fetch(appSettings.n8nWebhookUrl, {
       method: 'POST',
-      headers: { 
+      headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'User-Agent': 'AlianzaBoutique-Web/2.0 (Diagnostic Mode)'
+        'User-Agent': 'AlianzaBoutique-Web/2.0'
       },
       body: JSON.stringify(requestBody),
-      signal: AbortSignal.timeout(30000), 
+      // ✅ Timeout más largo para esperar respuesta sincrónica de Dify (~5-15s)
+      signal: AbortSignal.timeout(40000),
       cache: 'no-store'
     });
 
     const endTime = performance.now();
     const duration = Math.round(endTime - startTime);
     const responseText = await response.text();
-    let responseData;
+    let responseData: any;
     try {
       responseData = JSON.parse(responseText);
-    } catch (e) {
-      responseData = responseText;
+    } catch {
+      responseData = { raw: responseText };
     }
 
     const debugInfo = {
@@ -62,21 +67,29 @@ export async function sendMessageAction(payload: {
     };
 
     if (!response.ok) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: `Error n8n (${response.status}): ${response.statusText}`,
         debug: debugInfo
       };
     }
 
-    return { 
-      success: true, 
+    // ✅ FIX #2: Extraer la respuesta del bot y conversation_id del body de n8n
+    // El nuevo flujo n8n devuelve { success, response, conversation_id } directamente
+    const botResponse = responseData?.response || responseData?.text || null;
+    const newConversationId = responseData?.conversation_id || null;
+
+    return {
+      success: true,
+      // ✅ Respuesta del bot para mostrar directamente en el chat (sin polling)
+      botResponse,
+      conversationId: newConversationId,
       debug: debugInfo
     };
   } catch (error: any) {
     const endTime = performance.now();
     const duration = Math.round(endTime - startTime);
-    
+
     const debugInfo = {
       url: appSettings.n8nWebhookUrl,
       error: error.message,
@@ -84,9 +97,9 @@ export async function sendMessageAction(payload: {
       payload: requestBody
     };
 
-    return { 
-      success: false, 
-      error: error.name === 'TimeoutError' ? 'Timeout (30s)' : error.message,
+    return {
+      success: false,
+      error: error.name === 'TimeoutError' ? 'Sin respuesta del servidor (40s)' : error.message,
       debug: debugInfo
     };
   }

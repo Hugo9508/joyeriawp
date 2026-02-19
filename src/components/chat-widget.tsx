@@ -33,9 +33,11 @@ type DebugLog = {
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [onboardingForm, setOnboardingForm] = useState({ name: '', phone: '' });
+  const [conversationId, setConversationId] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -56,6 +58,9 @@ export function ChatWidget() {
   useEffect(() => {
     const saved = localStorage.getItem('alianza_user_info');
     if (saved) setUserInfo(JSON.parse(saved));
+    // ✅ Restaurar conversation_id de Dify de sesiones anteriores
+    const savedConvId = sessionStorage.getItem('dify_conversation_id');
+    if (savedConvId) setConversationId(savedConvId);
 
     const handleOpenWithMsg = (e: any) => {
       setIsOpen(true);
@@ -90,7 +95,7 @@ export function ChatWidget() {
       try {
         const res = await fetch(`/api/messages?phone=${userInfo.phone}`);
         if (!res.ok) return;
-        
+
         const data = await res.json();
         if (data.messages && data.messages.length > 0) {
           data.messages.forEach((msg: any) => {
@@ -105,7 +110,7 @@ export function ChatWidget() {
             });
           });
         }
-      } catch (err) {}
+      } catch (err) { }
     }, 2500);
 
     return () => clearInterval(interval);
@@ -154,23 +159,37 @@ export function ChatWidget() {
     const user = forcedUser || userInfo;
     if (!text.trim() || !user) return;
 
+    // Mostrar mensaje del usuario inmediatamente
+    addMessage(text, 'user');
+    setInputValue('');
     setIsSending(true);
+    setIsTyping(true); // ✅ Indicador "escribiendo..."
+
     const result = await sendMessageAction({
       text,
       senderName: user.name,
-      senderPhone: user.phone
+      senderPhone: user.phone,
+      conversationId: conversationId, // ✅ Enviar conversation_id para continuidad Dify
     });
 
+    setIsTyping(false);
     addDebugLog(result.success, result.debug, result.error);
 
     if (result.success) {
-      addMessage(text, 'user');
-      setInputValue('');
+      // ✅ FIX PRINCIPAL: Mostrar respuesta de Dify directamente (sin polling)
+      if (result.botResponse) {
+        addMessage(result.botResponse, 'agent');
+      }
+      // ✅ Guardar conversation_id para mantener contexto en próximos mensajes
+      if (result.conversationId) {
+        setConversationId(result.conversationId);
+        sessionStorage.setItem('dify_conversation_id', result.conversationId);
+      }
     } else {
-      toast({ 
-        variant: "destructive", 
-        title: "Error de Envío", 
-        description: result.error 
+      toast({
+        variant: "destructive",
+        title: "Error de Envío",
+        description: result.error
       });
     }
     setIsSending(false);
@@ -195,10 +214,10 @@ export function ChatWidget() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setShowDebug(!showDebug)} 
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowDebug(!showDebug)}
             className={cn("h-8 w-8 hover:bg-white/10", showDebug ? "text-white" : "text-white/50")}
             title="Consola Técnica"
           >
@@ -261,7 +280,7 @@ export function ChatWidget() {
                 <Label className="text-[10px] uppercase tracking-widest font-bold opacity-60">Nombre</Label>
                 <Input
                   value={onboardingForm.name}
-                  onChange={e => setOnboardingForm({...onboardingForm, name: e.target.value})}
+                  onChange={e => setOnboardingForm({ ...onboardingForm, name: e.target.value })}
                   placeholder="Su nombre"
                   className="h-12 bg-background border-primary/10"
                   required
@@ -271,7 +290,7 @@ export function ChatWidget() {
                 <Label className="text-[10px] uppercase tracking-widest font-bold opacity-60">Teléfono (WhatsApp)</Label>
                 <Input
                   value={onboardingForm.phone}
-                  onChange={e => setOnboardingForm({...onboardingForm, phone: e.target.value.replace(/\D/g, '')})}
+                  onChange={e => setOnboardingForm({ ...onboardingForm, phone: e.target.value.replace(/\D/g, '') })}
                   placeholder="59895435644"
                   className="h-12 bg-background border-primary/10"
                   required
@@ -302,9 +321,12 @@ export function ChatWidget() {
                     </span>
                   </div>
                 ))}
-                {isSending && (
-                  <div className="text-[10px] text-muted-foreground animate-pulse italic pl-2">
-                    Enviando consulta...
+                {/* ✅ Typing indicator mientras Dify procesa */}
+                {isTyping && (
+                  <div className="mr-auto bg-card border border-primary/5 rounded-2xl rounded-tl-none p-3 flex items-center gap-1.5 shadow-sm">
+                    <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 )}
               </div>
@@ -322,9 +344,9 @@ export function ChatWidget() {
                   className="flex-1 bg-secondary/30 border-none rounded-full px-4 h-10 text-sm focus-visible:ring-1 focus-visible:ring-primary"
                   disabled={isSending}
                 />
-                <Button 
-                  type="submit" 
-                  size="icon" 
+                <Button
+                  type="submit"
+                  size="icon"
                   disabled={isSending || !inputValue.trim()}
                   className="rounded-full h-10 w-10 flex-shrink-0"
                 >
@@ -337,7 +359,7 @@ export function ChatWidget() {
                   <span className="text-[8px] uppercase font-bold tracking-widest">
                     WhatsApp: {userInfo.phone}
                   </span>
-                  <button 
+                  <button
                     onClick={() => { localStorage.removeItem('alianza_user_info'); setUserInfo(null); setShowOnboarding(true); }}
                     className="text-[8px] underline ml-1"
                   >
