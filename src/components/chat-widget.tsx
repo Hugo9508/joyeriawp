@@ -5,7 +5,7 @@ import { appSettings } from '@/lib/settings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Send, User, Loader2, Phone, CheckCircle2, Terminal, CheckCircle } from 'lucide-react';
+import { X, Send, User, Loader2, Phone, Terminal, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { sendMessageAction } from '@/app/actions/chat';
 import { Label } from '@/components/ui/label';
@@ -53,7 +53,6 @@ export function ChatWidget() {
   const debugScrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  // Carga inicial y listeners de eventos globales
   useEffect(() => {
     const saved = localStorage.getItem('alianza_user_info');
     if (saved) setUserInfo(JSON.parse(saved));
@@ -83,7 +82,7 @@ export function ChatWidget() {
     };
   }, []);
 
-  // Polling: Consulta mensajes nuevos cada 2.5 segundos si hay un usuario identificado
+  // Polling para recibir respuestas de n8n cada 2.5s
   useEffect(() => {
     if (!userInfo?.phone || !isOpen) return;
 
@@ -96,9 +95,7 @@ export function ChatWidget() {
         if (data.messages && data.messages.length > 0) {
           data.messages.forEach((msg: any) => {
             setMessages(prev => {
-              // Evitar duplicados por ID
               if (prev.some(m => m.id === msg.id)) return prev;
-              
               return [...prev, {
                 id: msg.id,
                 text: msg.text,
@@ -108,9 +105,7 @@ export function ChatWidget() {
             });
           });
         }
-      } catch (err) {
-        // Silencioso en polling para no interrumpir UX
-      }
+      } catch (err) {}
     }, 2500);
 
     return () => clearInterval(interval);
@@ -121,12 +116,6 @@ export function ChatWidget() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, showOnboarding, isOpen]);
-
-  useEffect(() => {
-    if (debugScrollRef.current) {
-      debugScrollRef.current.scrollTop = debugScrollRef.current.scrollHeight;
-    }
-  }, [debugLogs]);
 
   const addMessage = (text: string, sender: 'user' | 'agent') => {
     setMessages(prev => [...prev, {
@@ -201,7 +190,7 @@ export function ChatWidget() {
             <h3 className="text-sm font-bold uppercase tracking-widest">{appSettings.chatAgentName}</h3>
             <div className="flex items-center gap-1.5 text-[9px] uppercase font-bold opacity-80">
               <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-              Boutique en vivo
+              Asesoría en vivo
             </div>
           </div>
         </div>
@@ -211,7 +200,7 @@ export function ChatWidget() {
             size="icon" 
             onClick={() => setShowDebug(!showDebug)} 
             className={cn("h-8 w-8 hover:bg-white/10", showDebug ? "text-white" : "text-white/50")}
-            title="Diagnóstico de Red"
+            title="Consola Técnica"
           >
             <Terminal className="h-4 w-4" />
           </Button>
@@ -231,10 +220,10 @@ export function ChatWidget() {
               </span>
               <button onClick={() => setShowDebug(false)} className="hover:text-white"><X className="h-3 w-3" /></button>
             </div>
-            <ScrollArea className="flex-1" ref={debugScrollRef}>
+            <ScrollArea className="flex-1">
               <div className="space-y-4">
                 {debugLogs.length === 0 ? (
-                  <div className="text-green-400/40 italic">Esperando actividad de red...</div>
+                  <div className="text-green-400/40 italic">Esperando actividad...</div>
                 ) : debugLogs.map((log, i) => (
                   <div key={i} className={cn("border-l-2 pl-3 py-1", log.success ? "border-green-500" : "border-red-500")}>
                     <div className="flex justify-between items-start mb-1">
@@ -247,16 +236,10 @@ export function ChatWidget() {
                     <div className="text-slate-400 text-[9px] mb-1">
                       Latencia: <span className="text-white">{log.data?.duration || 'N/A'}</span>
                     </div>
-                    <details className="mt-1 cursor-pointer">
-                      <summary className="hover:text-white/80 opacity-60">JSON Enviado</summary>
+                    <details className="mt-1">
+                      <summary className="cursor-pointer opacity-60">Payload</summary>
                       <pre className="bg-black/50 p-2 rounded mt-1 overflow-x-auto text-[8px] text-white/90">
                         {JSON.stringify(log.data?.payload, null, 2)}
-                      </pre>
-                    </details>
-                    <details className="mt-1 cursor-pointer">
-                      <summary className="hover:text-white/80 opacity-60">Respuesta n8n</summary>
-                      <pre className="bg-black/50 p-2 rounded mt-1 overflow-x-auto text-[8px] text-white/90">
-                        {JSON.stringify(log.data?.response, null, 2)}
                       </pre>
                     </details>
                   </div>
@@ -269,11 +252,8 @@ export function ChatWidget() {
         {showOnboarding ? (
           <div className="flex-1 p-8 flex flex-col justify-center bg-secondary/10">
             <div className="text-center mb-8">
-              <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Phone className="text-primary h-6 w-6" />
-              </div>
-              <h4 className="text-lg font-headline">Asesoría Directa</h4>
-              <p className="text-xs text-muted-foreground mt-2">Identifíquese para recibir atención personalizada de un experto.</p>
+              <h4 className="text-lg font-headline">Atención Personalizada</h4>
+              <p className="text-xs text-muted-foreground mt-2">Identifíquese para recibir asesoría directa.</p>
             </div>
 
             <form onSubmit={handleOnboarding} className="space-y-4">
@@ -288,17 +268,17 @@ export function ChatWidget() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase tracking-widest font-bold opacity-60">WhatsApp</Label>
+                <Label className="text-[10px] uppercase tracking-widest font-bold opacity-60">Teléfono (WhatsApp)</Label>
                 <Input
                   value={onboardingForm.phone}
                   onChange={e => setOnboardingForm({...onboardingForm, phone: e.target.value.replace(/\D/g, '')})}
-                  placeholder="Ej: 59895435644"
+                  placeholder="59895435644"
                   className="h-12 bg-background border-primary/10"
                   required
                 />
               </div>
               <Button type="submit" className="w-full h-12 text-xs font-bold uppercase tracking-widest">
-                Iniciar Conversación
+                Comenzar
               </Button>
             </form>
           </div>
@@ -324,7 +304,7 @@ export function ChatWidget() {
                 ))}
                 {isSending && (
                   <div className="text-[10px] text-muted-foreground animate-pulse italic pl-2">
-                    Transmitiendo a la boutique...
+                    Enviando consulta...
                   </div>
                 )}
               </div>
@@ -338,7 +318,7 @@ export function ChatWidget() {
                 <Input
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Escriba su consulta..."
+                  placeholder="Escriba su mensaje..."
                   className="flex-1 bg-secondary/30 border-none rounded-full px-4 h-10 text-sm focus-visible:ring-1 focus-visible:ring-primary"
                   disabled={isSending}
                 />
@@ -355,11 +335,11 @@ export function ChatWidget() {
                 <div className="flex items-center justify-center gap-2 mt-3 opacity-40">
                   <CheckCircle className="h-2.5 w-2.5 text-green-600" />
                   <span className="text-[8px] uppercase font-bold tracking-widest">
-                    Canal activo: {userInfo.phone}
+                    WhatsApp: {userInfo.phone}
                   </span>
                   <button 
                     onClick={() => { localStorage.removeItem('alianza_user_info'); setUserInfo(null); setShowOnboarding(true); }}
-                    className="text-[8px] underline ml-1 hover:text-primary"
+                    className="text-[8px] underline ml-1"
                   >
                     (Cambiar)
                   </button>
