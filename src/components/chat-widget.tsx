@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -5,7 +6,7 @@ import { appSettings } from '@/lib/settings';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { X, Send, User, MessageSquare, Loader2, Phone, CheckCircle2 } from 'lucide-react';
+import { X, Send, User, Loader2, Phone, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { io, Socket } from 'socket.io-client';
 import { sendMessageAction } from '@/app/actions/chat';
@@ -25,16 +26,11 @@ type UserInfo = {
 };
 
 export function ChatWidget() {
-  // Estados de Interfaz
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  
-  // Datos de Usuario
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [onboardingForm, setOnboardingForm] = useState({ name: '', phone: '' });
-  
-  // Mensajería
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -50,22 +46,18 @@ export function ChatWidget() {
   const socketRef = useRef<Socket | null>(null);
   const { toast } = useToast();
 
-  // Inicialización y Sockets
   useEffect(() => {
-    // 1. Recuperar sesión
     const saved = localStorage.getItem('alianza_user_info');
     if (saved) setUserInfo(JSON.parse(saved));
 
-    // 2. Configurar Sockets (Real-time de n8n)
+    // Inicialización de Sockets para producción
     socketRef.current = io(appSettings.siteUrl);
     socketRef.current.on('new_message', (data: any) => {
-      // Filtrar para que solo lleguen mensajes dirigidos a la tienda o marcados como entrantes
       if (data.type === 'whatsapp_incoming') {
         addMessage(data.text, 'agent');
       }
     });
 
-    // 3. Listeners de Eventos Internos
     const handleOpenWithMsg = (e: any) => {
       setIsOpen(true);
       const msg = e.detail?.message;
@@ -82,24 +74,16 @@ export function ChatWidget() {
       if (!localStorage.getItem('alianza_user_info')) setShowOnboarding(true);
     };
 
-    const handleSimulation = (e: any) => {
-      setIsOpen(true);
-      addMessage(e.detail.text, 'agent');
-    };
-
     window.addEventListener('open-chat-with-message', handleOpenWithMsg);
     window.addEventListener('open-chat-only', handleOpenOnly);
-    window.addEventListener('simulate-whatsapp-message', handleSimulation);
 
     return () => {
       socketRef.current?.disconnect();
       window.removeEventListener('open-chat-with-message', handleOpenWithMsg);
       window.removeEventListener('open-chat-only', handleOpenOnly);
-      window.removeEventListener('simulate-whatsapp-message', handleSimulation);
     };
   }, []);
 
-  // Auto-scroll al final
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -145,7 +129,11 @@ export function ChatWidget() {
       addMessage(text, 'user');
       setInputValue('');
     } else {
-      toast({ variant: "destructive", title: "Error", description: result.error });
+      toast({ 
+        variant: "destructive", 
+        title: "Error de Envío", 
+        description: result.error 
+      });
     }
     setIsSending(false);
   };
@@ -154,7 +142,6 @@ export function ChatWidget() {
 
   return (
     <div className="fixed bottom-24 right-6 w-[350px] sm:w-[400px] h-[550px] bg-background border border-primary/20 rounded-2xl shadow-2xl flex flex-col overflow-hidden z-[100] animate-in slide-in-from-bottom-5 duration-300">
-      {/* Header Ergonómico */}
       <div className="bg-primary p-4 flex items-center justify-between text-primary-foreground shadow-md">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
@@ -174,14 +161,13 @@ export function ChatWidget() {
       </div>
 
       {showOnboarding ? (
-        /* Vista de Identificación */
         <div className="flex-1 p-8 flex flex-col justify-center bg-secondary/10">
           <div className="text-center mb-8">
             <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Phone className="text-primary h-6 w-6" />
             </div>
-            <h4 className="text-lg font-headline">¿Cómo te llamas?</h4>
-            <p className="text-xs text-muted-foreground mt-2">Para brindarte una atención personalizada.</p>
+            <h4 className="text-lg font-headline">Identificación</h4>
+            <p className="text-xs text-muted-foreground mt-2">Ingrese sus datos para una atención personalizada.</p>
           </div>
 
           <form onSubmit={handleOnboarding} className="space-y-4">
@@ -190,13 +176,13 @@ export function ChatWidget() {
               <Input
                 value={onboardingForm.name}
                 onChange={e => setOnboardingForm({...onboardingForm, name: e.target.value})}
-                placeholder="Ej: Sofía"
+                placeholder="Nombre completo"
                 className="h-12 bg-background border-primary/10"
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-[10px] uppercase tracking-widest font-bold opacity-60">WhatsApp</Label>
+              <Label className="text-[10px] uppercase tracking-widest font-bold opacity-60">Teléfono (Uruguay)</Label>
               <Input
                 value={onboardingForm.phone}
                 onChange={e => setOnboardingForm({...onboardingForm, phone: e.target.value.replace(/\D/g, '').slice(0, 9)})}
@@ -206,12 +192,11 @@ export function ChatWidget() {
               />
             </div>
             <Button type="submit" className="w-full h-12 text-xs font-bold uppercase tracking-widest">
-              Iniciar Chat
+              Conectar con Asesor
             </Button>
           </form>
         </div>
       ) : (
-        /* Vista de Chat */
         <>
           <ScrollArea className="flex-1 p-4 bg-secondary/5">
             <div className="space-y-4" ref={scrollRef}>
@@ -233,7 +218,7 @@ export function ChatWidget() {
               ))}
               {isSending && (
                 <div className="text-[10px] text-muted-foreground animate-pulse italic pl-2">
-                  Maya está procesando tu consulta...
+                  Enviando mensaje a {appSettings.chatAgentName}...
                 </div>
               )}
             </div>
@@ -247,7 +232,7 @@ export function ChatWidget() {
               <Input
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Escribe tu consulta..."
+                placeholder="Escriba su consulta aquí..."
                 className="flex-1 bg-secondary/30 border-none rounded-full px-4 h-10 text-sm focus-visible:ring-1 focus-visible:ring-primary"
                 disabled={isSending}
               />
@@ -261,16 +246,16 @@ export function ChatWidget() {
               </Button>
             </form>
             {userInfo && (
-              <div className="flex items-center justify-center gap-2 mt-3 opacity-40 hover:opacity-100 transition-opacity">
+              <div className="flex items-center justify-center gap-2 mt-3 opacity-40">
                 <CheckCircle2 className="h-2.5 w-2.5 text-green-600" />
                 <span className="text-[8px] uppercase font-bold tracking-widest">
-                  Atención para {userInfo.name}
+                  Identificado como {userInfo.name}
                 </span>
                 <button 
                   onClick={() => { localStorage.removeItem('alianza_user_info'); setUserInfo(null); setShowOnboarding(true); }}
                   className="text-[8px] underline ml-1 hover:text-primary"
                 >
-                  Cambiar
+                  (Cambiar)
                 </button>
               </div>
             )}
