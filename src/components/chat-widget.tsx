@@ -78,7 +78,8 @@ export function ChatWidget() {
         }]);
       }
 
-      if (!localStorage.getItem('alianza_user_info')) {
+      const savedUserInfo = localStorage.getItem('alianza_user_info');
+      if (!savedUserInfo) {
         // ✅ Guardar el mensaje pendiente y pedir datos inline en el chat
         setPendingText(msg);
         setNeedsInlineOnboarding(true);
@@ -90,7 +91,9 @@ export function ChatWidget() {
           timestamp: new Date(),
         }]);
       } else if (msg) {
-        processMessage(msg);
+        // ✅ FIX: Pasar user info directamente para evitar stale closure
+        const parsedUser = JSON.parse(savedUserInfo) as UserInfo;
+        processMessage(msg, parsedUser);
       }
     };
 
