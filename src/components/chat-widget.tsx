@@ -34,6 +34,7 @@ export function ChatWidget() {
   const [isSending, setIsSending] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [needsInlineOnboarding, setNeedsInlineOnboarding] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [onboardingForm, setOnboardingForm] = useState({ name: '', phone: '' });
   const [conversationId, setConversationId] = useState<string>('');
@@ -64,9 +65,30 @@ export function ChatWidget() {
     const handleOpenWithMsg = (e: any) => {
       setIsOpen(true);
       const msg = e.detail?.message;
+      const product = e.detail?.product;
+
+      // ✅ Siempre mostrar datos del producto como mensaje del agente
+      if (product) {
+        const productInfoMsg = `📦 *Producto consultado:*\n\n🏷️ ${product.name}\n💰 USD ${product.price?.usd?.toLocaleString() || 'N/A'}${product.sku ? `\n🔖 SKU: ${product.sku}` : ''}${product.material ? `\n✨ Material: ${product.material}` : ''}`;
+        setMessages(prev => [...prev, {
+          id: 'product-' + Date.now(),
+          text: productInfoMsg,
+          sender: 'agent',
+          timestamp: new Date(),
+        }]);
+      }
+
       if (!localStorage.getItem('alianza_user_info')) {
+        // ✅ Guardar el mensaje pendiente y pedir datos inline en el chat
         setPendingText(msg);
-        setShowOnboarding(true);
+        setNeedsInlineOnboarding(true);
+        // Agregar mensaje del agente pidiendo datos
+        setMessages(prev => [...prev, {
+          id: 'ask-info-' + Date.now(),
+          text: 'Para poder asesorarte mejor, necesito tu nombre y número de WhatsApp. Por favor completa los datos debajo. 👇',
+          sender: 'agent',
+          timestamp: new Date(),
+        }]);
       } else if (msg) {
         processMessage(msg);
       }
@@ -147,6 +169,24 @@ export function ChatWidget() {
     localStorage.setItem('alianza_user_info', JSON.stringify(data));
     setUserInfo(data);
     setShowOnboarding(false);
+
+    if (pendingText) {
+      processMessage(pendingText, data);
+      setPendingText(null);
+    }
+  };
+
+  const handleInlineOnboarding = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!onboardingForm.name.trim() || onboardingForm.phone.length < 8) return;
+
+    const data = { name: onboardingForm.name.trim(), phone: onboardingForm.phone };
+    localStorage.setItem('alianza_user_info', JSON.stringify(data));
+    setUserInfo(data);
+    setNeedsInlineOnboarding(false);
+
+    // ✅ Confirmar en el chat que los datos fueron guardados
+    addMessage(`✅ ¡Gracias, ${data.name}! Tus datos fueron guardados. Enviando tu consulta...`, 'agent');
 
     if (pendingText) {
       processMessage(pendingText, data);
@@ -335,6 +375,41 @@ export function ChatWidget() {
                     </span>
                   </div>
                 ))}
+                {/* ✅ Formulario inline para nombre y WhatsApp dentro del chat */}
+                {needsInlineOnboarding && (
+                  <div className="mr-auto w-[90%] bg-card border border-primary/10 rounded-2xl rounded-tl-none p-4 shadow-sm animate-in slide-in-from-bottom-2 duration-300">
+                    <form onSubmit={handleInlineOnboarding} className="space-y-3">
+                      <div className="space-y-1">
+                        <Label className="text-[9px] uppercase tracking-widest font-bold opacity-60">Nombre</Label>
+                        <Input
+                          value={onboardingForm.name}
+                          onChange={e => setOnboardingForm({ ...onboardingForm, name: e.target.value })}
+                          placeholder="Su nombre"
+                          className="h-9 bg-background border-primary/10 text-sm"
+                          required
+                          autoFocus
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[9px] uppercase tracking-widest font-bold opacity-60">WhatsApp</Label>
+                        <Input
+                          value={onboardingForm.phone}
+                          onChange={e => setOnboardingForm({ ...onboardingForm, phone: e.target.value.replace(/\D/g, '') })}
+                          placeholder="59895435644"
+                          className="h-9 bg-background border-primary/10 text-sm"
+                          required
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={!onboardingForm.name.trim() || onboardingForm.phone.length < 8}
+                        className="w-full h-9 text-[10px] font-bold uppercase tracking-widest"
+                      >
+                        Confirmar y Enviar
+                      </Button>
+                    </form>
+                  </div>
+                )}
                 {/* ✅ Typing indicator mientras Dify procesa */}
                 {isTyping && (
                   <div className="mr-auto bg-card border border-primary/5 rounded-2xl rounded-tl-none p-3 flex items-center gap-1.5 shadow-sm">
@@ -354,14 +429,14 @@ export function ChatWidget() {
                 <Input
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  placeholder="Escriba su mensaje..."
+                  placeholder={needsInlineOnboarding ? "Complete sus datos arriba..." : "Escriba su mensaje..."}
                   className="flex-1 bg-secondary/30 border-none rounded-full px-4 h-10 text-sm focus-visible:ring-1 focus-visible:ring-primary"
-                  disabled={isSending}
+                  disabled={isSending || needsInlineOnboarding}
                 />
                 <Button
                   type="submit"
                   size="icon"
-                  disabled={isSending || !inputValue.trim()}
+                  disabled={isSending || !inputValue.trim() || needsInlineOnboarding}
                   className="rounded-full h-10 w-10 flex-shrink-0"
                 >
                   {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
