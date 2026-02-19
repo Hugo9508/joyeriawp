@@ -4,7 +4,7 @@ import { appSettings } from '@/lib/settings';
 
 /**
  * @fileOverview Acción de servidor para enviar mensajes a n8n.
- * Proporciona feedback detallado para facilitar el diagnóstico de errores.
+ * Optimizada para proporcionar diagnósticos claros sobre el estado del flujo en n8n.
  */
 
 export async function sendMessageAction(payload: {
@@ -12,51 +12,48 @@ export async function sendMessageAction(payload: {
   senderName: string;
   senderPhone: string;
 }) {
-  if (!payload.text.trim()) return { success: false, error: 'El mensaje no puede estar vacío.' };
+  if (!payload.text.trim()) return { success: false, error: 'El mensaje está vacío.' };
 
   try {
     const response = await fetch(appSettings.n8nWebhookUrl, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'User-Agent': 'JoyeriaAlianza-Boutique/2.0'
+        'Accept': 'application/json'
       },
       body: JSON.stringify({
-        ...payload,
         storePhoneNumber: appSettings.whatsAppNumber,
-        metadata: {
-          platform: 'web_boutique',
-          timestamp: new Date().toISOString()
-        }
+        text: payload.text,
+        senderName: payload.senderName,
+        senderPhone: payload.senderPhone,
+        timestamp: new Date().toISOString(),
+        platform: 'web_boutique'
       }),
-      signal: AbortSignal.timeout(15000), // 15 segundos para evitar bloqueos
+      signal: AbortSignal.timeout(15000), // Timeout de seguridad
       cache: 'no-store'
     });
 
     if (!response.ok) {
-      // Si n8n responde con error (ej: 404 si el flujo no está "Active")
+      // Diagnóstico de error 404 (Común si el flujo en n8n no está "Active")
+      if (response.status === 404) {
+        return { 
+          success: false, 
+          error: "n8n no encontró la ruta. Asegúrese de que el flujo esté en modo 'ACTIVE' (Interruptor ON)." 
+        };
+      }
       return { 
         success: false, 
-        error: `El servidor de chat (n8n) devolvió un error ${response.status}. Verifique que el flujo esté ACTIVO.` 
+        error: `n8n respondió con error ${response.status}. Revise la configuración del Webhook.` 
       };
     }
 
     return { success: true };
   } catch (error: any) {
-    console.error('[CHAT_SEND_ERROR]', error.message);
+    console.error('[CHAT_ACTION_ERROR]', error.message);
     
-    let userFriendlyError = 'Error de conexión con el sistema de chat.';
+    let errorMsg = 'Error de conexión con el servidor de chat.';
+    if (error.name === 'TimeoutError') errorMsg = 'El servidor de n8n no responde (Timeout).';
     
-    if (error.name === 'TimeoutError' || error.message.includes('timeout')) {
-      userFriendlyError = 'El servidor de n8n tarda demasiado en responder. ¿Está encendido?';
-    } else if (error.message.includes('fetch')) {
-      userFriendlyError = 'No se pudo conectar con n8n. Verifique la URL en settings.ts';
-    }
-
-    return { 
-      success: false, 
-      error: userFriendlyError 
-    };
+    return { success: false, error: errorMsg };
   }
 }

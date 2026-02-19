@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * @fileOverview Receptor unificado de mensajes entrantes desde n8n (WhatsApp).
- * Ruta definitiva: /api/webhook
+ * @fileOverview Endpoint Maestro de Recepción de Mensajes (WhatsApp -> Web).
+ * n8n debe enviar un POST a: https://joyeria.a380.com.br/api/webhook
  */
 
 export const runtime = 'nodejs';
@@ -11,29 +11,28 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     
-    // Log de auditoría para ver qué llega desde n8n
-    console.log(`[WHATSAPP_INCOMING] Remitente: ${body.senderName} (${body.phoneNumber}) | Msg: ${body.text}`);
+    // Log para depuración en el servidor de Hostinger
+    console.log(`[INCOMING_WHATSAPP] De: ${body.senderName} | Msg: ${body.text}`);
 
     /**
-     * El ChatWidget en la interfaz escucha eventos del navegador o de socket.
-     * En producción, n8n dispara este POST y el servidor lo procesa.
+     * El cuerpo esperado desde n8n es:
+     * { "text": "...", "senderName": "Maya", "phoneNumber": "..." }
      */
 
     return NextResponse.json({ 
-      success: true, 
-      message: "Recibido por Joyería Alianza",
-      at: new Date().toISOString()
+      received: true, 
+      at: new Date().toISOString() 
     });
   } catch (error: any) {
-    console.error('[WEBHOOK_ERROR]', error.message);
-    return NextResponse.json({ error: 'Payload inválido o malformado' }, { status: 400 });
+    console.error('[WEBHOOK_RECEIVE_ERROR]', error.message);
+    return NextResponse.json({ error: 'Payload malformado' }, { status: 400 });
   }
 }
 
 export async function GET() {
   return NextResponse.json({ 
     status: "online", 
-    service: "Maya Chat Webhook",
-    info: "Use POST para enviar mensajes desde n8n."
+    service: "Alianza Chat Webhook",
+    info: "Endpoint listo para recibir mensajes de n8n mediante POST."
   });
 }
