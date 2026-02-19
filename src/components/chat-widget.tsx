@@ -38,6 +38,7 @@ export function ChatWidget() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [onboardingForm, setOnboardingForm] = useState({ name: '', phone: '' });
   const [conversationId, setConversationId] = useState<string>('');
+  const conversationIdRef = useRef<string>('');
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -61,7 +62,10 @@ export function ChatWidget() {
     if (saved) setUserInfo(JSON.parse(saved));
     // ✅ Restaurar conversation_id de Dify de sesiones anteriores
     const savedConvId = sessionStorage.getItem('dify_conversation_id');
-    if (savedConvId) setConversationId(savedConvId);
+    if (savedConvId) {
+      setConversationId(savedConvId);
+      conversationIdRef.current = savedConvId;
+    }
 
     const handleOpenWithMsg = (e: any) => {
       setIsOpen(true);
@@ -218,7 +222,7 @@ export function ChatWidget() {
           text,
           senderName: user.name,
           senderPhone: user.phone,
-          conversationId: conversationId,
+          conversationId: conversationIdRef.current,
         }),
         signal: AbortSignal.timeout(45000),
       });
@@ -233,6 +237,7 @@ export function ChatWidget() {
         }
         if (result.conversationId) {
           setConversationId(result.conversationId);
+          conversationIdRef.current = result.conversationId;
           sessionStorage.setItem('dify_conversation_id', result.conversationId);
         }
       } else {
