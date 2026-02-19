@@ -1,8 +1,8 @@
 'use server';
 
 /**
- * @fileOverview Server Action para gestionar el envío de mensajes a la Evolution API.
- * Ahora incluye el número de teléfono del remitente para mejorar la trazabilidad.
+ * @fileOverview Server Action para gestionar el envío de mensajes a la Evolution API vía n8n.
+ * Realiza un llamado POST a la URL de n8n configurada en settings.ts.
  */
 
 import { appSettings } from '@/lib/settings';
@@ -14,6 +14,9 @@ export async function sendMessageToEvolutionAction(
 ) {
   if (!text.trim()) return { success: false, error: 'Mensaje vacío' };
 
+  // Log de auditoría para verificar en los logs de Hostinger
+  console.log(`📤 Iniciando llamado POST a n8n: ${appSettings.webhookUrl}`);
+
   try {
     const response = await fetch(appSettings.webhookUrl, {
       method: 'POST',
@@ -22,7 +25,7 @@ export async function sendMessageToEvolutionAction(
         storePhoneNumber: appSettings.whatsAppNumber,
         text: text,
         senderName: senderName,
-        senderPhone: senderPhone, // Enviamos el teléfono del cliente al webhook
+        senderPhone: senderPhone,
         metadata: {
           platform: 'web_boutique',
           timestamp: new Date().toISOString()
@@ -31,12 +34,15 @@ export async function sendMessageToEvolutionAction(
     });
 
     if (!response.ok) {
-      throw new Error('Error en la respuesta del servidor de chat');
+      const errorText = await response.text();
+      console.error(`❌ Error en respuesta de n8n [Status ${response.status}]:`, errorText);
+      throw new Error(`Error en la respuesta del servidor de chat: ${response.status}`);
     }
 
+    console.log('✅ Mensaje entregado a n8n con éxito.');
     return { success: true };
   } catch (error: any) {
-    console.error('Chat Server Action Error:', error.message);
+    console.error('❌ Chat Server Action Critical Error:', error.message);
     return { success: false, error: error.message };
   }
 }
