@@ -1,37 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * @fileOverview Endpoint ergonómico para recibir respuestas de n8n (WhatsApp).
- * Ruta: https://joyeria.a380.com.br/api/webhook
+ * @fileOverview Receptor unificado de mensajes entrantes desde n8n (WhatsApp).
+ * Ruta definitiva: /api/webhook
  */
+
+export const runtime = 'nodejs';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     
-    // Log minimalista para auditoría
-    console.log(`[INCOMING_WHATSAPP] De: ${body.senderName} | Msg: ${body.text}`);
+    // Log de auditoría para ver qué llega desde n8n
+    console.log(`[WHATSAPP_INCOMING] Remitente: ${body.senderName} (${body.phoneNumber}) | Msg: ${body.text}`);
 
     /**
-     * IMPORTANTE:
-     * El ChatWidget escucha este evento a través de un relay de socket
-     * o mediante la simulación local de eventos del navegador.
+     * El ChatWidget en la interfaz escucha eventos del navegador o de socket.
+     * En producción, n8n dispara este POST y el servidor lo procesa.
      */
 
     return NextResponse.json({ 
       success: true, 
-      received: true,
+      message: "Recibido por Joyería Alianza",
       at: new Date().toISOString()
     });
   } catch (error: any) {
-    return NextResponse.json({ error: 'Payload inválido' }, { status: 400 });
+    console.error('[WEBHOOK_ERROR]', error.message);
+    return NextResponse.json({ error: 'Payload inválido o malformado' }, { status: 400 });
   }
 }
 
 export async function GET() {
   return NextResponse.json({ 
-    status: "active", 
-    service: "Maya Chat Bridge",
-    webhook_url: "/api/webhook"
+    status: "online", 
+    service: "Maya Chat Webhook",
+    info: "Use POST para enviar mensajes desde n8n."
   });
 }
