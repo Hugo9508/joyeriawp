@@ -74,8 +74,9 @@ export function ChatWidget() {
       if (!currentSaved && !userInfo) {
         setPendingMessage(text || null);
         setShowOnboarding(true);
-      } else if (text) {
-        handleSendMessage(text);
+      } else {
+        const info = currentSaved ? JSON.parse(currentSaved) : userInfo;
+        if (text) handleSendMessage(text, info);
       }
     };
 
@@ -169,15 +170,15 @@ export function ChatWidget() {
       } else {
         toast({
           variant: "destructive",
-          title: "Error de conexión",
-          description: result.error || "No se pudo enviar el mensaje a n8n.",
+          title: "Error de envío",
+          description: result.error || "No se pudo contactar con n8n.",
         });
       }
     } catch (error: any) {
       toast({
         variant: "destructive",
-        title: "Fallo crítico",
-        description: "Error al intentar contactar con el servidor.",
+        title: "Fallo de conexión",
+        description: "El servidor de la boutique no pudo alcanzar n8n.",
       });
     } finally {
       setIsSending(false);
