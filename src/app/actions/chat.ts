@@ -3,8 +3,7 @@
 import { appSettings } from '@/lib/settings';
 
 /**
- * @fileOverview Acción de servidor para enviar mensajes a n8n.
- * Optimizada para el flujo 'jaflujodev' con diagnóstico mejorado.
+ * @fileOverview Acción de servidor para enviar mensajes a n8n con diagnóstico extendido.
  */
 
 export async function sendMessageAction(payload: {
@@ -14,7 +13,21 @@ export async function sendMessageAction(payload: {
 }) {
   if (!payload.text.trim()) return { success: false, error: 'El mensaje está vacío.' };
 
-  console.log(`[CHAT_ATTEMPT] Enviando a n8n (jaflujodev): ${payload.senderName}`);
+  const startTime = performance.now();
+  const requestBody = {
+    event: "web_message",
+    instance: appSettings.chatAgentName,
+    data: {
+      text: payload.text,
+      senderName: payload.senderName,
+      senderPhone: payload.senderPhone,
+      storeNumber: appSettings.whatsAppNumber
+    },
+    metadata: {
+      platform: 'web_boutique',
+      timestamp: new Date().toISOString()
+    }
+  };
 
   try {
     const response = await fetch(appSettings.n8nWebhookUrl, {
@@ -22,46 +35,59 @@ export async function sendMessageAction(payload: {
       headers: { 
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'User-Agent': 'AlianzaBoutique-Web/2.0 (Hostinger Production)'
+        'User-Agent': 'AlianzaBoutique-Web/2.0 (Diagnostic Mode)'
       },
-      body: JSON.stringify({
-        event: "web_message",
-        instance: appSettings.chatAgentName,
-        data: {
-          text: payload.text,
-          senderName: payload.senderName,
-          senderPhone: payload.senderPhone,
-          storeNumber: appSettings.whatsAppNumber
-        },
-        metadata: {
-          platform: 'web_boutique',
-          timestamp: new Date().toISOString()
-        }
-      }),
+      body: JSON.stringify(requestBody),
       signal: AbortSignal.timeout(30000), 
       cache: 'no-store'
     });
 
+    const endTime = performance.now();
+    const duration = Math.round(endTime - startTime);
+    const responseText = await response.text();
+    let responseData;
+    try {
+      responseData = JSON.parse(responseText);
+    } catch (e) {
+      responseData = responseText;
+    }
+
+    const debugInfo = {
+      url: appSettings.n8nWebhookUrl,
+      status: response.status,
+      statusText: response.statusText,
+      duration: `${duration}ms`,
+      payload: requestBody,
+      response: responseData
+    };
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[CHAT_ERROR_RESPONSE] Status: ${response.status}`, errorText);
-      
       return { 
         success: false, 
-        error: `Error de comunicación (${response.status}). Verifique si el flujo jaflujodev está ACTIVO en n8n.` 
+        error: `Error n8n (${response.status}): ${response.statusText}`,
+        debug: debugInfo
       };
     }
 
-    const result = await response.json();
-    console.log(`[CHAT_SUCCESS] n8n respondió:`, result);
-
-    return { success: true };
+    return { 
+      success: true, 
+      debug: debugInfo
+    };
   } catch (error: any) {
-    console.error('[CHAT_CRITICAL_ERROR]', error.message);
+    const endTime = performance.now();
+    const duration = Math.round(endTime - startTime);
     
-    let errorMsg = `No se pudo conectar con n8n.`;
-    if (error.name === 'TimeoutError') errorMsg = 'El servidor de n8n tardó demasiado en responder.';
-    
-    return { success: false, error: errorMsg };
+    const debugInfo = {
+      url: appSettings.n8nWebhookUrl,
+      error: error.message,
+      duration: `${duration}ms`,
+      payload: requestBody
+    };
+
+    return { 
+      success: false, 
+      error: error.name === 'TimeoutError' ? 'Timeout (30s)' : error.message,
+      debug: debugInfo
+    };
   }
 }
