@@ -65,11 +65,24 @@ export async function POST(req: NextRequest) {
             });
         }
 
-        // El flujo n8n v4 responde directamente con la respuesta de Dify
+        const botResponse = responseData?.response || responseData?.text || responseData?.data?.text || null;
+
+        // ✅ Detectar si n8n redirigió a un error capturado (ej. Gemini Quota 429)
+        // El mensaje "Lo siento, no pude procesar tu mensaje" suele ser el fallback de n8n
+        const isErrorString = typeof botResponse === 'string' && botResponse.includes('no pude procesar');
+
+        if (isErrorString || (!botResponse && !responseData?.conversation_id)) {
+            return NextResponse.json({
+                success: false,
+                error: isErrorString ? botResponse : 'Respuesta vacía de la IA.',
+                debug: { duration: `${duration}ms`, status: n8nResponse.status, raw: responseData },
+            });
+        }
+
         return NextResponse.json({
             success: true,
-            botResponse: responseData?.response || responseData?.text || null,
-            conversationId: responseData?.conversation_id || null,
+            botResponse: botResponse,
+            conversationId: responseData?.conversation_id || responseData?.data?.conversation_id || null,
             debug: { duration: `${duration}ms`, status: n8nResponse.status },
         });
 
