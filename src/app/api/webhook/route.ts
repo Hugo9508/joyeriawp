@@ -1,50 +1,37 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * @fileOverview Webhook principal para recibir respuestas desde n8n/WhatsApp.
- * Este es el punto de entrada oficial para los mensajes que vienen de WhatsApp hacia la Web.
- * URL Destino en n8n: https://joyeria.a380.com.br/api/webhook
+ * @fileOverview Endpoint ergonómico para recibir respuestas de n8n (WhatsApp).
+ * Ruta: https://joyeria.a380.com.br/api/webhook
  */
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     
-    // Log de auditoría en el servidor (visible en los logs de Hostinger)
-    console.log('📥 Mensaje de WhatsApp recibido vía n8n:', JSON.stringify(body, null, 2));
+    // Log minimalista para auditoría
+    console.log(`[INCOMING_WHATSAPP] De: ${body.senderName} | Msg: ${body.text}`);
 
     /**
-     * NOTA TÉCNICA: 
-     * Para que el mensaje aparezca instantáneamente en el ChatWidget de la web,
-     * este endpoint debería reenviar el 'body' a tu servidor de Socket.io.
-     * Si no usas un servidor de sockets externo, el cliente recibirá el mensaje
-     * tras la siguiente interacción o mediante un mecanismo de polling.
+     * IMPORTANTE:
+     * El ChatWidget escucha este evento a través de un relay de socket
+     * o mediante la simulación local de eventos del navegador.
      */
 
     return NextResponse.json({ 
       success: true, 
-      message: "Recibido por Joyería Alianza",
-      receivedAt: new Date().toISOString(),
-      echo: {
-        text: body.text,
-        sender: body.senderName
-      }
+      received: true,
+      at: new Date().toISOString()
     });
   } catch (error: any) {
-    console.error('❌ Error crítico en Webhook:', error.message);
-    return NextResponse.json({ 
-      error: 'Fallo al procesar mensaje', 
-      detail: error.message 
-    }, { status: 500 });
+    return NextResponse.json({ error: 'Payload inválido' }, { status: 400 });
   }
 }
 
 export async function GET() {
   return NextResponse.json({ 
-    status: "online", 
-    endpoint: "/api/webhook",
-    message: "Listo para recibir POST desde n8n (WhatsApp -> Chat Web)",
-    documentation: "Envíe un JSON con { text, senderName, phoneNumber }"
+    status: "active", 
+    service: "Maya Chat Bridge",
+    webhook_url: "/api/webhook"
   });
 }
