@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, Send, User, Loader2, Phone, Terminal, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { sendMessageAction } from '@/app/actions/chat';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
@@ -163,35 +162,50 @@ export function ChatWidget() {
     addMessage(text, 'user');
     setInputValue('');
     setIsSending(true);
-    setIsTyping(true); // ✅ Indicador "escribiendo..."
+    setIsTyping(true);
 
-    const result = await sendMessageAction({
-      text,
-      senderName: user.name,
-      senderPhone: user.phone,
-      conversationId: conversationId, // ✅ Enviar conversation_id para continuidad Dify
-    });
+    try {
+      // ✅ Llamada directa a API Route — sin Server Action, sin hash-mismatch
+      const res = await fetch('/api/send-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text,
+          senderName: user.name,
+          senderPhone: user.phone,
+          conversationId: conversationId,
+        }),
+        signal: AbortSignal.timeout(45000),
+      });
 
-    setIsTyping(false);
-    addDebugLog(result.success, result.debug, result.error);
+      const result = await res.json();
+      setIsTyping(false);
+      addDebugLog(result.success, result.debug, result.error);
 
-    if (result.success) {
-      // ✅ FIX PRINCIPAL: Mostrar respuesta de Dify directamente (sin polling)
-      if (result.botResponse) {
-        addMessage(result.botResponse, 'agent');
+      if (result.success) {
+        if (result.botResponse) {
+          addMessage(result.botResponse, 'agent');
+        }
+        if (result.conversationId) {
+          setConversationId(result.conversationId);
+          sessionStorage.setItem('dify_conversation_id', result.conversationId);
+        }
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Error de Envío',
+          description: result.error,
+        });
       }
-      // ✅ Guardar conversation_id para mantener contexto en próximos mensajes
-      if (result.conversationId) {
-        setConversationId(result.conversationId);
-        sessionStorage.setItem('dify_conversation_id', result.conversationId);
-      }
-    } else {
+    } catch (error: any) {
+      setIsTyping(false);
       toast({
-        variant: "destructive",
-        title: "Error de Envío",
-        description: result.error
+        variant: 'destructive',
+        title: 'Error de conexión',
+        description: error.name === 'TimeoutError' ? 'Sin respuesta (45s)' : error.message,
       });
     }
+
     setIsSending(false);
   };
 
