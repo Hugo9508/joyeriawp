@@ -4,7 +4,7 @@ import { appSettings } from '@/lib/settings';
 
 /**
  * @fileOverview Acción de servidor para enviar mensajes a n8n.
- * Optimizada para entornos de hosting compartido con mayor tolerancia y diagnóstico.
+ * Optimizada para el flujo 'jaflujodev' con diagnóstico mejorado.
  */
 
 export async function sendMessageAction(payload: {
@@ -14,7 +14,7 @@ export async function sendMessageAction(payload: {
 }) {
   if (!payload.text.trim()) return { success: false, error: 'El mensaje está vacío.' };
 
-  console.log(`[CHAT_ATTEMPT] Enviando a n8n: ${payload.senderName} (${payload.senderPhone})`);
+  console.log(`[CHAT_ATTEMPT] Enviando a n8n (jaflujodev): ${payload.senderName}`);
 
   try {
     const response = await fetch(appSettings.n8nWebhookUrl, {
@@ -22,17 +22,22 @@ export async function sendMessageAction(payload: {
       headers: { 
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AlianzaBoutique/1.0'
+        'User-Agent': 'AlianzaBoutique-Web/2.0 (Hostinger Production)'
       },
       body: JSON.stringify({
-        storePhoneNumber: appSettings.whatsAppNumber,
-        text: payload.text,
-        senderName: payload.senderName,
-        senderPhone: payload.senderPhone,
-        timestamp: new Date().toISOString(),
-        platform: 'web_boutique'
+        event: "web_message",
+        instance: appSettings.chatAgentName,
+        data: {
+          text: payload.text,
+          senderName: payload.senderName,
+          senderPhone: payload.senderPhone,
+          storeNumber: appSettings.whatsAppNumber
+        },
+        metadata: {
+          platform: 'web_boutique',
+          timestamp: new Date().toISOString()
+        }
       }),
-      // Aumentamos a 30 segundos para dar margen en hosting compartido
       signal: AbortSignal.timeout(30000), 
       cache: 'no-store'
     });
@@ -41,30 +46,21 @@ export async function sendMessageAction(payload: {
       const errorText = await response.text();
       console.error(`[CHAT_ERROR_RESPONSE] Status: ${response.status}`, errorText);
       
-      if (response.status === 404) {
-        return { 
-          success: false, 
-          error: "n8n no encontró la ruta. Verifique que el flujo esté en modo 'ACTIVE'." 
-        };
-      }
       return { 
         success: false, 
-        error: `Error del servidor n8n (${response.status}).` 
+        error: `Error de comunicación (${response.status}). Verifique si el flujo jaflujodev está ACTIVO en n8n.` 
       };
     }
 
+    const result = await response.json();
+    console.log(`[CHAT_SUCCESS] n8n respondió:`, result);
+
     return { success: true };
   } catch (error: any) {
-    // Log detallado para el administrador en los logs de Hostinger
-    console.error('[CHAT_CRITICAL_ERROR]', {
-      message: error.message,
-      name: error.name,
-      cause: error.cause
-    });
+    console.error('[CHAT_CRITICAL_ERROR]', error.message);
     
-    let errorMsg = `Error de conexión: ${error.message}`;
-    if (error.name === 'TimeoutError') errorMsg = 'El servidor de n8n tardó demasiado en responder (Timeout).';
-    if (error.message.includes('fetch failed')) errorMsg = 'Fallo al contactar n8n. Verifique que la URL sea accesible.';
+    let errorMsg = `No se pudo conectar con n8n.`;
+    if (error.name === 'TimeoutError') errorMsg = 'El servidor de n8n tardó demasiado en responder.';
     
     return { success: false, error: errorMsg };
   }

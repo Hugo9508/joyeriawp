@@ -9,8 +9,8 @@ export const appSettings = {
   chatAgentName: "Maya",
   
   // Integración con n8n (Web -> WhatsApp)
-  // URL verificada desde el historial y capturas
-  n8nWebhookUrl: "https://n8n.axion380.com.br/webhook/d801ab84-eb6e-4b8c-a04a-03fdc7a126a0",
+  // Nueva URL validada: jaflujodev
+  n8nWebhookUrl: "https://n8n.axion380.com.br/webhook/jaflujodev",
   
   // URL de la boutique para recibir respuestas (n8n -> Web)
   siteUrl: "https://joyeria.a380.com.br"
