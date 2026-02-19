@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -11,6 +10,7 @@ import { cn } from '@/lib/utils';
 import { io, Socket } from 'socket.io-client';
 import { sendMessageToEvolutionAction } from '@/app/actions/chat';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 type Message = {
   id: string;
@@ -30,6 +30,7 @@ export function ChatWidget() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingData, setOnboardingData] = useState({ name: '', phone: '' });
   const [phoneError, setPhoneError] = useState<string | null>(null);
+  const { toast } = useToast();
   
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -52,7 +53,6 @@ export function ChatWidget() {
       setUserInfo(JSON.parse(saved));
     }
 
-    // Conexión a Socket (Producción)
     socketRef.current = io(appSettings.socketUrl);
     socketRef.current.on('new_message', (data: any) => {
       if (data.type === 'whatsapp_incoming' || (data.sender && data.sender.includes(appSettings.whatsAppNumber))) {
@@ -60,7 +60,6 @@ export function ChatWidget() {
       }
     });
 
-    // LÓGICA DE TEST: Escuchar simulaciones desde el Panel Admin
     const handleTestMessage = (e: any) => {
       const { text } = e.detail;
       setIsOpen(true);
@@ -155,7 +154,6 @@ export function ChatWidget() {
       return;
     }
 
-    addMessage(text, 'user');
     setIsSending(true);
 
     try {
@@ -165,12 +163,24 @@ export function ChatWidget() {
         currentInfo.phone
       );
       
-      if (!result.success) throw new Error(result.error);
-    } catch (error) {
-      console.warn('Fallo en el envío:', error);
+      if (result.success) {
+        addMessage(text, 'user');
+        setInputValue('');
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error de conexión",
+          description: result.error || "No se pudo enviar el mensaje a n8n.",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Fallo crítico",
+        description: "Error al intentar contactar con el servidor.",
+      });
     } finally {
       setIsSending(false);
-      setInputValue('');
     }
   };
 

@@ -1,8 +1,8 @@
 'use server';
 
 /**
- * @fileOverview Server Action para gestionar el envío de mensajes a la Evolution API vía n8n.
- * Realiza un llamado POST a la URL de n8n configurada en settings.ts.
+ * @fileOverview Server Action optimizada para gestionar el envío de mensajes a n8n.
+ * Incluye manejo de timeouts y logs detallados para depuración en producción.
  */
 
 import { appSettings } from '@/lib/settings';
@@ -14,35 +14,52 @@ export async function sendMessageToEvolutionAction(
 ) {
   if (!text.trim()) return { success: false, error: 'Mensaje vacío' };
 
-  // Log de auditoría para verificar en los logs de Hostinger
-  console.log(`📤 Iniciando llamado POST a n8n: ${appSettings.webhookUrl}`);
+  const timestamp = new Date().toISOString();
+  console.log(`[CHAT_ACTION] [${timestamp}] Iniciando POST a: ${appSettings.webhookUrl}`);
+
+  const payload = {
+    storePhoneNumber: appSettings.whatsAppNumber,
+    text: text,
+    senderName: senderName,
+    senderPhone: senderPhone,
+    metadata: {
+      platform: 'web_boutique',
+      timestamp: timestamp
+    }
+  };
 
   try {
+    // Usamos AbortSignal.timeout para evitar bloqueos prolongados en el event loop
     const response = await fetch(appSettings.webhookUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        storePhoneNumber: appSettings.whatsAppNumber,
-        text: text,
-        senderName: senderName,
-        senderPhone: senderPhone,
-        metadata: {
-          platform: 'web_boutique',
-          timestamp: new Date().toISOString()
-        }
-      }),
+      headers: { 
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Cache-Control': 'no-cache'
+      },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(15000), // 15 segundos de timeout
+      cache: 'no-store'
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Error en respuesta de n8n [Status ${response.status}]:`, errorText);
-      throw new Error(`Error en la respuesta del servidor de chat: ${response.status}`);
+      const errorText = await response.text().catch(() => 'Sin detalle de error');
+      console.error(`[CHAT_ACTION] n8n rechazó la petición [Status ${response.status}]:`, errorText);
+      return { 
+        success: false, 
+        error: `Error ${response.status} en el servidor de chat.` 
+      };
     }
 
-    console.log('✅ Mensaje entregado a n8n con éxito.');
+    console.log('[CHAT_ACTION] Éxito: Mensaje recibido por n8n correctamente.');
     return { success: true };
   } catch (error: any) {
-    console.error('❌ Chat Server Action Critical Error:', error.message);
-    return { success: false, error: error.message };
+    let errorMessage = error.message;
+    if (error.name === 'TimeoutError' || error.name === 'AbortError') {
+      errorMessage = 'El servidor de n8n no respondió a tiempo (Timeout).';
+    }
+    
+    console.error('[CHAT_ACTION] Error crítico de red:', errorMessage);
+    return { success: false, error: errorMessage };
   }
 }
