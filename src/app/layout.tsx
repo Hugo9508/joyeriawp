@@ -8,6 +8,7 @@ import { Footer } from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { WhatsappButton } from '@/components/whatsapp-button';
 import { ChatWidget } from '@/components/chat-widget';
+import { TickerTape } from '@/components/ticker-tape';
 
 const manrope = Manrope({
   subsets: ['latin'],
@@ -41,6 +42,7 @@ export default function RootLayout({
         <div className="relative flex min-h-screen flex-col">
           <Header />
           <main className="flex-grow">{children}</main>
+          <TickerTape />
           <Footer />
         </div>
         <div id="modal-root"></div>
