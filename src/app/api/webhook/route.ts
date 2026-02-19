@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     console.log('📥 Mensaje de WhatsApp recibido vía n8n:', JSON.stringify(body, null, 2));
 
     /**
-     * NOTA TÉCNICA:
+     * NOTA TÉCNICA: 
      * Para que el mensaje aparezca instantáneamente en el ChatWidget de la web,
      * este endpoint debería reenviar el 'body' a tu servidor de Socket.io.
      * Si no usas un servidor de sockets externo, el cliente recibirá el mensaje

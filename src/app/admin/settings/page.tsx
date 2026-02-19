@@ -26,6 +26,7 @@ export default function SettingsPage() {
   const handleSave = async () => {
     setIsSaving(true);
     try {
+      // Aquí podrías implementar la persistencia en Firestore en el futuro
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast({
         title: "Configuración Actualizada",
@@ -68,6 +69,7 @@ export default function SettingsPage() {
         <p className="text-sm text-muted-foreground">Administre la integración con n8n y la Evolution API.</p>
       </div>
 
+      {/* Herramientas de Diagnóstico */}
       <Card className="border-blue-500/20 bg-blue-500/5 shadow-sm">
         <CardHeader>
           <div className="flex items-center gap-3">
