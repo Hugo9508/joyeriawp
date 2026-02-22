@@ -180,8 +180,19 @@
         {
             "parameters": {
                 "resource": "row",
-                "operation": "create",
+                "operation": "update",
                 "tableId": "chat_handoff",
+                "filterType": "manual",
+                "matchType": "allFilters",
+                "filters": {
+                    "conditions": [
+                        {
+                            "keyName": "client_phone",
+                            "condition": "eq",
+                            "keyValue": "={{ $json.client_phone }}"
+                        }
+                    ]
+                },
                 "dataToSend": "autoMapInputData",
                 "inputsToIgnore": "action"
             },
@@ -231,8 +242,19 @@
         {
             "parameters": {
                 "resource": "row",
-                "operation": "create",
+                "operation": "update",
                 "tableId": "chat_handoff",
+                "filterType": "manual",
+                "matchType": "allFilters",
+                "filters": {
+                    "conditions": [
+                        {
+                            "keyName": "client_phone",
+                            "condition": "eq",
+                            "keyValue": "={{ $json.client_phone }}"
+                        }
+                    ]
+                },
                 "dataToSend": "autoMapInputData",
                 "inputsToIgnore": "response_msg"
             },
@@ -590,8 +612,19 @@
         {
             "parameters": {
                 "resource": "row",
-                "operation": "create",
+                "operation": "update",
                 "tableId": "chat_handoff",
+                "filterType": "manual",
+                "matchType": "allFilters",
+                "filters": {
+                    "conditions": [
+                        {
+                            "keyName": "client_phone",
+                            "condition": "eq",
+                            "keyValue": "={{ $json.client_phone }}"
+                        }
+                    ]
+                },
                 "dataToSend": "autoMapInputData"
             },
             "type": "n8n-nodes-base.supabase",
