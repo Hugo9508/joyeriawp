@@ -214,15 +214,16 @@ export function ChatWidget() {
     setIsTyping(true);
 
     try {
-      // ✅ Llamada directa a API Route — sin Server Action, sin hash-mismatch
-      const res = await fetch('/api/send-message', {
+      // ✅ Llamada directa a Dify — sin pasar por n8n
+      const res = await fetch('/api/dify-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text,
+          query: text,
+          user: `web-${user.phone}`,
+          conversationId: conversationIdRef.current,
           senderName: user.name,
           senderPhone: user.phone,
-          conversationId: conversationIdRef.current,
         }),
         signal: AbortSignal.timeout(45000),
       });
