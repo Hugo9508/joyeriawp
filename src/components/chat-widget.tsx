@@ -374,13 +374,13 @@ export function ChatWidget() {
                   <div
                     key={msg.id}
                     className={cn(
-                      "max-w-[85%] p-3 rounded-2xl text-sm shadow-sm",
+                      "max-w-[85%] p-3 rounded-2xl text-sm shadow-sm overflow-hidden",
                       msg.sender === 'user'
                         ? "ml-auto bg-primary text-primary-foreground rounded-tr-none"
                         : "mr-auto bg-card text-card-foreground border border-primary/5 rounded-tl-none"
                     )}
                   >
-                    <p className="whitespace-pre-line leading-relaxed">{msg.text}</p>
+                    <p className="whitespace-pre-line leading-relaxed" style={{ overflowWrap: 'break-word', wordBreak: 'break-word' }}>{msg.text}</p>
                     <span className="text-[8px] opacity-40 mt-1 block text-right">
                       {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
