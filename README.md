@@ -49,7 +49,10 @@ Chat Widget → POST /api/dify-chat → Dify API (/v1/chat-messages)
 
 - **Aislamiento de Contexto**: El chat directo (burbuja) resetea el historial para evitar filtraciones de productos consultados previamente ([Ver reporte](docs/agente%20ai/resolucion-leak-contexto-chat.md)).
 - **Botones de Consulta Unificados**: Se cambió "Añadir a Lista de Deseos" por **"Consultar"** en todas las tarjetas de producto (Home y Colecciones), integrando el contexto automático del producto con el chat de Alma.
-- **Mapa Interactivo en Footer**: Se agregó una miniatura de mapa dinámica en el pie de página que, al clicar, abre un modal con la ubicación exacta de la boutique (Mercedes 1211) en Google Maps interactivo.
+- **Carrusel de Reseñas Google**: Sección con 9 reseñas verificadas de Google Maps, carrusel con drag/swipe, flechas, dots y CTA a perfil de Google (`reviews-carousel.tsx`).
+- **Mapa Interactivo en Footer**: Miniatura con previsualización real del embed de Google Maps que abre un modal interactivo con la ubicación exacta (Mercedes 1211).
+- **Dirección Actualizada**: Dirección de la boutique actualizada a Mercedes 1211, Montevideo 11100.
+- **Redes Sociales**: Link de Instagram conectado al perfil real [@joyeria.alianzas_](https://www.instagram.com/joyeria.alianzas_/).
 - **Bloqueo de Scroll**: Implementación de bloqueo de scroll del body al abrir modales para mejorar la navegación en dispositivos móviles.
 - **Robustez de Texto**: Soporte para URLs largas y strings sin espacios mediante `overflow-wrap` en las burbujas de mensaje.
 

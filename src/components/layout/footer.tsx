@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { MapPin, X } from "lucide-react";
 
 const GOOGLE_MAPS_EMBED_URL = "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3272.8!2d-56.065!3d-34.883!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x959f802b6c8aaaab%3A0x1234567890!2sCalle+Arocena+1592%2C+11500+Montevideo%2C+Uruguay!5e0!3m2!1ses!2suy!4v1";
-const GOOGLE_MAPS_SEARCH_URL = "https://www.google.com/maps/search/?api=1&query=Calle+Arocena+1592%2C+Carrasco%2C+Montevideo%2C+11500%2C+Uruguay";
+const GOOGLE_MAPS_SEARCH_URL = "https://www.google.com/maps/search/?api=1&query=Mercedes+1211%2C+Montevideo%2C+11100%2C+Uruguay";
 
 // Usamos Google Maps embed en modo place para buscar la dirección exacta
 const EMBED_PLACE_URL = "https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=Calle+Arocena+1592,Carrasco,Montevideo,Uruguay&zoom=16";
@@ -56,35 +56,22 @@ export function Footer() {
                 <div className="flex flex-col gap-2">
                   <p className="text-sm font-light text-white/80">Montevideo Flagship</p>
                   <p className="text-xs text-white/50 leading-relaxed">
-                    Calle Arocena 1592<br />Carrasco, Montevideo 11500
+                    Mercedes 1211<br />Montevideo 11100
                   </p>
                 </div>
-                {/* Mapa clickeable — miniatura CSS */}
+                {/* Mapa clickeable — previsualización de embed */}
                 <button
                   onClick={() => setShowMap(true)}
-                  className="group relative w-full max-w-[220px] aspect-[16/9] rounded-lg overflow-hidden border border-white/10 hover:border-primary/50 transition-all duration-300 cursor-pointer"
-                  style={{
-                    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 70%, #1a1a2e 100%)',
-                  }}
+                  className="group relative w-full max-w-[220px] aspect-[16/9] rounded-lg overflow-hidden border border-white/10 hover:border-primary/50 transition-all duration-300 cursor-pointer bg-black"
                 >
-                  {/* Lineas decorativas simulando calles */}
-                  <div className="absolute inset-0 opacity-20">
-                    <div className="absolute top-1/3 left-0 right-0 h-[1px] bg-white/40" />
-                    <div className="absolute top-2/3 left-0 right-0 h-[1px] bg-white/30" />
-                    <div className="absolute left-1/4 top-0 bottom-0 w-[1px] bg-white/30" />
-                    <div className="absolute left-2/3 top-0 bottom-0 w-[1px] bg-white/25" />
-                    <div className="absolute top-[45%] left-[35%] right-[20%] h-[2px] bg-white/50" />
-                    <div className="absolute top-[20%] left-[55%] bottom-[30%] w-[2px] bg-white/50" />
-                  </div>
-                  {/* Pin central */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                    <div className="relative">
-                      <MapPin className="w-6 h-6 text-primary drop-shadow-lg" />
-                      <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-1 bg-black/30 rounded-full blur-sm" />
-                    </div>
-                  </div>
+                  <iframe
+                    src={EMBED_SEARCH_URL}
+                    className="absolute inset-0 w-full h-full border-0 pointer-events-none opacity-50 grayscale group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-700 scale-110 group-hover:scale-100"
+                    loading="lazy"
+                    title="Previsualización Mapa"
+                  />
                   {/* Overlay con botón */}
-                  <div className="absolute inset-0 flex items-end justify-center pb-2 opacity-80 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-transparent transition-colors duration-300">
                     <div className="flex items-center gap-1.5 bg-white/90 text-foreground px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-lg">
                       <MapPin className="w-3 h-3 text-primary" />
                       Ver Mapa
@@ -106,7 +93,7 @@ export function Footer() {
               </div>
               <div className="flex flex-col gap-6">
                 <h4 className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Social</h4>
-                <a className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Instagram</a>
+                <a className="text-sm font-light text-white/60 hover:text-white transition-colors" href="https://www.instagram.com/joyeria.alianzas_/" target="_blank" rel="noopener noreferrer">Instagram</a>
                 <a className="text-sm font-light text-white/60 hover:text-white transition-colors" href="#">Facebook</a>
               </div>
             </div>
@@ -150,7 +137,7 @@ export function Footer() {
                 <MapPin className="w-5 h-5 text-primary" />
                 <div>
                   <h3 className="text-sm font-bold text-white uppercase tracking-wider">Joyería Alianza</h3>
-                  <p className="text-[11px] text-white/50">Calle Arocena 1592, Carrasco, Montevideo</p>
+                  <p className="text-[11px] text-white/50">Mercedes 1211, Montevideo 11100</p>
                 </div>
               </div>
               <button
