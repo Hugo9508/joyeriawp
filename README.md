@@ -37,15 +37,26 @@ El chat web del sitio se conecta **directamente** con la API de Dify (sin pasar 
 ```
 Chat Widget → POST /api/dify-chat → Dify API (/v1/chat-messages)
                                        ↓ (si detecta handoff)
-                                     n8n webhook (notifica vendedor por WhatsApp)
+                                     n8n webhook /dify-events (notifica vendedor por WhatsApp)
 ```
 
 - **Agente:** Alma (asesora de ventas de Joyería Alianza)
 - **Endpoint:** `POST /api/dify-chat` — recibe `{ query, user, conversationId }`
-- **Handoff automático:** cuando Alma detecta señales de compra, notifica a n8n vía `N8N_EVENT_WEBHOOK_URL`
-- **Config Dify:** las 3 variables `DIFY_*` se configuran en Hostinger (Node.js App → Environment Variables)
+- **Handoff automático:** cuando Alma detecta señales de compra, notifica a n8n vía webhook
+- **Credenciales Dify:** las 3 variables `DIFY_*` tienen fallback codificado en Base64 dentro de `settings.ts`. Si las variables de entorno están configuradas en Hostinger, se usan esas; si no, se usan los valores embedded. Para cambiar la API key, actualizar `settings.ts` o configurar la env var.
+
+## 📱 Flujo n8n v9
+
+El workflow actualizado está en `docs/agente ai/n8n_flujo_v9_dify_directo.json`:
+
+- **Webhook `/jaflujodev`:** WhatsApp + comandos `#pausa`/`#activar`
+- **Webhook `/dify-events`:** recibe handoffs del chat web → GPT-4.1-mini resume el prospecto → Google Sheets CRM → WhatsApp al vendedor → pausa IA en Supabase
+
+> [!NOTE]
+> n8n ya **no** es intermediario del chat web. Solo recibe eventos de handoff.
 
 ## 🛠️ Comandos Locales
 - `npm install`: Instalar dependencias.
 - `npm run dev`: Iniciar modo desarrollo.
 - `npm run build`: Generar versión de producción.
+
