@@ -179,30 +179,14 @@
         },
         {
             "parameters": {
-                "method": "POST",
-                "url": "https://hmcwbizjawrhpkiyydye.supabase.co/rest/v1/chat_handoff",
-                "authentication": "predefinedCredentialType",
-                "nodeCredentialType": "supabaseApi",
-                "sendHeaders": true,
-                "headerParameters": {
-                    "parameters": [
-                        {
-                            "name": "Content-Type",
-                            "value": "application/json"
-                        },
-                        {
-                            "name": "Prefer",
-                            "value": "resolution=merge-duplicates"
-                        }
-                    ]
-                },
-                "sendBody": true,
-                "specifyBody": "json",
-                "jsonBody": "={{ { \"client_phone\": $json.client_phone, \"is_paused\": $json.is_paused, \"paused_by\": $json.paused_by, \"paused_at\": $json.paused_at, \"resume_at\": $json.resume_at, \"seller_name\": $json.seller_name } }}",
-                "options": {}
+                "resource": "row",
+                "operation": "create",
+                "tableId": "chat_handoff",
+                "dataToSend": "autoMapInputData",
+                "inputsToIgnore": "action"
             },
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.2,
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
             "position": [
                 -1200,
                 10150
@@ -246,30 +230,14 @@
         },
         {
             "parameters": {
-                "method": "POST",
-                "url": "https://hmcwbizjawrhpkiyydye.supabase.co/rest/v1/chat_handoff",
-                "authentication": "predefinedCredentialType",
-                "nodeCredentialType": "supabaseApi",
-                "sendHeaders": true,
-                "headerParameters": {
-                    "parameters": [
-                        {
-                            "name": "Content-Type",
-                            "value": "application/json"
-                        },
-                        {
-                            "name": "Prefer",
-                            "value": "resolution=merge-duplicates"
-                        }
-                    ]
-                },
-                "sendBody": true,
-                "specifyBody": "json",
-                "jsonBody": "={{ { \"client_phone\": $json.client_phone, \"is_paused\": $json.is_paused, \"paused_by\": $json.paused_by, \"paused_at\": $json.paused_at, \"resume_at\": $json.resume_at, \"seller_name\": $json.seller_name } }}",
-                "options": {}
+                "resource": "row",
+                "operation": "create",
+                "tableId": "chat_handoff",
+                "dataToSend": "autoMapInputData",
+                "inputsToIgnore": "response_msg"
             },
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.2,
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
             "position": [
                 -1200,
                 10300
@@ -608,32 +576,28 @@
         },
         {
             "parameters": {
-                "method": "POST",
-                "url": "https://hmcwbizjawrhpkiyydye.supabase.co/rest/v1/chat_handoff",
-                "authentication": "predefinedCredentialType",
-                "nodeCredentialType": "supabaseApi",
-                "sendHeaders": true,
-                "headerParameters": {
-                    "parameters": [
-                        {
-                            "name": "Content-Type",
-                            "value": "application/json"
-                        },
-                        {
-                            "name": "Prefer",
-                            "value": "resolution=merge-duplicates"
-                        }
-                    ]
-                },
-                "sendBody": true,
-                "specifyBody": "json",
-                "jsonBody": "={{ { \"client_phone\": $('📋 Procesar Resumen').item.json.phoneNumber || $('📝 Formatear Historial').item.json.senderPhone, \"is_paused\": true, \"paused_by\": 'handoff_web', \"paused_at\": new Date().toISOString(), \"resume_at\": new Date(Date.now() + 30 * 60 * 1000).toISOString(), \"seller_name\": 'Vendedor' } }}",
-                "options": {}
+                "jsCode": "// Preparar datos para Supabase desde nodos anteriores\nconst phone = $('📋 Procesar Resumen').item.json.phoneNumber || $('📝 Formatear Historial').item.json.senderPhone;\nreturn {\n  json: {\n    client_phone: phone,\n    is_paused: true,\n    paused_by: 'handoff_web',\n    paused_at: new Date().toISOString(),\n    resume_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),\n    seller_name: 'Vendedor'\n  }\n};"
             },
-            "type": "n8n-nodes-base.httpRequest",
-            "typeVersion": 4.2,
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
             "position": [
                 -300,
+                10800
+            ],
+            "id": "prep-pause-handoff-v9",
+            "name": "⏸️ Preparar Pausa Web"
+        },
+        {
+            "parameters": {
+                "resource": "row",
+                "operation": "create",
+                "tableId": "chat_handoff",
+                "dataToSend": "autoMapInputData"
+            },
+            "type": "n8n-nodes-base.supabase",
+            "typeVersion": 1,
+            "position": [
+                -100,
                 10800
             ],
             "id": "pause-ia-handoff-v9",
@@ -882,6 +846,17 @@
             ]
         },
         "📱 Notificar Vendedor WA": {
+            "main": [
+                [
+                    {
+                        "node": "⏸️ Preparar Pausa Web",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "⏸️ Preparar Pausa Web": {
             "main": [
                 [
                     {
