@@ -627,7 +627,7 @@
                 },
                 "sendBody": true,
                 "specifyBody": "json",
-                "jsonBody": "={{ { \"client_phone\": $json.phoneNumber, \"is_paused\": true, \"paused_by\": 'handoff_web', \"paused_at\": new Date().toISOString(), \"resume_at\": new Date(Date.now() + 30 * 60 * 1000).toISOString(), \"seller_name\": 'Vendedor' } }}",
+                "jsonBody": "={{ { \"client_phone\": $('📋 Procesar Resumen').item.json.phoneNumber || $('📝 Formatear Historial').item.json.senderPhone, \"is_paused\": true, \"paused_by\": 'handoff_web', \"paused_at\": new Date().toISOString(), \"resume_at\": new Date(Date.now() + 30 * 60 * 1000).toISOString(), \"seller_name\": 'Vendedor' } }}",
                 "options": {}
             },
             "type": "n8n-nodes-base.httpRequest",
