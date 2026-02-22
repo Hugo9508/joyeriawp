@@ -45,15 +45,28 @@ Chat Widget → POST /api/dify-chat → Dify API (/v1/chat-messages)
 - **Handoff automático:** cuando Alma detecta señales de compra, notifica a n8n vía webhook
 - **Credenciales Dify:** las 3 variables `DIFY_*` tienen fallback codificado en Base64 dentro de `settings.ts`. Si las variables de entorno están configuradas en Hostinger, se usan esas; si no, se usan los valores embedded. Para cambiar la API key, actualizar `settings.ts` o configurar la env var.
 
-## 📱 Flujo n8n v9
+## ✨ Mejoras UI/UX Recientes
+
+- **Aislamiento de Contexto**: El chat directo (burbuja) resetea el historial para evitar filtraciones de productos consultados previamente ([Ver reporte](docs/agente%20ai/resolucion-leak-contexto-chat.md)).
+- **Botones Simplificados**: Se eliminaron los íconos de WhatsApp de los botones "Consultar" para centralizar la atención en el chat inteligente de Alma.
+- **Robustez de Texto**: Soporte para URLs largas y strings sin espacios mediante `overflow-wrap` en las burbujas de mensaje.
+
+## 📱 Flujo n8n v9.1
 
 El workflow actualizado está en `docs/agente ai/n8n_flujo_v9_dify_directo.json`:
 
-- **Webhook `/jaflujodev`:** WhatsApp + comandos `#pausa`/`#activar`
-- **Webhook `/dify-events`:** recibe handoffs del chat web → GPT-4.1-mini resume el prospecto → Google Sheets CRM → WhatsApp al vendedor → pausa IA en Supabase
+- **Webhook `/jaflujodev`**: WhatsApp + comandos `#pausa`/`#activar`
+- **Webhook `/dify-events`**: recibe handoffs del chat web → GPT-4.1-mini resume el prospecto → Google Sheets CRM → WhatsApp al vendedor → pausa IA en Supabase
+- **Integración Nativa**: Uso de nodos de Supabase oficiales con lógica de "Upsert" para mayor estabilidad.
 
 > [!NOTE]
 > n8n ya **no** es intermediario del chat web. Solo recibe eventos de handoff.
+
+## 📄 Documentación Técnica
+
+- [Resumen de Mejoras n8n](docs/resumen_mejoras_n8n.md)
+- [Configuración del Ecosistema de Chat](docs/configuracion-chat.md)
+- [Resolución: Leak de Contexto](docs/agente%20ai/resolucion-leak-contexto-chat.md)
 
 ## 🛠️ Comandos Locales
 - `npm install`: Instalar dependencias.

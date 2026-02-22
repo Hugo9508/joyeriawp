@@ -25,14 +25,22 @@ Este documento detalla la evolución del flujo de n8n para resolver problemas de
     - Reemplazo de nodos nativos por **HTTP Request** directos a la API REST de Supabase (`PostgREST`).
     - Uso del header `Prefer: resolution=merge-duplicates` para lograr el comportamiento de "Upsert" (crear o actualizar) de manera robusta.
 
+## 4. Estabilidad y Eficiencia: Flujo n8n (v9 y v9.1)
+- **Problema**: Los nodos HTTP Request eran difíciles de mantener y no aprovechaban las credenciales nativas de n8n.
+- **Solución (v9.1 Directo)**:
+    - **Nodos Nativos**: Se reemplazaron todas las llamadas HTTP a Supabase por nodos nativos `n8n-nodes-base.supabase`.
+    - **Lógica de Actualización (Upsert)**: Se cambió la operación de `create` a `update` con filtro manual por `client_phone`, logrando un comportamiento de "upsert" que evita errores de claves duplicadas.
+    - **Capa de Preparación**: Se añadió un nodo de código (`⏸️ Preparar Pausa Web`) para normalizar los datos antes de interactuar con la base de datos, garantizando que el estado de la IA se guarde correctamente tanto para WhatsApp como para la Web.
+
 ---
 
 ## Resumen de Archivos Entregados
 
 | Archivo | Descripción |
 |---|---|
-| `docs/n8n_flujo_v5_resiliente.json` | Versión estable con fallback de errores (sin base de datos). |
-| `docs/n8n_flujo_v6_handoff.json` | **Versión recomendada**. Incluye Human Handoff, Supabase y comandos. |
-| `docs/sql_handoff_table.sql` | Script SQL para crear la tabla necesaria en Supabase. |
+| `docs/agente ai/n8n_flujo_v9_dify_directo.json` | **Versión Actual (v9.1)**. Integración nativa Supabase + Handoff Web/WA. |
+| `docs/agente ai/n8n_flujo_v8_smart_handoff.json` | Versión previa con lógica CRM completa. |
+| `docs/sql_handoff_table.sql` | Script SQL para crear la tabla `chat_handoff` en Supabase. |
 
-**Fecha de Actualización**: 19 de Febrero, 2026
+**Fecha de Actualización**: 22 de Febrero, 2026
+

@@ -1,59 +1,37 @@
 # 💬 Configuración Técnica: Ecosistema de Chat (Web ↔ WhatsApp)
 
-Este documento detalla la arquitectura de comunicación actualizada para el flujo **jaflujodev**.
+Este documento detalla la arquitectura de comunicación **Directa** (v9.1).
 
 ---
 
-## 1. Flujo: Web Boutique → WhatsApp (Consultas del Cliente)
+## 1. Arquitectura: Chat Web Directo (Dify)
 
-La web envía un POST al Webhook de n8n.
+El chat web ya **no** utiliza n8n como intermediario para mensajes de usuario. Se comunica directamente con la API de Dify para reducir latencia y evitar fallos por cuotas en n8n.
 
-### Parámetros de Conexión
-- **URL de Destino:** `https://n8n.axion380.com.br/webhook/jaflujodev`
-- **Método HTTP:** `POST`
-- **Seguridad:** Timeout de 30 segundos y User-Agent personalizado.
-
-### Formato del JSON (Payload enviado por la Web)
-```json
-{
-  "event": "web_message",
-  "instance": "Maya",
-  "data": {
-    "text": "Mensaje del cliente",
-    "senderName": "Nombre",
-    "senderPhone": "099123456",
-    "storeNumber": "59895435644"
-  },
-  "metadata": {
-    "platform": "web_boutique",
-    "timestamp": "2026-02-18T..."
-  }
-}
-```
+### Flujo de Datos
+1.  **Mensaje de Usuario**: `ChatWidget.tsx` → `api/dify-chat` → `Dify API`.
+2.  **Handoff a Humano**: Si Dify detecta señales de compra (detectHandoff), notifica a n8n vía el webhook `/dify-events`.
+3.  **Gestión de Prospectos**: n8n recibe el evento → Resume la charla con IA → Registra en Google Sheets CRM → Notifica al vendedor por WhatsApp.
 
 ---
 
-## 2. Flujo: WhatsApp → Web Boutique (Respuestas del Asesor)
+## 2. Lógica de Contexto e Interacción
 
-n8n debe responder a la web para que el cliente vea el mensaje en el widget.
+### Consultas de Producto ("Consultar")
+Cuando el usuario hace clic en el botón **"Consultar"**, se envía a Dify un bloque de metadatos (Nombre, Precio, SKU, URL). Esto permite que Alma (IA) asesore al cliente con datos exactos sobre la pieza de interés.
 
-### Endpoint de Recepción
-- **URL:** `https://joyeria.a380.com.br/api/webhook`
-- **Método HTTP:** `POST`
-
-### Formato esperado por la Web
-```json
-{
-  "text": "Respuesta desde WhatsApp",
-  "senderName": "Maya",
-  "phoneNumber": "59895435644"
-}
-```
+### Chat Directo (Aislamiento de Contexto)
+Para evitar que consultas previas de productos "contaminen" una nueva charla general:
+- Al abrir el chat desde la burbuja flotante, el sistema **limpia** el `conversation_id` y el historial local.
+- Esto garantiza una conversación "limpia" sin referencias a productos consultados anteriormente, a menos que el usuario vuelva a clicar "Consultar".
 
 ---
 
 ## 3. Resolución de Problemas (Troubleshooting)
 
-1. **Error 404 en el Chat**: n8n rechazó la conexión. Verifique que el flujo **jaflujodev** esté en modo **ACTIVE** (Switch ON).
-2. **Timeout**: Si Hostinger no llega a n8n en 30 segundos, el mensaje fallará. Revise la latencia del servidor n8n.
-3. **Credenciales WooCommerce**: Se mantienen seguras en la bóveda interna (`src/lib/woocommerce.ts`) usando codificación Base64 procesada solo en el servidor.
+1.  **Dify no responde**: Verifique `DIFY_API_KEY` en Hostinger.
+2.  **Handoff no llega a WhatsApp**: Verifique que el flujo de n8n v9.1 esté activo y que el Webhook URL coincida con la variable `N8N_EVENT_WEBHOOK_URL`.
+3.  **El chat recuerda productos viejos**: Se ha implementado un fix en `ChatWidget.tsx` para limpiar el `sessionStorage`. Si persiste, el usuario debe cerrar y reabrir el chat.
+4.  **Texto cortado/desbordado**: Los globos de chat tienen `overflowWrap: 'break-word'` para soportar URLs largas.
+
+**Fecha de Actualización**: 22 de Febrero, 2026
