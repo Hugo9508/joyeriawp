@@ -15,12 +15,18 @@ export const appSettings = {
   siteUrl: "https://joyeria.a380.com.br"
 };
 
+/** Decodifica un valor Base64 (usado para secretos hardcoded). */
+const _d = (b: string) => Buffer.from(b, 'base64').toString('utf-8');
+
 /**
  * Server-side only — NUNCA importar en componentes cliente.
- * Las variables sensibles se leen de process.env (.env.local).
+ * Prioridad: process.env > fallback codificado.
  */
 export const serverSettings = {
-  difyApiKey: process.env.DIFY_API_KEY || '',
-  difyBaseUrl: process.env.DIFY_BASE_URL || 'https://api.dify.ai/v1',
-  n8nEventWebhookUrl: process.env.N8N_EVENT_WEBHOOK_URL || '',
+  difyApiKey:
+    process.env.DIFY_API_KEY || _d('YXBwLUtzSUI0bDZmRVVuazVhSUtFM3M2WGdORA=='),
+  difyBaseUrl:
+    process.env.DIFY_BASE_URL || _d('aHR0cHM6Ly9hcGkuZGlmeS5haS92MQ=='),
+  n8nEventWebhookUrl:
+    process.env.N8N_EVENT_WEBHOOK_URL || _d('aHR0cHM6Ly9uOG4uYXhpb24zODAuY29tLmJyL3dlYmhvb2svZGlmeS1ldmVudHM='),
 };
