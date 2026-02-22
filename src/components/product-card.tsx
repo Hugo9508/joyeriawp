@@ -6,16 +6,17 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { VirtualTryOn } from "@/components/virtual-try-on";
 import { Tag } from "lucide-react";
+import { WhatsAppProductButton } from "./whatsapp-product-button";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const placeholderImage = product.imageIds && product.imageIds.length > 0 
+  const placeholderImage = product.imageIds && product.imageIds.length > 0
     ? PlaceHolderImages.find(p => p.id === product.imageIds[0])
     : null;
-    
+
   const displayImageUrl = (product.images && product.images.length > 0)
     ? product.images[0]
     : (placeholderImage?.imageUrl || 'https://placehold.co/600x800?text=No+Img');
@@ -24,36 +25,40 @@ export function ProductCard({ product }: ProductCardProps) {
     <div className="group cursor-pointer">
       <div className="relative aspect-[3/4] overflow-hidden bg-secondary mb-6 rounded-lg">
         <Link href={`/products/${product.id}`}>
-            <Image
-                src={displayImageUrl}
-                alt={product.name}
-                fill
-                className="object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
-                unoptimized
-            />
+          <Image
+            src={displayImageUrl}
+            alt={product.name}
+            fill
+            className="object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
+            unoptimized
+          />
         </Link>
         <div className="absolute top-4 right-4 flex flex-col gap-2">
           {product.isBestseller && (
-              <Badge variant="secondary" className="text-[10px] uppercase tracking-widest shadow-sm">
-                  Más Vendido
-              </Badge>
+            <Badge variant="secondary" className="text-[10px] uppercase tracking-widest shadow-sm">
+              Más Vendido
+            </Badge>
           )}
           {product.isOnSale && (
-              <Badge className="bg-destructive text-white border-none text-[10px] uppercase tracking-widest shadow-md">
-                  <Tag className="w-3 h-3 mr-1" />
-                  Oferta
-              </Badge>
+            <Badge className="bg-destructive text-white border-none text-[10px] uppercase tracking-widest shadow-md">
+              <Tag className="w-3 h-3 mr-1" />
+              Oferta
+            </Badge>
           )}
         </div>
         <div className="absolute inset-x-0 bottom-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-2">
-            <VirtualTryOn product={product}>
-              <Button variant="secondary" className="w-full backdrop-blur-sm bg-white/80 hover:bg-white text-foreground">
-                  Prueba Virtual
-              </Button>
-            </VirtualTryOn>
+          <VirtualTryOn product={product}>
             <Button variant="secondary" className="w-full backdrop-blur-sm bg-white/80 hover:bg-white text-foreground">
-                Añadir a Lista de Deseos
+              Prueba Virtual
             </Button>
+          </VirtualTryOn>
+          <WhatsAppProductButton
+            product={product}
+            variant="secondary"
+            className="w-full backdrop-blur-sm bg-white/80 hover:bg-white text-foreground"
+          >
+            Consultar
+          </WhatsAppProductButton>
         </div>
       </div>
       <div className="text-center">

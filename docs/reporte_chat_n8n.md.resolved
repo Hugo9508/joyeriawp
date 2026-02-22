@@ -1,0 +1,53 @@
+# Reporte de Incidencias: Flujo de Chat (Febrero 2026)
+
+Este documento registra los problemas detectados en la integración del widget de chat con n8n/Dify y las soluciones implementadas.
+
+## 1. Problema de Stale Closure (Cierre Obsoleto)
+
+### Descripción
+Al hacer clic en el botón "Consultar" de un producto, el chat se abría pero no enviaba el mensaje a n8n, o lo enviaba sin el `conversation_id`, perdiendo el contexto de la charla.
+
+### Causa Raíz
+React captura el estado de las variables dentro de los efectos (`useEffect`) al momento de crearlos. Como el event listener de `open-chat-with-message` se registraba al montar el componente:
+1. `userInfo` era `null`.
+2. `conversationId` era `""` (vacío).
+Incluso después de que el usuario llenara sus datos, el event listener seguía usando las versiones "viejas" (nulas/vacías) de esas variables.
+
+### Solución Implementada
+1. **Para UserInfo**: Se modificó el manejador de eventos para leer directamente de `localStorage` en el momento del clic, en lugar de confiar en el estado de React.
+2. **Para ConversationId**: Se implementó `conversationIdRef` usando `useRef`. A diferencia del estado, los refs siempre mantienen el valor más reciente y son accesibles dentro de closures antiguos sin quedar obsoletos.
+
+---
+
+## 2. Error "Lo siento, no pude procesar tu mensaje"
+
+### Descripción
+El chat mostraba un error genérico de n8n inmediatamente después de que el usuario enviaba una consulta sobre un producto.
+
+### Causa Raíz (Externa)
+Al revisar los logs de ejecución en n8n, se detectó un error proveniente de la API de Dify:
+> `429 RESOURCE_EXHAUSTED: "you exceeded your current quota"`
+
+Esto indica que el modelo de IA (Google Gemini) configurado en Dify agotó su cuota de uso (créditos o límite de hits por minuto/día).
+
+### Solución/Acción Requerida
+Este es un problema de infraestructura externa. Se requiere:
+- Revisar el plan de facturación en [Google AI Studio](https://ai.google.dev/).
+- O cambiar el modelo en Dify a uno con cuota disponible.
+
+---
+
+## 3. Mejora de Scroll Automático
+
+### Problema
+Los nuevos mensajes no forzaban al chat a bajar, obligando al usuario a hacer scroll manual para leer la respuesta.
+
+### Solución
+Se reemplazo el cálculo manual de `scrollTop` (que fallaba con el componente `ScrollArea`) por un elemento ancla invisible al final de la lista de mensajes:
+```tsx
+const bottomRef = useRef<HTMLDivElement>(null);
+// ...
+useEffect(() => {
+  bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+}, [messages]);
+```

@@ -1,0 +1,211 @@
+# Integración Directa Dify + n8n Webhook (Opción A+B)
+
+## Estado Actual
+
+El flujo actual funciona así:
+
+```
+chat-widget.tsx → POST /api/send-message → n8n webhook → Dify API → n8n responde → widget muestra respuesta
+```
+
+**Problema:** n8n actúa como intermediario innecesario entre el chat web y Dify. Cada mensaje del chat pasa por n8n solo para que n8n llame a Dify y devuelva la respuesta. Esto agrega latencia, dependencia, y no permite controlar el "cerebro" Dify directamente desde la app.
+
+## Arquitectura Propuesta
+
+```
+┌─────────────────────────────────────────────────────┐
+│  chat-widget.tsx (React)                            │
+│  ↓ POST /api/dify-chat                              │
+│  ↓                                                  │
+│  API Route (route.ts) ── llamada directa ──→ Dify   │
+│                          POST /v1/chat-messages      │
+│                          Bearer DIFY_API_KEY         │
+│                                                      │
+│  Dify procesa la conversación                        │
+│  ├─ Responde al usuario (texto)                      │
+│  └─ Si detecta señal de compra/handoff:              │
+│     └─ HTTP Tool → n8n webhook (notifica vendedor)   │
+└─────────────────────────────────────────────────────┘
+```
+
+**Beneficios:**
+- ⚡ Menor latencia (elimina el intermediario n8n para chat)
+- 🧠 Control directo del "cerebro" Dify desde tu app
+- 🔌 n8n solo se activa cuando hay un evento real (handoff, pedido, etc.)
+- 📊 Puedes extraer metadata de Dify (tokens usados, conversation_id) directamente
+
+---
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Necesito tu API Key de Dify** y la URL base de tu instancia Dify (ej: `https://tu-dify.com/v1` o `https://api.dify.ai/v1`). Estos valores irán en un archivo `.env.local` que NO se sube al repositorio.
+
+> [!IMPORTANT]
+> **Configuración en Dify:** Deberás crear una **HTTP Tool** dentro de tu app de Dify que apunte al webhook de n8n para handoffs. Esto se configura en el panel de Dify (no en código). Te daré las instrucciones exactas después.
+
+> [!WARNING]
+> **El flujo n8n actual para web_message dejará de recibir mensajes del chat web.** Solo recibirá llamadas de la HTTP Tool de Dify para eventos específicos (handoff, pedido confirmado, etc.). El flujo de WhatsApp no se toca.
+
+---
+
+## Proposed Changes
+
+### Configuración / Environment
+
+#### [NEW] [.env.local](file:///c:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/.env.local)
+
+Variables de entorno para la integración directa con Dify:
+
+```env
+# Dify API
+DIFY_API_KEY=app-XXXXXXXXXXXXXXXXXX
+DIFY_BASE_URL=https://tu-instancia-dify.com/v1
+
+# n8n Webhook para eventos (handoff, CRM, etc.)
+N8N_EVENT_WEBHOOK_URL=https://n8n.axion380.com.br/webhook/dify-events
+```
+
+---
+
+### Settings
+
+#### [MODIFY] [settings.ts](file:///c:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/src/lib/settings.ts)
+
+Agregar las nuevas configuraciones de Dify y el webhook de eventos n8n. Las variables sensibles se leen de `process.env` (server-side only):
+
+```diff
+ export const appSettings = {
+   whatsAppNumber: "59895435644",
+-  chatAgentName: "Maya",
++  chatAgentName: "Alma",
+   n8nWebhookUrl: "https://n8n.axion380.com.br/webhook/jaflujodev",
+   siteUrl: "https://joyeria.a380.com.br"
+ };
++
++// Server-side only — nunca exponer al cliente
++export const serverSettings = {
++  difyApiKey: process.env.DIFY_API_KEY || '',
++  difyBaseUrl: process.env.DIFY_BASE_URL || 'https://api.dify.ai/v1',
++  n8nEventWebhookUrl: process.env.N8N_EVENT_WEBHOOK_URL || '',
++};
+```
+
+> [!NOTE]
+> El nombre del agente se cambia de "Maya" a "Alma" para alinearlo con el prompt de Dify que ya usa ese nombre.
+
+---
+
+### API Route — Chat Directo con Dify
+
+#### [NEW] [route.ts](file:///c:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/src/app/api/dify-chat/route.ts)
+
+Nueva API Route que habla directamente con la API de Dify en modo **blocking**:
+
+**Flujo:**
+1. Recibe `{ query, conversationId, user }` del widget
+2. Llama a `POST ${DIFY_BASE_URL}/chat-messages` con Bearer auth
+3. Extrae `answer`, `conversation_id`, y metadata de la respuesta
+4. **Opcionalmente** revisa si la respuesta contiene señales de handoff y dispara el webhook de n8n
+5. Devuelve `{ success, botResponse, conversationId }` al widget
+
+**Parámetros del request a Dify:**
+```json
+{
+  "inputs": {},
+  "query": "texto del usuario",
+  "user": "web-59895435644",
+  "conversation_id": "conv_id_previo_o_vacío",
+  "response_mode": "blocking"
+}
+```
+
+---
+
+### Chat Widget
+
+#### [MODIFY] [chat-widget.tsx](file:///c:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/src/components/chat-widget.tsx)
+
+Cambios mínimos — solo actualizar la URL del endpoint en [processMessage](file:///c:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/src/components/chat-widget.tsx#206-261):
+
+```diff
+-const res = await fetch('/api/send-message', {
++const res = await fetch('/api/dify-chat', {
+   method: 'POST',
+   headers: { 'Content-Type': 'application/json' },
+   body: JSON.stringify({
+-    text,
+-    senderName: user.name,
+-    senderPhone: user.phone,
+-    conversationId: conversationIdRef.current,
++    query: text,
++    user: `web-${user.phone}`,
++    conversationId: conversationIdRef.current,
++    senderName: user.name,
++    senderPhone: user.phone,
+   }),
+   signal: AbortSignal.timeout(45000),
+ });
+```
+
+La respuesta sigue el mismo formato: `{ success, botResponse, conversationId }`, así que el resto del widget no cambia.
+
+---
+
+### Configuración en Dify (manual, sin código)
+
+Dentro del panel de Dify, en la configuración de tu app de Alma:
+
+1. **Crear HTTP Tool** llamada `notificar_vendedor`:
+   - URL: `https://n8n.axion380.com.br/webhook/dify-events`
+   - Método: [POST](file:///c:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/src/app/api/send-message/route.ts#12-96)
+   - Body:
+     ```json
+     {
+       "event": "handoff_request",
+       "customer_name": "{{nombre_del_cliente}}",
+       "customer_phone": "{{telefono}}",
+       "product": "{{producto_consultado}}",
+       "conversation_summary": "{{resumen_de_la_conversion}}",
+       "conversation_id": "{{conversation_id}}"
+     }
+     ```
+   - Descripción para el agente: *"Usa esta herramienta cuando el cliente muestre señales de compra (pregunta por precio exacto, envío, disponibilidad, o dice 'me interesa'). Notifica al vendedor humano para que tome la conversación."*
+
+2. **Crear un webhook en n8n** con path `/dify-events` que reciba estos eventos y ejecute la notificación al vendedor por WhatsApp.
+
+---
+
+### Archivos que NO se tocan
+
+| Archivo | Razón |
+|---------|-------|
+| [src/app/api/send-message/route.ts](file:///c:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/src/app/api/send-message/route.ts) | Se mantiene como fallback y para el flujo de WhatsApp |
+| `src/app/api/webhook/` | Sigue recibiendo webhooks de n8n → web |
+| `src/app/api/messages/` | Sigue sirviendo para polling de WhatsApp |
+| `src/app/actions/chat.ts` | Legacy, ya no se usa pero no molesta |
+
+---
+
+## Verification Plan
+
+### Manual Verification (con tu ayuda)
+
+1. **Configurar `.env.local`** con tu API Key de Dify y la URL base
+2. **Iniciar dev server** con `npm run dev`
+3. **Abrir el chat widget** en el sitio y enviar un mensaje
+4. **Verificar:**
+   - ✅ Alma responde directamente (sin pasar por n8n)
+   - ✅ El `conversation_id` se mantiene entre mensajes
+   - ✅ El typing indicator funciona durante la espera
+   - ✅ La consola de debug muestra la llamada a Dify (no a n8n)
+5. **Simular handoff:** Escribir "me interesa, ¿cómo lo compro?" y verificar que:
+   - ✅ Alma responde con el enlace de WhatsApp
+   - ✅ (Si configuraste la HTTP Tool en Dify) n8n recibe el webhook de handoff
+
+### Browser Testing
+
+Se puede verificar visualmente con el browser tool que:
+- El chat abre correctamente
+- Los mensajes se envían y reciben
+- No hay errores en la consola del navegador

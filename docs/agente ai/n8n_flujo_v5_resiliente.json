@@ -1,0 +1,363 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "jaflujodev",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -496,
+                5712
+            ],
+            "id": "bb52d82a-baf3-48ba-aec7-970221358eb7",
+            "name": "Webhook Web Chat v5",
+            "webhookId": "send-to-whatsapp"
+        },
+        {
+            "parameters": {
+                "jsCode": "// ─── PREPARAR DATOS v5 (Simplificado y Resiliente) ───\nconst body = $input.item.json.body;\n\n// ─── CASO 1: WhatsApp entrante (Evolution API) ───\nif (body.event === 'messages.upsert') {\n  const msgData = body.data;\n  if (msgData.key.fromMe) throw new Error('Mensaje del bot, ignorando');\n  const remoteJid = msgData.key.remoteJidAlt || msgData.key.remoteJid;\n  const phoneNumber = remoteJid.split('@')[0];\n  const messageText = msgData.message?.conversation ||\n                      msgData.message?.extendedTextMessage?.text || '[Multimedia]';\n  return {\n    json: {\n      type: 'whatsapp_incoming',\n      phoneNumber,\n      text: messageText,\n      senderName: msgData.pushName || 'Usuario',\n      timestamp: msgData.messageTimestamp * 1000,\n      conversation_id: '',\n      storeJid: ''\n    }\n  };\n}\n\n// ─── CASO 2: Web Chat ───\nconst data = body.data || body;\nconst clientPhone = String(data.senderPhone || data.phoneNumber || '').replace(/[^0-9]/g, '');\nlet storeRaw = String(data.storeNumber || data.storePhoneNumber || '59895435644').replace(/[^0-9]/g, '');\nlet storeJid = storeRaw;\nif (storeRaw.length === 9) storeJid = '598' + storeRaw;\n\nconst conversationId = data.conversation_id || body.metadata?.conversation_id || '';\n\nreturn {\n  json: {\n    type: 'chat_outgoing',\n    phoneNumber: clientPhone,\n    senderPhone: clientPhone,\n    senderName: data.senderName || 'Cliente Web',\n    text: data.text || body.text || '',\n    conversation_id: conversationId,\n    storeJid: storeJid,\n    platform: body.metadata?.platform || 'web_boutique',\n    timestamp: body.metadata?.timestamp ? new Date(body.metadata.timestamp).getTime() : Date.now()\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -272,
+                5712
+            ],
+            "id": "162e9377-3b71-4d9d-b9de-f47be9e16b40",
+            "name": "Preparar Datos v5"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 1
+                    },
+                    "conditions": [
+                        {
+                            "id": "condition-outgoing",
+                            "leftValue": "={{ $json.type }}",
+                            "rightValue": "chat_outgoing",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                -48,
+                5712
+            ],
+            "id": "cfbb0719-3516-4bc6-8c66-1f99b1cad90d",
+            "name": "¿Es mensaje del Chat?"
+        },
+        {
+            "parameters": {
+                "resource": "messages-api",
+                "instanceName": "Maya",
+                "remoteJid": "={{ $json.storeJid }}",
+                "messageText": "=🛍️ *Web Boutique*\n👤 {{ $json.senderName }} ({{ $json.senderPhone }})\n💬 {{ $json.text }}",
+                "options_message": {}
+            },
+            "type": "n8n-nodes-evolution-api.evolutionApi",
+            "typeVersion": 1,
+            "position": [
+                176,
+                5568
+            ],
+            "id": "1b5ac43f-7bef-46b5-b044-e9cefe5be4b5",
+            "name": "📤 Notificar Vendedor",
+            "credentials": {
+                "evolutionApi": {
+                    "id": "6r5z9RoXouEeeobi",
+                    "name": "Evolution Maya"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "user": "={{ $('Preparar Datos v5').item.json.phoneNumber }}",
+                "query": "={{ $('Preparar Datos v5').item.json.text }}",
+                "conversationId": "={{ $('Preparar Datos v5').item.json.conversation_id }}",
+                "responseMode": "blocking"
+            },
+            "type": "n8n-nodes-difyai.difyAi",
+            "typeVersion": 1,
+            "position": [
+                176,
+                5808
+            ],
+            "id": "cbc22a7b-1a4a-4019-be52-9546fd947434",
+            "name": "🤖 Dify (Blocking)",
+            "credentials": {
+                "difyApi": {
+                    "id": "4VHrD6jV7wt07VYZ",
+                    "name": "Dify account"
+                }
+            },
+            "continueOnFail": true
+        },
+        {
+            "parameters": {
+                "jsCode": "// ─── VERIFICAR RESPUESTA DE DIFY ───\nconst item = $input.item.json;\n\n// Campos que Dify devuelve en modo blocking\nconst answer = item.answer || item.response || item.data?.answer || '';\nconst conversationId = item.conversation_id || item.data?.conversation_id || '';\n\n// Si hay error o respuesta vacía, marcar como fallo\nconst hasError = !!item.error || !answer.trim();\n\nreturn {\n  json: {\n    success: !hasError,\n    answer: answer.trim(),\n    conversation_id: conversationId,\n    error: hasError ? (item.error || 'Respuesta vacía de Dify') : null\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                400,
+                5808
+            ],
+            "id": "verificar-respuesta",
+            "name": "🔍 Verificar Respuesta"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 1
+                    },
+                    "conditions": [
+                        {
+                            "id": "check-success",
+                            "leftValue": "={{ $json.success }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                624,
+                5808
+            ],
+            "id": "check-success-node",
+            "name": "¿Dify respondió OK?"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ {\n  \"success\": true,\n  \"type\": \"bot_response\",\n  \"response\": $json.answer,\n  \"conversation_id\": $json.conversation_id,\n  \"phoneNumber\": $('Preparar Datos v5').item.json.phoneNumber\n} }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                880,
+                5708
+            ],
+            "id": "f299f6c9-418d-4e6d-8913-cff93d97d347",
+            "name": "✅ Responder OK"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ {\n  \"success\": true,\n  \"type\": \"bot_response\",\n  \"response\": \"Gracias por tu interés. En este momento tengo mucha demanda y no puedo responderte al instante. Para una atención personalizada, te invito a escribirnos directamente por WhatsApp haciendo clic en el ícono verde de abajo. ¡Estaremos encantados de atenderte! ✨\",\n  \"conversation_id\": \"\",\n  \"phoneNumber\": $('Preparar Datos v5').item.json.phoneNumber\n} }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                880,
+                5920
+            ],
+            "id": "resp-fallback-id",
+            "name": "⚠️ Responder Fallback"
+        },
+        {
+            "parameters": {
+                "resource": "messages-api",
+                "instanceName": "Maya",
+                "remoteJid": "={{ $('Preparar Datos v5').item.json.storeJid }}",
+                "messageText": "=🤖 *Respuesta IA para {{ $('Preparar Datos v5').item.json.senderName }}*\n\n{{ $json.answer }}",
+                "options_message": {}
+            },
+            "type": "n8n-nodes-evolution-api.evolutionApi",
+            "typeVersion": 1,
+            "position": [
+                1120,
+                5708
+            ],
+            "id": "f04bc3b6-db8a-4167-b362-67f0d83bd67b",
+            "name": "📤 Notificar Respuesta IA",
+            "credentials": {
+                "evolutionApi": {
+                    "id": "6r5z9RoXouEeeobi",
+                    "name": "Evolution Maya"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://joyeria.a380.com.br/api/webhook",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ {\n  \"text\": $json.text,\n  \"senderName\": $json.senderName,\n  \"timestamp\": $json.timestamp,\n  \"phoneNumber\": $json.phoneNumber,\n  \"type\": \"whatsapp_incoming\"\n} }}",
+                "options": {
+                    "response": {
+                        "response": {}
+                    }
+                }
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                176,
+                6100
+            ],
+            "id": "442b3094-16d0-4bc5-b38e-3f8fbb7f8091",
+            "name": "📨 WhatsApp → Chat Web"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"type\": $json.type, \"message\": \"WhatsApp recibido\" } }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                400,
+                6100
+            ],
+            "id": "2f7efd2f-c33b-4914-ba75-ba75c9771f01",
+            "name": "✅ Responder: WhatsApp OK"
+        }
+    ],
+    "connections": {
+        "Webhook Web Chat v5": {
+            "main": [
+                [
+                    {
+                        "node": "Preparar Datos v5",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Preparar Datos v5": {
+            "main": [
+                [
+                    {
+                        "node": "¿Es mensaje del Chat?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "¿Es mensaje del Chat?": {
+            "main": [
+                [
+                    {
+                        "node": "📤 Notificar Vendedor",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "🤖 Dify (Blocking)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "📨 WhatsApp → Chat Web",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🤖 Dify (Blocking)": {
+            "main": [
+                [
+                    {
+                        "node": "🔍 Verificar Respuesta",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🔍 Verificar Respuesta": {
+            "main": [
+                [
+                    {
+                        "node": "¿Dify respondió OK?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "¿Dify respondió OK?": {
+            "main": [
+                [
+                    {
+                        "node": "✅ Responder OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "⚠️ Responder Fallback",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "✅ Responder OK": {
+            "main": [
+                [
+                    {
+                        "node": "📤 Notificar Respuesta IA",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📨 WhatsApp → Chat Web": {
+            "main": [
+                [
+                    {
+                        "node": "✅ Responder: WhatsApp OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "48879120a3f3dc46e2394aadd0f93e174d47f6eef6bd3799c4f575c713076dca"
+    }
+}
