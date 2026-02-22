@@ -7,36 +7,35 @@ import { Product, Category } from '@/lib/products';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { WhatsappIcon } from '@/components/icons';
 import { LayoutGrid, Eye, Package, Tag, Loader2 } from 'lucide-react';
 import { VirtualTryOn } from '@/components/virtual-try-on';
 import { WhatsAppProductButton } from '@/components/whatsapp-product-button';
 import { Badge } from '@/components/ui/badge';
 
 function FilterContent({ categories }: { categories: Category[] }) {
-    return (
-        <div className="space-y-8">
-            <div className="flex items-baseline justify-between">
-              <h2 className="text-lg font-medium tracking-wide uppercase">Filtros</h2>
-              <Link href="/collections" className="text-xs text-primary hover:underline">Limpiar</Link>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-primary">
-                <LayoutGrid className="h-5 w-5" />
-                <h3 className="text-sm font-semibold uppercase tracking-wider">Categorías</h3>
-              </div>
-              <ul className="space-y-2 pl-2">
-                {categories.map((cat) => (
-                  <li key={cat.value}>
-                    <Link className="block text-sm text-muted-foreground hover:text-primary transition-colors py-1" href={`/collections?category=${cat.value}`}>
-                      {cat.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+  return (
+    <div className="space-y-8">
+      <div className="flex items-baseline justify-between">
+        <h2 className="text-lg font-medium tracking-wide uppercase">Filtros</h2>
+        <Link href="/collections" className="text-xs text-primary hover:underline">Limpiar</Link>
+      </div>
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-primary">
+          <LayoutGrid className="h-5 w-5" />
+          <h3 className="text-sm font-semibold uppercase tracking-wider">Categorías</h3>
         </div>
-    );
+        <ul className="space-y-2 pl-2">
+          {categories.map((cat) => (
+            <li key={cat.value}>
+              <Link className="block text-sm text-muted-foreground hover:text-primary transition-colors py-1" href={`/collections?category=${cat.value}`}>
+                {cat.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
 }
 
 function CollectionsContent() {
@@ -44,7 +43,7 @@ function CollectionsContent() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   const categoryFilter = searchParams.get('category');
 
   useEffect(() => {
@@ -52,7 +51,7 @@ function CollectionsContent() {
       setLoading(true);
       try {
         const [prodData, catData] = await Promise.all([
-          getProducts({ category: categoryFilter || undefined }), 
+          getProducts({ category: categoryFilter || undefined }),
           getCategories()
         ]);
         setAllProducts(prodData);
@@ -70,7 +69,7 @@ function CollectionsContent() {
   // devolvió más resultados de los esperados o para refinamiento instantáneo.
   const filteredProducts = useMemo(() => {
     if (!categoryFilter) return allProducts;
-    return allProducts.filter(p => 
+    return allProducts.filter(p =>
       p.categories && p.categories.includes(categoryFilter)
     );
   }, [allProducts, categoryFilter]);
@@ -105,24 +104,24 @@ function CollectionsContent() {
                   <div key={product.id} className="group flex flex-col gap-4 animate-in fade-in duration-500">
                     <div className="relative aspect-[4/5] w-full overflow-hidden bg-secondary rounded-lg">
                       <Link href={`/products/${product.id}`}>
-                          <Image
+                        <Image
                           src={product.images?.[0] || 'https://placehold.co/600x800?text=No+Img'}
                           alt={product.name}
                           fill
                           className="object-cover transition-transform duration-700 group-hover:scale-105"
                           unoptimized
-                          />
+                        />
                       </Link>
                       {product.isOnSale && (
                         <Badge className="absolute top-4 left-4 bg-destructive text-white border-none text-[10px] uppercase tracking-widest shadow-md">
-                            <Tag className="w-3 h-3 mr-1" />
-                            Oferta
+                          <Tag className="w-3 h-3 mr-1" />
+                          Oferta
                         </Badge>
                       )}
                       <div className="absolute top-3 right-3 z-10 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                         <VirtualTryOn product={product}>
                           <Button size="icon" className="h-10 w-10 bg-white/90 rounded-full shadow-lg text-foreground">
-                              <Eye className="h-5 w-5" />
+                            <Eye className="h-5 w-5" />
                           </Button>
                         </VirtualTryOn>
                       </div>
@@ -145,24 +144,23 @@ function CollectionsContent() {
                       </div>
                       <WhatsAppProductButton product={product} className="mt-3 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] md:text-xs font-bold uppercase tracking-widest h-10">
                         Consultar
-                        <WhatsappIcon className="w-4 h-4 fill-current ml-2" />
                       </WhatsAppProductButton>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="col-span-full flex flex-col items-center justify-center py-20 text-muted-foreground">
-                    <Package className="h-16 w-16 opacity-10 mb-4" />
-                    <p>No se encontraron piezas en esta categoría.</p>
-                    <Button variant="link" asChild className="mt-4">
-                      <Link href="/collections">Ver toda la colección</Link>
-                    </Button>
+                  <Package className="h-16 w-16 opacity-10 mb-4" />
+                  <p>No se encontraron piezas en esta categoría.</p>
+                  <Button variant="link" asChild className="mt-4">
+                    <Link href="/collections">Ver toda la colección</Link>
+                  </Button>
                 </div>
               )
             ) : (
               Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="aspect-[4/5] bg-muted animate-pulse rounded-lg flex items-center justify-center">
-                   <Loader2 className="h-8 w-8 animate-spin opacity-20" />
+                  <Loader2 className="h-8 w-8 animate-spin opacity-20" />
                 </div>
               ))
             )}
