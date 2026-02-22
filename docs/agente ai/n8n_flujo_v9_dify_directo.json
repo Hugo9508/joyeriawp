@@ -1,10 +1,10 @@
 {
-    "name": "Joyería Alianza - Chat v9 (Dify Directo + Events)",
+    "name": "Joyería Alianza - Chat v9.1 (Fixes: Supabase + Historial Dify)",
     "nodes": [
         {
             "parameters": {
-                "content": "## ⚙️ CONFIGURACIÓN v9 — Dify Directo\n\n**Arquitectura nueva:**\n- 🌐 **Chat Web** → Next.js llama Dify directo (ya no pasa por n8n)\n- 📱 **WhatsApp** → sigue entrando por webhook `/jaflujodev`\n- 🔔 **Handoff Web** → Next.js detecta handoff y notifica a n8n vía `/dify-events`\n\n**Configurar antes de activar:**\n1. **Google Sheets:** Crear credencial OAuth2 y asignarla a los nodos de Sheets\n2. **Sheet ID:** Reemplazar `YOUR_GOOGLE_SHEET_ID` con el ID real\n3. **Hojas:** \"Historial\" y \"Prospectos\" (mismas columnas que v8)\n4. **Variables de entorno:** `SUPABASE_KEY`\n5. **Credenciales:** OpenAI, Evolution API, Supabase (ya existentes)",
-                "height": 400,
+                "content": "## ⚙️ CONFIGURACIÓN v9.1 — Fixes\n\n**Cambios vs v9:**\n1. ✅ Supabase: removido `$env.SUPABASE_KEY` — usa credencial directa\n2. ✅ Historial: nuevo nodo que lee conversación de Dify API\n3. ✅ LLM: prompt actualizado con historial completo\n4. ✅ WhatsApp: notificación con datos reales\n\n**Configurar:**\n1. **Google Sheets:** Asignar credencial OAuth2 y reemplazar `YOUR_GOOGLE_SHEET_ID`\n2. **Supabase:** Verificar que la credencial `y8DfPHX391IPTiG3` tenga la API key correcta\n3. **OpenAI:** Credencial `RtDfEvCFWwteC4hN` ya configurada\n4. **Evolution API:** Credencial `6r5z9RoXouEeeobi` ya configurada",
+                "height": 380,
                 "width": 560,
                 "color": 3
             },
@@ -15,12 +15,12 @@
             ],
             "typeVersion": 1,
             "id": "note-v9-config",
-            "name": "📌 Config v9"
+            "name": "📌 Config v9.1"
         },
         {
             "parameters": {
-                "content": "## 📱 WEBHOOK 1: WhatsApp + Comandos\n\n**Path:** `/jaflujodev` (mismo que v8)\n\nRecibe solo:\n- Mensajes de WhatsApp (Evolution API)\n- Comandos #pausa / #activar\n- Respuestas del vendedor\n\n⚠️ Ya NO recibe mensajes del chat web — esos van directo a Dify.",
-                "height": 240,
+                "content": "## 📱 WEBHOOK 1: WhatsApp + Comandos\n\n**Path:** `/jaflujodev`\n\nRecibe solo:\n- Mensajes de WhatsApp (Evolution API)\n- Comandos #pausa / #activar\n- Respuestas del vendedor\n\n⚠️ Ya NO recibe mensajes del chat web.",
+                "height": 220,
                 "width": 480,
                 "color": 6
             },
@@ -35,19 +35,19 @@
         },
         {
             "parameters": {
-                "content": "## 🔔 WEBHOOK 2: Eventos Dify (Handoff)\n\n**Path:** `/dify-events`\n\nRecibe eventos del endpoint Next.js `/api/dify-chat` cuando Alma detecta señales de compra.\n\n**Flujo:**\n1. Recibe evento handoff\n2. GPT-4.1-mini genera resumen del prospecto\n3. Guarda prospecto en Google Sheets\n4. Envía resumen al vendedor por WhatsApp\n5. Pausa IA en Supabase\n\n💡 Fire-and-forget: el cliente ya recibió su respuesta de Dify. Este flujo corre en background.",
-                "height": 320,
+                "content": "## 🔔 WEBHOOK 2: Eventos Dify (Handoff)\n\n**Path:** `/dify-events`\n\n**Flujo v9.1:**\n1. Recibe evento handoff\n2. 📥 Llama Dify API para obtener historial completo\n3. 🧠 GPT-4.1-mini analiza TODO el historial\n4. 📊 Guarda prospecto en Sheets\n5. 📱 Envía resumen al vendedor por WhatsApp\n6. ⏸️ Pausa IA en Supabase (sin $env)\n\n💡 El LLM ahora tiene contexto completo de la conversación.",
+                "height": 340,
                 "width": 480,
                 "color": 2
             },
             "type": "n8n-nodes-base.stickyNote",
             "position": [
                 -2600,
-                10550
+                10520
             ],
             "typeVersion": 1,
             "id": "note-v9-dify-events",
-            "name": "📌 Dify Events Webhook"
+            "name": "📌 Dify Events v9.1"
         },
         {
             "parameters": {
@@ -187,14 +187,6 @@
                 "headerParameters": {
                     "parameters": [
                         {
-                            "name": "apikey",
-                            "value": "={{ $env.SUPABASE_KEY }}"
-                        },
-                        {
-                            "name": "Authorization",
-                            "value": "=Bearer {{ $env.SUPABASE_KEY }}"
-                        },
-                        {
                             "name": "Content-Type",
                             "value": "application/json"
                         },
@@ -261,14 +253,6 @@
                 "sendHeaders": true,
                 "headerParameters": {
                     "parameters": [
-                        {
-                            "name": "apikey",
-                            "value": "={{ $env.SUPABASE_KEY }}"
-                        },
-                        {
-                            "name": "Authorization",
-                            "value": "=Bearer {{ $env.SUPABASE_KEY }}"
-                        },
                         {
                             "name": "Content-Type",
                             "value": "application/json"
@@ -385,7 +369,7 @@
         },
         {
             "parameters": {
-                "jsCode": "// ─── Procesar evento de Dify (handoff) ───\nconst body = $input.item.json.body;\nconst event = body.event || 'unknown';\nconst senderName = body.senderName || 'Cliente Web';\nconst senderPhone = String(body.senderPhone || '').replace(/[^0-9]/g, '');\nconst conversationId = body.conversationId || '';\nconst botResponse = body.botResponse || '';\nconst userQuery = body.userQuery || '';\n\nreturn {\n  json: {\n    event,\n    senderName,\n    senderPhone,\n    phoneNumber: senderPhone,\n    conversationId,\n    botResponse,\n    userQuery,\n    canal: 'Web Boutique',\n    timestamp: Date.now()\n  }\n};"
+                "jsCode": "// ─── Procesar evento de Dify (handoff) ───\nconst body = $input.item.json.body;\nconst event = body.event || 'unknown';\nconst senderName = body.senderName || 'Cliente Web';\nconst senderPhone = String(body.senderPhone || '').replace(/[^0-9]/g, '');\nconst conversationId = body.conversationId || '';\nconst botResponse = body.botResponse || '';\nconst userQuery = body.userQuery || '';\n\nreturn {\n  json: {\n    event,\n    senderName,\n    senderPhone,\n    phoneNumber: senderPhone,\n    conversationId,\n    botResponse,\n    userQuery,\n    canal: 'Web Boutique',\n    timestamp: Date.now(),\n    difyUser: `web-${senderPhone}`\n  }\n};"
             },
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
@@ -430,53 +414,71 @@
         },
         {
             "parameters": {
-                "operation": "append",
-                "documentId": {
-                    "__rl": true,
-                    "value": "YOUR_GOOGLE_SHEET_ID",
-                    "mode": "id"
+                "method": "GET",
+                "url": "=https://api.dify.ai/v1/messages",
+                "authentication": "genericCredentialType",
+                "genericAuthType": "httpHeaderAuth",
+                "sendQuery": true,
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "conversation_id",
+                            "value": "={{ $json.conversationId }}"
+                        },
+                        {
+                            "name": "user",
+                            "value": "={{ $json.difyUser }}"
+                        },
+                        {
+                            "name": "limit",
+                            "value": "20"
+                        }
+                    ]
                 },
-                "sheetName": {
-                    "__rl": true,
-                    "value": "Historial",
-                    "mode": "list"
-                },
-                "columns": {
-                    "mappingMode": "defineBelow",
-                    "value": {
-                        "timestamp": "={{ $now.toISO() }}",
-                        "conversation_id": "={{ $json.conversationId }}",
-                        "canal": "=Web Boutique (Handoff)",
-                        "sender": "={{ $json.senderName }}",
-                        "mensaje": "=[HANDOFF] {{ $json.userQuery }}",
-                        "phone": "={{ $json.senderPhone }}"
+                "options": {
+                    "response": {
+                        "response": {
+                            "responseFormat": "json"
+                        }
                     }
-                },
-                "options": {}
+                }
             },
-            "type": "n8n-nodes-base.googleSheets",
-            "typeVersion": 4.5,
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
             "position": [
                 -1500,
-                10750
+                10800
             ],
-            "id": "save-handoff-hist-v9",
-            "name": "📊 Guardar Evento Historial",
+            "id": "fetch-dify-history-v9",
+            "name": "📥 Obtener Historial Dify",
             "credentials": {
-                "googleSheetsOAuth2Api": {
-                    "id": "CONFIGURAR_GOOGLE_SHEETS",
-                    "name": "Google Sheets"
+                "httpHeaderAuth": {
+                    "id": "CONFIGURAR_DIFY_AUTH",
+                    "name": "Dify API Key"
                 }
             }
         },
         {
             "parameters": {
+                "jsCode": "// Combinar historial de Dify con datos del evento\nconst eventData = $('📋 Preparar Evento').item.json;\nconst difyResponse = $json;\n\n// Extraer mensajes del historial de Dify\nlet conversationText = '';\nconst messages = difyResponse.data || [];\n\n// Los mensajes vienen en orden descendente, los invertimos\nconst sorted = [...messages].reverse();\n\nfor (const msg of sorted) {\n  const userMsg = msg.query || '';\n  const botMsg = msg.answer || '';\n  if (userMsg) conversationText += `👤 Cliente: ${userMsg}\\n`;\n  if (botMsg) conversationText += `🤖 Alma: ${botMsg}\\n`;\n  conversationText += '---\\n';\n}\n\nif (!conversationText) {\n  // Fallback: usar solo el último mensaje si no hay historial\n  conversationText = `👤 Cliente: ${eventData.userQuery}\\n🤖 Alma: ${eventData.botResponse}`;\n}\n\nreturn {\n  json: {\n    ...eventData,\n    conversationHistory: conversationText,\n    totalMessages: sorted.length\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -1300,
+                10800
+            ],
+            "id": "format-history-v9",
+            "name": "📝 Formatear Historial"
+        },
+        {
+            "parameters": {
                 "promptType": "define",
-                "text": "=Evento de handoff desde el chat web de Joyería Alianza.\n\nCliente: {{ $json.senderName }} ({{ $json.senderPhone }})\nCanal: Web Boutique\nÚltimo mensaje del cliente: {{ $json.userQuery }}\nRespuesta de Alma: {{ $json.botResponse }}",
+                "text": "=Conversación COMPLETA de handoff en Joyería Alianza (joyería de alta gama).\n\nCliente: {{ $json.senderName }} ({{ $json.senderPhone }})\nCanal: {{ $json.canal }}\nTotal mensajes: {{ $json.totalMessages }}\n\n--- HISTORIAL COMPLETO ---\n{{ $json.conversationHistory }}\n--- FIN HISTORIAL ---",
                 "messages": {
                     "messageValues": [
                         {
-                            "message": "Analiza este evento de handoff de un chat de joyería. Extrae SOLO un JSON con estos campos (si no se mencionó, pon 'No especificado'):\n{\"nombre\":\"\",\"producto\":\"\",\"para_quien\":\"\",\"ocasion\":\"\",\"urgencia\":\"\",\"preferencias\":\"\",\"nivel_interes\":\"bajo/medio/alto\",\"resumen\":\"2 líneas max\"}\nDevolvé SOLO el JSON, nada más."
+                            "message": "Eres un analista de ventas de joyería de alta gama. Analiza esta conversación COMPLETA entre un cliente y la asistente Alma.\n\nExtrae SOLO un JSON con estos campos. Busca en TODA la conversación las pistas:\n{\n  \"nombre\": \"nombre del cliente si se mencionó\",\n  \"producto\": \"joya específica que le interesó (nombre, tipo, material)\",\n  \"precio\": \"precio mencionado si lo hay\",\n  \"para_quien\": \"para quién es la joya (regalo, uso personal)\",\n  \"ocasion\": \"ocasión (cumpleaños, aniversario, etc)\",\n  \"urgencia\": \"baja/media/alta según las señales\",\n  \"preferencias\": \"gustos, estilo, materiales preferidos\",\n  \"nivel_interes\": \"bajo/medio/alto basado en la conversación\",\n  \"resumen\": \"2-3 líneas resumiendo la intención de compra\"\n}\n\nSi un dato no se mencionó, pon 'No mencionado'. Devolvé SOLO el JSON."
                         }
                     ]
                 },
@@ -485,8 +487,8 @@
             "type": "@n8n/n8n-nodes-langchain.chainLlm",
             "typeVersion": 1.7,
             "position": [
-                -1300,
-                10750
+                -1100,
+                10800
             ],
             "id": "llm-resumen-v9",
             "name": "🧠 LLM Resumen Handoff",
@@ -500,15 +502,15 @@
                     "mode": "list"
                 },
                 "options": {
-                    "maxTokens": 300,
+                    "maxTokens": 500,
                     "temperature": 0.2
                 }
             },
             "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
             "typeVersion": 1.2,
             "position": [
-                -1300,
-                10950
+                -1100,
+                11000
             ],
             "id": "openai-model-v9",
             "name": "OpenAI Model",
@@ -521,12 +523,12 @@
         },
         {
             "parameters": {
-                "jsCode": "// Parsear JSON del LLM y combinar con datos del evento\nconst llmOutput = $json.response?.text || $json.text || $json.output || $json.response || '{}';\nlet parsed = {};\ntry {\n  const jsonMatch = llmOutput.match(/\\{[\\s\\S]*\\}/);\n  parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : {};\n} catch(e) { parsed = { resumen: llmOutput }; }\n\nconst prev = $('📋 Preparar Evento').item.json;\nreturn {\n  json: {\n    ...parsed,\n    phoneNumber: prev.senderPhone,\n    senderName: prev.senderName,\n    canal: prev.canal,\n    conversationId: prev.conversationId,\n    userQuery: prev.userQuery,\n    botResponse: prev.botResponse,\n    storeJid: '59895435644',\n    fecha: new Date().toISOString().split('T')[0]\n  }\n};"
+                "jsCode": "// Parsear JSON del LLM y combinar con datos del evento\nconst llmOutput = $json.response?.text || $json.text || $json.output || $json.response || '{}';\nlet parsed = {};\ntry {\n  const jsonMatch = llmOutput.match(/\\{[\\s\\S]*\\}/);\n  parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : {};\n} catch(e) { parsed = { resumen: llmOutput }; }\n\nconst prev = $('📝 Formatear Historial').item.json;\nreturn {\n  json: {\n    ...parsed,\n    phoneNumber: prev.senderPhone,\n    senderName: prev.senderName,\n    canal: prev.canal,\n    conversationId: prev.conversationId,\n    userQuery: prev.userQuery,\n    botResponse: prev.botResponse,\n    storeJid: '59895435644',\n    fecha: new Date().toISOString().split('T')[0]\n  }\n};"
             },
             "type": "n8n-nodes-base.code",
             "typeVersion": 2,
             "position": [
-                -1100,
+                -900,
                 10800
             ],
             "id": "proc-resumen-v9",
@@ -552,14 +554,16 @@
                         "canal": "={{ $json.canal }}",
                         "nombre": "={{ $json.nombre || $json.senderName }}",
                         "telefono": "={{ $json.phoneNumber }}",
-                        "producto": "={{ $json.producto || 'No especificado' }}",
-                        "para_quien": "={{ $json.para_quien || 'No especificado' }}",
-                        "ocasion": "={{ $json.ocasion || 'No especificado' }}",
-                        "urgencia": "={{ $json.urgencia || 'No especificado' }}",
-                        "preferencias": "={{ $json.preferencias || 'No especificado' }}",
-                        "nivel_interes": "={{ $json.nivel_interes || 'No especificado' }}",
+                        "producto": "={{ $json.producto || 'No mencionado' }}",
+                        "precio": "={{ $json.precio || 'No mencionado' }}",
+                        "para_quien": "={{ $json.para_quien || 'No mencionado' }}",
+                        "ocasion": "={{ $json.ocasion || 'No mencionado' }}",
+                        "urgencia": "={{ $json.urgencia || 'No mencionado' }}",
+                        "preferencias": "={{ $json.preferencias || 'No mencionado' }}",
+                        "nivel_interes": "={{ $json.nivel_interes || 'No mencionado' }}",
                         "estado": "=Handoff Web (Dify directo)",
-                        "conversation_id": "={{ $json.conversationId }}"
+                        "conversation_id": "={{ $json.conversationId }}",
+                        "resumen": "={{ $json.resumen || '' }}"
                     }
                 },
                 "options": {}
@@ -567,7 +571,7 @@
             "type": "n8n-nodes-base.googleSheets",
             "typeVersion": 4.5,
             "position": [
-                -900,
+                -700,
                 10800
             ],
             "id": "save-prospecto-v9",
@@ -584,13 +588,13 @@
                 "resource": "messages-api",
                 "instanceName": "Maya",
                 "remoteJid": "=59895435644",
-                "messageText": "=🌐 *Handoff desde Chat Web*\n\n👤 {{ $json.nombre || $json.senderName }} ({{ $json.phoneNumber }})\n💍 {{ $json.producto || 'No especificado' }}\n🎁 {{ $json.para_quien || '-' }} - {{ $json.ocasion || '-' }}\n⏰ {{ $json.urgencia || '-' }}\n✨ {{ $json.preferencias || '-' }}\n🔥 Interés: {{ $json.nivel_interes || '-' }}\n\n💬 Último msg: \"{{ $json.userQuery }}\"\n📝 {{ $json.resumen || 'Ver historial en Sheets' }}",
+                "messageText": "=🌐 *Handoff desde Chat Web*\n\n👤 {{ $json.nombre || $json.senderName }} ({{ $json.phoneNumber }})\n💍 {{ $json.producto || 'No mencionado' }}\n💰 {{ $json.precio || '-' }}\n🎁 {{ $json.para_quien || '-' }} | {{ $json.ocasion || '-' }}\n⏰ Urgencia: {{ $json.urgencia || '-' }}\n✨ {{ $json.preferencias || '-' }}\n🔥 Interés: {{ $json.nivel_interes || '-' }}\n\n📝 {{ $json.resumen || 'Ver prospecto en Sheets' }}",
                 "options_message": {}
             },
             "type": "n8n-nodes-evolution-api.evolutionApi",
             "typeVersion": 1,
             "position": [
-                -700,
+                -500,
                 10800
             ],
             "id": "send-wa-vendor-v9",
@@ -612,14 +616,6 @@
                 "headerParameters": {
                     "parameters": [
                         {
-                            "name": "apikey",
-                            "value": "={{ $env.SUPABASE_KEY }}"
-                        },
-                        {
-                            "name": "Authorization",
-                            "value": "=Bearer {{ $env.SUPABASE_KEY }}"
-                        },
-                        {
                             "name": "Content-Type",
                             "value": "application/json"
                         },
@@ -637,7 +633,7 @@
             "type": "n8n-nodes-base.httpRequest",
             "typeVersion": 4.2,
             "position": [
-                -500,
+                -300,
                 10800
             ],
             "id": "pause-ia-handoff-v9",
@@ -658,7 +654,7 @@
             "type": "n8n-nodes-base.respondToWebhook",
             "typeVersion": 1.5,
             "position": [
-                -300,
+                -100,
                 10800
             ],
             "id": "resp-handoff-ok-v9",
@@ -674,7 +670,7 @@
             "typeVersion": 1.5,
             "position": [
                 -1500,
-                10900
+                10950
             ],
             "id": "resp-ignore-v9",
             "name": "⏭️ Evento Ignorado"
@@ -816,7 +812,7 @@
             "main": [
                 [
                     {
-                        "node": "📊 Guardar Evento Historial",
+                        "node": "📥 Obtener Historial Dify",
                         "type": "main",
                         "index": 0
                     }
@@ -830,7 +826,18 @@
                 ]
             ]
         },
-        "📊 Guardar Evento Historial": {
+        "📥 Obtener Historial Dify": {
+            "main": [
+                [
+                    {
+                        "node": "📝 Formatear Historial",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📝 Formatear Historial": {
             "main": [
                 [
                     {
