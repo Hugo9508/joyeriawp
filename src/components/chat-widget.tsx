@@ -104,6 +104,17 @@ export function ChatWidget() {
 
     const handleOpenOnly = () => {
       setIsOpen(true);
+      // ✅ Resetear conversación de Dify para que no arrastre contexto de producto anterior
+      setConversationId('');
+      conversationIdRef.current = '';
+      sessionStorage.removeItem('dify_conversation_id');
+      // Resetear mensajes al bienvenida para empezar limpio
+      setMessages([{
+        id: 'welcome',
+        text: `¡Hola! Soy ${appSettings.chatAgentName}. ¿En qué puedo ayudarte hoy? ✨`,
+        sender: 'agent',
+        timestamp: new Date(),
+      }]);
       if (!localStorage.getItem('alianza_user_info')) setShowOnboarding(true);
     };
 
