@@ -12,7 +12,7 @@ const GOOGLE_MAPS_SEARCH_URL = "https://www.google.com/maps/search/?api=1&query=
 // Usamos Google Maps embed en modo place para buscar la dirección exacta
 const EMBED_PLACE_URL = "https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU17R8&q=Calle+Arocena+1592,Carrasco,Montevideo,Uruguay&zoom=16";
 // Fallback sin API key: usar el modo de búsqueda estándar
-const EMBED_SEARCH_URL = "https://maps.google.com/maps?q=Calle+Arocena+1592,+Carrasco,+Montevideo,+11500,+Uruguay&t=&z=16&ie=UTF8&iwloc=&output=embed";
+const EMBED_SEARCH_URL = "https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d13866.782026716934!2d-56.192284303020145!3d-34.90331539126892!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x959f8032e5c2380b%3A0xfcb4455742e9cd83!2sMercedes%201211%2C%2011100%20Montevideo%2C%20Departamento%20de%20Montevideo!5e0!3m2!1ses!2suy!4v1771789533418!5m2!1ses!2suy";
 
 export function Footer() {
   const [showMap, setShowMap] = useState(false);
