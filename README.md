@@ -48,7 +48,9 @@ Chat Widget → POST /api/dify-chat → Dify API (/v1/chat-messages)
 ## ✨ Mejoras UI/UX Recientes
 
 - **Aislamiento de Contexto**: El chat directo (burbuja) resetea el historial para evitar filtraciones de productos consultados previamente ([Ver reporte](docs/agente%20ai/resolucion-leak-contexto-chat.md)).
-- **Botones Simplificados**: Se eliminaron los íconos de WhatsApp de los botones "Consultar" para centralizar la atención en el chat inteligente de Alma.
+- **Botones de Consulta Unificados**: Se cambió "Añadir a Lista de Deseos" por **"Consultar"** en todas las tarjetas de producto (Home y Colecciones), integrando el contexto automático del producto con el chat de Alma.
+- **Mapa Interactivo en Footer**: Se agregó una miniatura de mapa dinámica en el pie de página que, al clicar, abre un modal con la ubicación exacta de la boutique (Mercedes 1211) en Google Maps interactivo.
+- **Bloqueo de Scroll**: Implementación de bloqueo de scroll del body al abrir modales para mejorar la navegación en dispositivos móviles.
 - **Robustez de Texto**: Soporte para URLs largas y strings sin espacios mediante `overflow-wrap` en las burbujas de mensaje.
 
 ## 📱 Flujo n8n v9.1
