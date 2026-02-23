@@ -16,6 +16,7 @@ import {
   ShoppingCart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { createSupabaseBrowser } from '@/lib/supabase-browser';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
@@ -33,7 +34,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   if (pathname === '/admin/login') return <>{children}</>;
 
   const handleLogout = async () => {
-    await fetch('/api/admin/logout', { method: 'POST' });
+    const supabase = createSupabaseBrowser();
+    await supabase.auth.signOut();
     router.push('/admin/login');
   };
 

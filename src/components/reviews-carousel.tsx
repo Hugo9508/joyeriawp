@@ -3,107 +3,107 @@
 import { useState, useRef } from "react";
 
 interface Review {
-    name: string;
-    badge: string | null;
-    stars: number;
-    time: string;
-    text: string;
-    initial: string;
-    color: string;
-    photo: string | null;
+  name: string;
+  badge: string | null;
+  stars: number;
+  time: string;
+  text: string;
+  initial: string;
+  color: string;
+  photo: string | null;
 }
 
 const REVIEWS: Review[] = [
-    {
-        name: "Romina",
-        badge: "Local Guide",
-        stars: 5,
-        time: "8 meses atrás",
-        text: "Muy buena atención, excelente servicio! y los precios están súper accesibles. Realizó un ajuste a mi anillo y quedó tal cual lo quería. Recomiendo mucho el lugar.",
-        initial: "R",
-        color: "#c084fc",
-        photo: "https://i.imgur.com/Y27nt3T.png",
-    },
-    {
-        name: "Leonardo Núñez Gómez",
-        badge: null,
-        stars: 5,
-        time: "7 meses atrás",
-        text: "Excelente atención, acabado de calidad, buen precio, más que satisfecho. Estoy feliz de haber elegido esta joyería; la recomiendo 100%.",
-        initial: "L",
-        color: "#60a5fa",
-        photo: null,
-    },
-    {
-        name: "Valentín Sosa",
-        badge: null,
-        stars: 5,
-        time: "7 meses atrás",
-        text: "Servicio y calidad excelentes. El anillo que encargamos fue perfectamente personalizado según lo solicitado y muy bien hecho — exactamente como debería ser.",
-        initial: "V",
-        color: "#34d399",
-        photo: "https://i.imgur.com/mnLW9nR.png",
-    },
-    {
-        name: "Carmen Signorelli",
-        badge: "Local Guide",
-        stars: 5,
-        time: "7 meses atrás",
-        text: "Joyas excelentes y originales; es evidente el empeño y el amor que dedican a su trabajo, y la atención es impecable. Muy profesionales y confiables. Los recomiendo sin reservas.",
-        initial: "C",
-        color: "#f472b6",
-        photo: "https://i.imgur.com/Yka8zpN.png",
-    },
-    {
-        name: "Andrés de Acevedo",
-        badge: null,
-        stars: 5,
-        time: "un año atrás",
-        text: "Atención y servicio excelentes. Dos años después de nuestra boda, fuimos a la joyería a hacer el mantenimiento de nuestras alianzas y nos trataron maravillosamente bien, sin ningún costo adicional.",
-        initial: "A",
-        color: "#fbbf24",
-        photo: "https://i.imgur.com/bB6QRyC.png",
-    },
-    {
-        name: "M. Olivera",
-        badge: null,
-        stars: 5,
-        time: "un año atrás",
-        text: "Servicio excelente, acabado impecable y lo que es realmente excepcional: la rapidez con que trabajan. El montaje personalizado se hizo el mismo día. Dudo que exista otro lugar como este.",
-        initial: "M",
-        color: "#fb923c",
-        photo: null,
-    },
-    {
-        name: "Fabiana Moreira",
-        badge: null,
-        stars: 5,
-        time: "7 meses atrás",
-        text: "Excelente atención, compramos nuestras alianzas de casamiento y son lindas, además, los precios son muy buenos. Super recomendado.",
-        initial: "F",
-        color: "#a78bfa",
-        photo: null,
-    },
-    {
-        name: "Nay Buono",
-        badge: "Local Guide",
-        stars: 5,
-        time: "5 meses atrás",
-        text: "Si buscas calidad, este es definitivamente el lugar correcto 🫶🏼",
-        initial: "N",
-        color: "#2dd4bf",
-        photo: "https://i.imgur.com/993wTWJ.png",
-    },
-    {
-        name: "Francisca González",
-        badge: "Local Guide",
-        stars: 5,
-        time: "un año atrás",
-        text: "¡Servicio excelente! ¡Excelente trabajo personalizado! ¡Recomiendo 100%! Con certeza los elegiría de nuevo.",
-        initial: "F",
-        color: "#f87171",
-        photo: null,
-    },
+  {
+    name: "Romina",
+    badge: "Local Guide",
+    stars: 5,
+    time: "8 meses atrás",
+    text: "Muy buena atención, excelente servicio! y los precios están súper accesibles. Realizó un ajuste a mi anillo y quedó tal cual lo quería. Recomiendo mucho el lugar.",
+    initial: "R",
+    color: "#c084fc",
+    photo: "https://i.imgur.com/Y27nt3T.png",
+  },
+  {
+    name: "Leonardo Núñez Gómez",
+    badge: null,
+    stars: 5,
+    time: "7 meses atrás",
+    text: "Excelente atención, acabado de calidad, buen precio, más que satisfecho. Estoy feliz de haber elegido esta joyería; la recomiendo 100%.",
+    initial: "L",
+    color: "#60a5fa",
+    photo: null,
+  },
+  {
+    name: "Valentín Sosa",
+    badge: null,
+    stars: 5,
+    time: "7 meses atrás",
+    text: "Servicio y calidad excelentes. El anillo que encargamos fue perfectamente personalizado según lo solicitado y muy bien hecho — exactamente como debería ser.",
+    initial: "V",
+    color: "#34d399",
+    photo: "https://i.imgur.com/mnLW9nR.png",
+  },
+  {
+    name: "Carmen Signorelli",
+    badge: "Local Guide",
+    stars: 5,
+    time: "7 meses atrás",
+    text: "Joyas excelentes y originales; es evidente el empeño y el amor que dedican a su trabajo, y la atención es impecable. Muy profesionales y confiables. Los recomiendo sin reservas.",
+    initial: "C",
+    color: "#f472b6",
+    photo: "https://i.imgur.com/Yka8zpN.png",
+  },
+  {
+    name: "Andrés de Acevedo",
+    badge: null,
+    stars: 5,
+    time: "un año atrás",
+    text: "Atención y servicio excelentes. Dos años después de nuestra boda, fuimos a la joyería a hacer el mantenimiento de nuestras alianzas y nos trataron maravillosamente bien, sin ningún costo adicional.",
+    initial: "A",
+    color: "#fbbf24",
+    photo: "https://i.imgur.com/bB6QRyC.png",
+  },
+  {
+    name: "M. Olivera",
+    badge: null,
+    stars: 5,
+    time: "un año atrás",
+    text: "Servicio excelente, acabado impecable y lo que es realmente excepcional: la rapidez con que trabajan. El montaje personalizado se hizo el mismo día. Dudo que exista otro lugar como este.",
+    initial: "M",
+    color: "#fb923c",
+    photo: null,
+  },
+  {
+    name: "Fabiana Moreira",
+    badge: null,
+    stars: 5,
+    time: "7 meses atrás",
+    text: "Excelente atención, compramos nuestras alianzas de casamiento y son lindas, además, los precios son muy buenos. Super recomendado.",
+    initial: "F",
+    color: "#a78bfa",
+    photo: null,
+  },
+  {
+    name: "Nay Buono",
+    badge: "Local Guide",
+    stars: 5,
+    time: "5 meses atrás",
+    text: "Si buscas calidad, este es definitivamente el lugar correcto 🫶🏼",
+    initial: "N",
+    color: "#2dd4bf",
+    photo: "https://i.imgur.com/993wTWJ.png",
+  },
+  {
+    name: "Francisca González",
+    badge: "Local Guide",
+    stars: 5,
+    time: "un año atrás",
+    text: "¡Servicio excelente! ¡Excelente trabajo personalizado! ¡Recomiendo 100%! Con certeza los elegiría de nuevo.",
+    initial: "F",
+    color: "#f87171",
+    photo: null,
+  },
 ];
 
 const TOTAL_SCORE = 5.0;
@@ -113,44 +113,44 @@ const GAP = 20;
 const VISIBLE = 3;
 
 export function ReviewsCarousel() {
-    const [index, setIndex] = useState(0);
-    const maxIndex = REVIEWS.length - VISIBLE;
-    const dragStartX = useRef<number | null>(null);
-    const dragDelta = useRef(0);
-    const [isDragging, setIsDragging] = useState(false);
+  const [index, setIndex] = useState(0);
+  const maxIndex = REVIEWS.length - VISIBLE;
+  const dragStartX = useRef<number | null>(null);
+  const dragDelta = useRef(0);
+  const [isDragging, setIsDragging] = useState(false);
 
-    const prev = () => setIndex((i) => Math.max(0, i - 1));
-    const next = () => setIndex((i) => Math.min(maxIndex, i + 1));
+  const prev = () => setIndex((i) => Math.max(0, i - 1));
+  const next = () => setIndex((i) => Math.min(maxIndex, i + 1));
 
-    const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
-        const clientX = 'clientX' in e ? e.clientX : e.touches?.[0]?.clientX;
-        dragStartX.current = clientX ?? null;
-        dragDelta.current = 0;
-        setIsDragging(true);
-    };
+  const handlePointerDown = (e: React.MouseEvent | React.TouchEvent) => {
+    const clientX = 'clientX' in e ? e.clientX : e.touches?.[0]?.clientX;
+    dragStartX.current = clientX ?? null;
+    dragDelta.current = 0;
+    setIsDragging(true);
+  };
 
-    const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
-        if (dragStartX.current === null) return;
-        const clientX = 'clientX' in e ? e.clientX : e.touches?.[0]?.clientX;
-        if (clientX !== undefined) {
-            dragDelta.current = clientX - dragStartX.current;
-        }
-    };
+  const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
+    if (dragStartX.current === null) return;
+    const clientX = 'clientX' in e ? e.clientX : e.touches?.[0]?.clientX;
+    if (clientX !== undefined) {
+      dragDelta.current = clientX - dragStartX.current;
+    }
+  };
 
-    const handlePointerUp = () => {
-        if (dragStartX.current === null) return;
-        if (dragDelta.current < -50) next();
-        else if (dragDelta.current > 50) prev();
-        dragStartX.current = null;
-        dragDelta.current = 0;
-        setIsDragging(false);
-    };
+  const handlePointerUp = () => {
+    if (dragStartX.current === null) return;
+    if (dragDelta.current < -50) next();
+    else if (dragDelta.current > 50) prev();
+    dragStartX.current = null;
+    dragDelta.current = 0;
+    setIsDragging(false);
+  };
 
-    const translateX = index * (CARD_WIDTH + GAP);
+  const translateX = index * (CARD_WIDTH + GAP);
 
-    return (
-        <section className="reviews-section">
-            <style>{`
+  return (
+    <section className="reviews-section">
+      <style>{`
         .reviews-section {
           width: 100%;
           max-width: 1140px;
@@ -441,121 +441,121 @@ export function ReviewsCarousel() {
         }
       `}</style>
 
-            {/* HEADER */}
-            <div className="reviews-header">
-                <div>
-                    <div className="reviews-eyebrow">
-                        <span className="eyebrow-line" />
-                        Google Reviews
-                        <span className="eyebrow-line" />
-                    </div>
-                    <h2 className="reviews-title">
-                        Lo que dicen<br />nuestros <em>clientes</em>
-                    </h2>
-                </div>
-                <div className="score-block">
-                    <div className="score-number">{TOTAL_SCORE.toFixed(1)}</div>
-                    <div className="score-stars">
-                        {[...Array(5)].map((_, i) => <span key={i} className="star-icon">★</span>)}
-                    </div>
-                    <div className="score-sub">{TOTAL_REVIEWS} reseñas verificadas</div>
-                    <div className="google-badge">🔍 Google Maps</div>
-                </div>
-            </div>
+      {/* HEADER */}
+      <div className="reviews-header">
+        <div>
+          <div className="reviews-eyebrow">
+            <span className="eyebrow-line" />
+            Google Reviews
+            <span className="eyebrow-line" />
+          </div>
+          <h2 className="reviews-title">
+            Lo que dicen<br />nuestros <em>clientes</em>
+          </h2>
+        </div>
+        <div className="score-block">
+          <div className="score-number">{TOTAL_SCORE.toFixed(1)}</div>
+          <div className="score-stars">
+            {[...Array(5)].map((_, i) => <span key={i} className="star-icon">★</span>)}
+          </div>
+          <div className="score-sub">{TOTAL_REVIEWS} reseñas verificadas</div>
+          <div className="google-badge">🔍 Google Maps</div>
+        </div>
+      </div>
 
-            {/* CAROUSEL */}
-            <div className="carousel-wrap">
-                <div
-                    className="track-outer"
-                    onMouseDown={handlePointerDown}
-                    onMouseMove={handlePointerMove}
-                    onMouseUp={handlePointerUp}
-                    onMouseLeave={handlePointerUp}
-                    onTouchStart={handlePointerDown}
-                    onTouchMove={handlePointerMove}
-                    onTouchEnd={handlePointerUp}
-                >
-                    <div
-                        className={`review-track ${isDragging ? "is-dragging" : ""}`}
-                        style={{ transform: `translateX(-${translateX}px)` }}
-                    >
-                        {REVIEWS.map((r, i) => (
-                            <div key={i} className="review-card">
-                                <div className="card-stars">
-                                    {[...Array(r.stars)].map((_, s) => <span key={s} className="card-star">★</span>)}
-                                </div>
-                                <p className="card-text">{r.text}</p>
-                                <div className="card-author">
-                                    {r.photo ? (
-                                        /* eslint-disable-next-line @next/next/no-img-element */
-                                        <img
-                                            src={r.photo}
-                                            alt={r.name}
-                                            className="review-avatar"
-                                            style={{ objectFit: "cover", border: `2px solid ${r.color}44` }}
-                                            onError={(e) => {
-                                                const target = e.target as HTMLImageElement;
-                                                target.style.display = "none";
-                                                if (target.nextElementSibling) {
-                                                    (target.nextElementSibling as HTMLElement).style.display = "flex";
-                                                }
-                                            }}
-                                        />
-                                    ) : null}
-                                    <div
-                                        className="review-avatar"
-                                        style={{
-                                            background: `linear-gradient(135deg, ${r.color}88, ${r.color}44)`,
-                                            border: `1px solid ${r.color}33`,
-                                            display: r.photo ? "none" : "flex",
-                                        }}
-                                    >
-                                        {r.initial}
-                                    </div>
-                                    <div className="author-info">
-                                        <div className="author-name">{r.name}</div>
-                                        <div className="author-meta">{r.time}</div>
-                                    </div>
-                                    {r.badge && <span className="author-badge">{r.badge}</span>}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+      {/* CAROUSEL */}
+      <div className="carousel-wrap">
+        <div
+          className="track-outer"
+          onMouseDown={handlePointerDown}
+          onMouseMove={handlePointerMove}
+          onMouseUp={handlePointerUp}
+          onMouseLeave={handlePointerUp}
+          onTouchStart={handlePointerDown}
+          onTouchMove={handlePointerMove}
+          onTouchEnd={handlePointerUp}
+        >
+          <div
+            className={`review-track ${isDragging ? "is-dragging" : ""}`}
+            style={{ transform: `translateX(-${translateX}px)` }}
+          >
+            {REVIEWS.map((r, i) => (
+              <div key={i} className="review-card">
+                <div className="card-stars">
+                  {[...Array(r.stars)].map((_, s) => <span key={s} className="card-star">★</span>)}
                 </div>
-            </div>
+                <p className="card-text">{r.text}</p>
+                <div className="card-author">
+                  {r.photo ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={r.photo}
+                      alt={r.name}
+                      className="review-avatar"
+                      style={{ objectFit: "cover", border: `2px solid ${r.color}44` }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        if (target.nextElementSibling) {
+                          (target.nextElementSibling as HTMLElement).style.display = "flex";
+                        }
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className="review-avatar"
+                    style={{
+                      background: `linear-gradient(135deg, ${r.color}88, ${r.color}44)`,
+                      border: `1px solid ${r.color}33`,
+                      display: r.photo ? "none" : "flex",
+                    }}
+                  >
+                    {r.initial}
+                  </div>
+                  <div className="author-info">
+                    <div className="author-name">{r.name}</div>
+                    <div className="author-meta">{r.time}</div>
+                  </div>
+                  {r.badge && <span className="author-badge">{r.badge}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
-            {/* CONTROLS */}
-            <div className="review-controls">
-                <div className="review-dots">
-                    {REVIEWS.map((_, i) => (
-                        <div
-                            key={i}
-                            className={`review-dot ${i === index ? "active" : ""}`}
-                            style={{ width: i === index ? 28 : 8 }}
-                            onClick={() => setIndex(Math.min(i, maxIndex))}
-                        />
-                    ))}
-                </div>
-                <div className="review-arrows">
-                    <button className="review-arrow" onClick={prev} disabled={index === 0}>←</button>
-                    <button className="review-arrow" onClick={next} disabled={index >= maxIndex}>→</button>
-                </div>
-            </div>
+      {/* CONTROLS */}
+      <div className="review-controls">
+        <div className="review-dots">
+          {REVIEWS.map((_, i) => (
+            <div
+              key={i}
+              className={`review-dot ${i === index ? "active" : ""}`}
+              style={{ width: i === index ? 28 : 8 }}
+              onClick={() => setIndex(Math.min(i, maxIndex))}
+            />
+          ))}
+        </div>
+        <div className="review-arrows">
+          <button className="review-arrow" onClick={prev} disabled={index === 0}>←</button>
+          <button className="review-arrow" onClick={next} disabled={index >= maxIndex}>→</button>
+        </div>
+      </div>
 
-            {/* FOOTER */}
-            <div className="reviews-cta-footer">
-                <div className="footer-text">
-                    <em>{TOTAL_REVIEWS} familias</em> eligieron Joyería Alianzas
-                </div>
-                <a
-                    href="https://share.google/JkYbjTKsgx9eN0UGt"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="footer-link"
-                >
-                    Ver todas en Google ↗
-                </a>
-            </div>
-        </section>
-    );
+      {/* FOOTER */}
+      <div className="reviews-cta-footer">
+        <div className="footer-text">
+          <em>{TOTAL_REVIEWS} familias</em> eligieron Joyería Alianzas
+        </div>
+        <a
+          href="https://share.google/W6wgrzI9vPSM1QTNU"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="footer-link"
+        >
+          Ver todas en Google ↗
+        </a>
+      </div>
+    </section>
+  );
 }
