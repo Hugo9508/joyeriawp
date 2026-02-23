@@ -29,6 +29,21 @@ Configure estas variables en el panel de Hostinger (Node.js App -> Environment V
 | `DIFY_API_KEY` | API Key de tu app Dify (Alma) | `app-XXXXXXXXXXXX` |
 | `DIFY_BASE_URL` | URL base de la API de Dify | `https://api.dify.ai/v1` |
 | `N8N_EVENT_WEBHOOK_URL` | Webhook n8n para eventos Dify (handoff, CRM) | `https://n8n.axion380.com.br/webhook/dify-events` |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL del proyecto Supabase | `https://xxxx.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Anon Key de Supabase | `eyJhbGci...` |
+
+## 📊 Dashboard de Pedidos (Kanban)
+
+Se implementó un sistema de gestión de pedidos avanzado en `/admin/orders` con las siguientes características:
+
+- **Board Kanban**: 5 columnas de flujo (Nuevos, En Análisis, Preparando, Listo, Completado).
+- **Drag & Drop**: Movimiento de pedidos entre columnas con persistencia en Supabase.
+- **Fuentes Unificadas**: Centralización de pedidos desde:
+    - 🔵 **Web**: Sincronizados desde WooCommerce.
+    - 🟢 **WhatsApp**: Ingresados vía n8n/API.
+    - 🟣 **Manual**: Creados directamente en el dashboard.
+- **Pre-Facturación**: Generación de ticket/factura adaptado a Joyería Alianza con cálculo automático de IVA (22%).
+- **Edición Inline**: Gestión rápida de datos del cliente, items y notas desde el modal de detalle.
 
 ## 💬 Chat Web con IA (Alma — Dify)
 
@@ -69,6 +84,7 @@ El workflow actualizado está en `docs/agente ai/n8n_flujo_v9_dify_directo.json`
 
 ## 📄 Documentación Técnica
 
+- [Esquema SQL Dashboard](docs/orders_schema.sql)
 - [Resumen de Mejoras n8n](docs/resumen_mejoras_n8n.md)
 - [Configuración del Ecosistema de Chat](docs/configuracion-chat.md)
 - [Resolución: Leak de Contexto](docs/agente%20ai/resolucion-leak-contexto-chat.md)
