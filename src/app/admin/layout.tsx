@@ -5,19 +5,21 @@ import { ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { 
-  LayoutDashboard, 
-  Package, 
-  Settings, 
-  LogOut, 
-  Gem, 
+import {
+  LayoutDashboard,
+  Package,
+  Settings,
+  LogOut,
+  Gem,
   Layers,
-  ChevronRight
+  ChevronRight,
+  ShoppingCart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/admin' },
+  { icon: ShoppingCart, label: 'Pedidos', href: '/admin/orders' },
   { icon: Package, label: 'Productos', href: '/admin/products' },
   { icon: Layers, label: 'Categorías', href: '/admin/categories' },
   { icon: Settings, label: 'Configuración', href: '/admin/settings' },
@@ -45,18 +47,18 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
           <span className="font-headline text-lg tracking-widest uppercase">Alianza</span>
         </div>
-        
+
         <nav className="flex-1 p-4 space-y-2 mt-4">
           {menuItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = item.href === '/admin' ? pathname === '/admin' : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
                   "flex items-center justify-between px-4 py-3 rounded-lg transition-all group",
-                  isActive 
-                    ? "bg-primary text-primary-foreground" 
+                  isActive
+                    ? "bg-primary text-primary-foreground"
                     : "hover:bg-muted text-muted-foreground hover:text-foreground"
                 )}
               >
@@ -71,8 +73,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </nav>
 
         <div className="p-4 border-t">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="w-full justify-start text-destructive hover:bg-destructive/10 hover:text-destructive"
             onClick={handleLogout}
           >
