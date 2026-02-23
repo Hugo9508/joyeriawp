@@ -11,7 +11,7 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGci
  * Agrega aquí los correos autorizados.
  */
 const ADMIN_EMAILS: string[] = [
-  // 'tu-email@gmail.com',
+  'joyeriaalianzauy@gmail.com',
 ];
 
 export async function middleware(request: NextRequest) {

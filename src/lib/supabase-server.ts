@@ -9,8 +9,7 @@ const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGci
  * Agregar los emails que necesiten acceso.
  */
 export const ADMIN_EMAILS: string[] = [
-    // Agrega aquí los emails autorizados:
-    // 'tu-email@gmail.com',
+    'joyeriaalianzauy@gmail.com',
 ];
 
 export async function createSupabaseServer() {
