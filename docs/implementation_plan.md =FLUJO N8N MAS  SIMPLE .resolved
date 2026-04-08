@@ -1,0 +1,233 @@
+# Workflow v8: Alma Dual-Channel + Smart Handoff + Google Sheets CRM
+
+Refactorización completa del flujo n8n para la Joyería Alianza. El objetivo es simplificar el flujo de atención, eliminar duplicación de mensajes al vendedor, y agregar un CRM básico en Google Sheets.
+
+## User Review Required
+
+> [!IMPORTANT]
+> **Credencial de Dify incorrecta:** El flujo actual (v7) posiblemente está llamando a una versión vieja del agente. La credencial actual `Dify clientesuy26@gmail.com` (id: `oJqYFYdLcHE7q7pG`) debe actualizarse con la API Key `app-4ywbOMEo8yMuls03aWsDluhr` que corresponde a la Alma actualizada.
+
+> [!WARNING]
+> **Google Sheets:** Se necesita crear una hoja de cálculo y compartirla con la cuenta de servicio de n8n. El usuario debe proporcionar el ID de la hoja y configurar la credencial de Google Sheets en n8n.
+
+> [!CAUTION]
+> **Prompt de Alma en Dify:** Se debe modificar directamente en la interfaz de Dify. El cambio incluye la instrucción del marcador `[HANDOFF]` y la lectura del prefijo de canal `[Canal: Web]` / `[Canal: WhatsApp]`.
+
+---
+
+## Proposed Changes
+
+### Componente 1: Credencial de Dify
+
+#### [MODIFY] Credencial en n8n (manual)
+
+- Ir a **n8n → Credentials → "Dify clientesuy26@gmail.com"**
+- Cambiar el **API Key** a: `app-4ywbOMEo8yMuls03aWsDluhr`
+- Guardar
+
+Esto corrige el problema raíz de las respuestas largas y con tablas: n8n estaba llamando a un agente desactualizado.
+
+---
+
+### Componente 2: Prompt de Alma en Dify
+
+#### [MODIFY] Prompt del agente Alma (en Dify UI)
+
+Agregar al final del prompt existente de Alma:
+
+```text
+## REGLAS DE CANAL
+- Si el mensaje del cliente comienza con [Canal: WhatsApp], respondé aún más breve (2-3 líneas máximo).
+- Si comienza con [Canal: Web Boutique], podés ser un poco más descriptiva (3-4 líneas).
+- NUNCA menciones el canal al cliente.
+
+## REGLA DE HANDOFF
+Cuando detectes que el cliente muestra intención de compra real (pide precio final, forma de pago, quiere comprar, dice "me interesa", "lo quiero"), hacé lo siguiente:
+1. Cerrá con una frase cálida agradeciendo la conversación
+2. Mencioná que lo conectarás con una asesora especializada
+3. Agregá el texto EXACTO [HANDOFF] al final de tu mensaje (es invisible para el cliente)
+
+Ejemplo de respuesta con handoff:
+"Qué hermosa elección para un momento tan especial. Te voy a conectar con nuestra asesora Laura que te va a ayudar con todos los detalles del pedido. ¡Tu compra está en las mejores manos! 💍 [HANDOFF]"
+```
+
+---
+
+### Componente 3: Google Sheets
+
+#### [NEW] Hoja "Historial de Chat"
+
+Columnas:
+| timestamp | conversation_id | canal | sender | mensaje | phone |
+|---|---|---|---|---|---|
+
+- Cada mensaje (entrada y respuesta de Alma) se guarda como una fila
+- Se usa para leer el historial al momento del handoff
+
+#### [NEW] Hoja "Prospectos"
+
+Columnas:
+| fecha | canal | nombre | telefono | producto | para_quien | ocasion | urgencia | preferencias | nivel_interes | estado | conversation_id |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+
+- Se llena SOLO cuando hay handoff
+- El LLM Resumen extrae estos campos del historial
+
+---
+
+### Componente 4: Workflow n8n v8
+
+#### [NEW] [n8n_flujo_v8_smart_handoff.json](file:///C:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/docs/n8n_flujo_v8_smart_handoff.json)
+
+**Nodos del flujo (13 nodos):**
+
+```mermaid
+graph TD
+    A[Webhook] --> B[Preparar Datos v8]
+    B --> C[Router]
+    C -->|seller_reply| D[Preparar Pausa]
+    C -->|command| E[Procesar Comando]
+    C -->|chat/WA| F[Consultar Handoff - Supabase]
+    D --> D1[Guardar Pausa - Supabase]
+    E --> E1[Guardar Estado - Supabase]
+    F --> G{¿IA Activa?}
+    G -->|NO| H[Resp: Vendedor Atendiendo]
+    G -->|SÍ| I[📊 Guardar Msg en Sheets]
+    I --> J[🤖 Dify Alma]
+    J --> K[Verificar Respuesta]
+    K --> L{¿Tiene HANDOFF?}
+    L -->|NO| M[Responder al Cliente]
+    L -->|SÍ| N[📖 Leer Historial Sheets]
+    N --> O[🧠 LLM Resumen]
+    O --> P[📊 Guardar Prospecto en Sheets]
+    P --> Q[📱 Enviar Resumen al Vendedor - WA]
+    Q --> R[💾 Pausar IA - Supabase]
+    R --> S[Responder al Cliente con Link WA]
+```
+
+**Cambios clave vs v7:**
+
+| Nodo | v7 | v8 |
+|---|---|---|
+| `Preparar Datos` | No inyecta canal | Inyecta `[Canal: Web]` o `[Canal: WhatsApp]` en el texto |
+| `📤 Notificar Vendedor` | Envía cada mensaje al vendedor | **ELIMINADO** |
+| `✨ Formatear Respuesta` (LLM) | GPT-4.1-mini en cada mensaje | **ELIMINADO** |
+| `📊 Guardar Msg en Sheets` | No existía | **NUEVO** — graba cada mensaje |
+| `¿Tiene [HANDOFF]?` | No existía | **NUEVO** — IF node detecta marcador |
+| `📖 Leer Historial Sheets` | No existía | **NUEVO** — lee filas por conversation_id |
+| `🧠 LLM Resumen` | No existía | **NUEVO** — GPT-4.1-mini extrae datos (solo en handoff) |
+| `📊 Guardar Prospecto` | No existía | **NUEVO** — fila en hoja Prospectos |
+| `📱 Enviar Resumen` | Enviaba chat crudo | **NUEVO** — envía resumen estructurado |
+
+---
+
+#### Detalle del nodo: `Preparar Datos v8` (Code)
+
+```javascript
+// Cambio clave: inyectar canal en el texto
+const canal = body.event === 'messages.upsert' ? 'WhatsApp' : 'Web Boutique';
+const textWithChannel = `[Canal: ${canal}] ${text}`;
+
+return {
+  json: {
+    // ... campos existentes ...
+    text: textWithChannel,
+    originalText: text,
+    canal: canal
+  }
+};
+```
+
+#### Detalle del nodo: `¿Tiene [HANDOFF]?` (IF)
+
+```
+Condición: {{ $json.answer }} contiene "[HANDOFF]"
+  TRUE → Flujo de handoff
+  FALSE → Responder al cliente
+```
+
+Además, limpiar el marcador antes de enviar al cliente:
+```javascript
+// En el nodo de respuesta
+const cleanAnswer = $json.answer.replace('[HANDOFF]', '').trim();
+```
+
+#### Detalle del nodo: `🧠 LLM Resumen` (GPT-4.1-mini)
+
+Prompt:
+```text
+Analiza este historial de chat entre un cliente y la asesora Alma de Joyería Alianza.
+Extrae la siguiente información en formato JSON:
+
+{
+  "nombre": "nombre del cliente",
+  "producto": "producto de interés",
+  "para_quien": "para quién es",
+  "ocasion": "ocasión o motivo",
+  "urgencia": "nivel de urgencia",
+  "preferencias": "metal, talla, estilo",
+  "nivel_interes": "bajo/medio/alto",
+  "resumen": "resumen en 2 líneas para el vendedor"
+}
+
+Si algún campo no se mencionó, poné "No especificado".
+Historial:
+{{ historial_from_sheets }}
+```
+
+#### Detalle del nodo: `📱 Enviar Resumen al Vendedor`
+
+Mensaje para Evolution API:
+```text
+🛍️ Prospecto calificado desde {{ canal }}
+
+👤 {{ nombre }} ({{ telefono }})
+💍 {{ producto }}
+🎁 {{ para_quien }} - {{ ocasion }}
+⏰ {{ urgencia }}
+✨ {{ preferencias }}
+🔥 Interés: {{ nivel_interes }}
+
+📝 {{ resumen }}
+```
+
+---
+
+## Verification Plan
+
+### Test Manual en n8n (con Pinned Data)
+
+**Test 1: Mensaje normal de Web Chat (sin handoff)**
+1. En n8n, usar el Pinned Data existente del webhook
+2. Ejecutar el workflow
+3. Verificar:
+   - ✅ El mensaje se graba en Google Sheets (hoja Historial)
+   - ✅ Dify recibe el texto con prefijo `[Canal: Web Boutique]`
+   - ✅ La respuesta de Alma NO tiene `[HANDOFF]`
+   - ✅ La respuesta llega al respondToWebhook sin pasar por LLM Resumen
+   - ❌ NO se envía mensaje al vendedor por WhatsApp
+
+**Test 2: Mensaje que activa handoff**
+1. Simular un mensaje como: `"Sí, me interesa, ¿cómo puedo pagar?"`
+2. Verificar:
+   - ✅ La respuesta de Alma contiene `[HANDOFF]`
+   - ✅ Se lee el historial de Sheets
+   - ✅ El LLM genera un JSON con datos del prospecto
+   - ✅ Se graba en hoja Prospectos
+   - ✅ El vendedor recibe UN mensaje limpio en WhatsApp
+   - ✅ Se pausa la IA en Supabase
+   - ✅ El cliente recibe respuesta con link de WhatsApp
+   - ✅ El marcador `[HANDOFF]` NO aparece en la respuesta al cliente
+
+**Test 3: Mensaje de WhatsApp entrante**
+1. Simular un evento `messages.upsert` de Evolution API
+2. Verificar:
+   - ✅ Canal detectado como WhatsApp
+   - ✅ Dify recibe `[Canal: WhatsApp]`
+   - ✅ Respuesta se envía por Evolution API (no por respondToWebhook)
+
+**Test 4: Vendedor responde (#pausa)**
+1. Simular seller_reply
+2. Verificar:
+   - ✅ IA se pausa en Supabase por 30 min
+   - ✅ Mensajes posteriores notifican al vendedor que hay mensaje pendiente

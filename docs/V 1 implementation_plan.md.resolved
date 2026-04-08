@@ -1,0 +1,41 @@
+# Consultar → Chat: Capturar datos del producto y pedir nombre/WhatsApp
+
+Cuando el usuario hace clic en **"Consultar"**, los datos del producto deben aparecer en el chat como un mensaje del agente, y se le solicita nombre y WhatsApp **inline dentro del chat** (no en un formulario separado). Solo después de completar esos datos se habilita el envío.
+
+## Proposed Changes
+
+### Chat Widget
+
+#### [MODIFY] [chat-widget.tsx](file:///c:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/src/components/chat-widget.tsx)
+
+1. **Al recibir el evento `open-chat-with-message`**: mostrar los datos del producto como un mensaje del agente en el chat (nombre, precio, SKU, enlace) **antes** de pedir nada al usuario.
+2. **Si el usuario no tiene info guardada** (`alianza_user_info`): en vez de redirigir a la pantalla de onboarding separada, cambiar el flujo para:
+   - Mostrar un mensaje del agente pidiendo nombre y WhatsApp.
+   - Mostrar campos inline (nombre + WhatsApp) dentro del área de mensajes del chat.
+   - Deshabilitar el input de texto hasta que el usuario complete los datos.
+3. **Después de completar los datos**: guardar en `localStorage`, enviar automáticamente el mensaje pendiente del producto, y habilitar el input de texto normal.
+4. **Si el usuario ya tiene info guardada**: mostrar el producto y enviar el mensaje automáticamente como antes.
+
+---
+
+### WhatsApp Helper
+
+#### [MODIFY] [whatsapp.ts](file:///c:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/src/lib/whatsapp.ts)
+
+No requiere cambios significativos — ya pasa `product` en el evento. El mensaje se mantiene igual.
+
+## Verification Plan
+
+### Manual Verification
+
+1. Abrir la app en `localhost:3000`
+2. Ir a `/collections`
+3. Hacer clic en **"Consultar"** en un producto **sin tener datos guardados** (borrar `alianza_user_info` de localStorage)
+4. Verificar que:
+   - El chat se abre
+   - Aparece un mensaje del agente con los datos del producto
+   - Aparece un mensaje del agente pidiendo nombre y WhatsApp
+   - Aparecen campos inline para ingresar nombre y WhatsApp
+   - El input de texto normal está deshabilitado
+   - Después de completar nombre y teléfono y dar "Confirmar", el mensaje se envía y el input se habilita
+5. Repetir con datos ya guardados y verificar que el producto aparece en el chat y el mensaje se envía automáticamente

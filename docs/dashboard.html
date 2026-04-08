@@ -1,0 +1,925 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Aromacos Order Management Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=Playfair+Display:wght@700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#D4AF37", // Muted Gold from the original 'Chocolates' text vibe
+                        secondary: "#8B5A2B", // Brown/Bronze accent
+                        "background-light": "#F3F4F6",
+                        "background-dark": "#111827",
+                        "surface-light": "#FFFFFF",
+                        "surface-dark": "#1F2937",
+                        "accent-green": "#10B981",
+                        "accent-blue": "#3B82F6",
+                        "accent-purple": "#8B5CF6",
+                        "accent-orange": "#F97316",
+                        "accent-red": "#EF4444"
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                        display: ["Playfair Display", "serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+    <link rel="stylesheet" href="css/global.css" />
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 h-screen overflow-hidden flex font-sans antialiased transition-colors duration-200 dark">
+    <aside
+        class="w-64 bg-surface-light dark:bg-surface-dark border-r border-gray-200 dark:border-gray-700 flex flex-col justify-between hidden md:flex z-10 shadow-lg">
+        <div>
+            <div
+                class="h-16 flex items-center px-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <span class="material-icons-outlined text-primary text-3xl mr-2">spa</span>
+                <div>
+                    <h1 class="font-display font-bold text-xl tracking-wide text-gray-900 dark:text-white">AROMACOS</h1>
+                    <p class="text-[10px] uppercase tracking-wider text-gray-500 dark:text-gray-400">Internal Systems
+                    </p>
+                </div>
+            </div>
+            <nav class="mt-6 px-3 space-y-1">
+                <a class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-md bg-primary/10 text-primary"
+                    href="dashboard.html">
+                    <span class="material-icons-outlined mr-3 text-xl">dashboard</span>
+                    Orders Board
+                </a>
+                <a class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-all"
+                    href="inventory.html">
+                    <span class="material-icons-outlined mr-3 text-xl">inventory_2</span>
+                    Inventory Mgmt
+                </a>
+                <a class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-all"
+                    href="#">
+                    <span class="material-icons-outlined mr-3 text-xl">people</span>
+                    Customers
+                </a>
+                <a class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-all"
+                    href="#">
+                    <span class="material-icons-outlined mr-3 text-xl">local_shipping</span>
+                    Logistics
+                </a>
+                <a class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white transition-all"
+                    href="#">
+                    <span class="material-icons-outlined mr-3 text-xl">bar_chart</span>
+                    Reports
+                </a>
+            </nav>
+        </div>
+        <div class="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+            <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Daily Pulse
+            </h3>
+            <div class="mb-4">
+                <div class="flex justify-between text-sm mb-1">
+                    <span class="text-gray-600 dark:text-gray-300">Meta de Ventas</span>
+                    <span class="text-accent-green font-bold">84%</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                    <div class="bg-accent-green h-1.5 rounded-full" style="width: 84%"></div>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <div
+                    class="flex items-center justify-between p-2 rounded bg-white dark:bg-gray-700 shadow-sm border border-gray-100 dark:border-gray-600">
+                    <div class="flex items-center">
+                        <span class="w-2 h-2 rounded-full bg-primary mr-2"></span>
+                        <span class="text-xs font-medium text-gray-700 dark:text-gray-200">Confites Mavalerio</span>
+                    </div>
+                    <span class="text-xs font-bold text-gray-900 dark:text-white">â†‘ 12%</span>
+                </div>
+                <div
+                    class="flex items-center justify-between p-2 rounded bg-white dark:bg-gray-700 shadow-sm border border-gray-100 dark:border-gray-600">
+                    <div class="flex items-center">
+                        <span class="w-2 h-2 rounded-full bg-accent-blue mr-2"></span>
+                        <span class="text-xs font-medium text-gray-700 dark:text-gray-200">Pastas</span>
+                    </div>
+                    <span class="text-xs font-bold text-gray-900 dark:text-white">â†‘ 5%</span>
+                </div>
+            </div>
+            <div class="mt-6 flex items-center p-3 rounded-lg bg-gray-800 dark:bg-black/20 border border-gray-700">
+                <img alt="User Profile" class="h-8 w-8 rounded-full"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrJehSNiR8gmPdePPjbNJDDtnAr1uz6eoMn0UPJGN0x0ITsXC8WiuU2XKUbE3b1MqieUDymFznnknaVEdYWzvMb_gOln81y2EiXu8xKMPpRQmuCxXh6hC3BXd0fIorXEZZjDoJuLD-GdiS3wooFj12sYCR7y024kLKLSuJWxbAY_dM23cImRq0LeRoPM5f0YdN8MmmCuXpAA7QdxG3SWlYIehFzoiOl6kdm6ztYvzD5_lkOqUuPT72n1sNMSKgM_sLJ0MVJcXHass" />
+                <div class="ml-3">
+                    <p class="text-sm font-medium text-gray-700 dark:text-gray-200">Gerente de Ops</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">En lÃ­nea</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <header
+            class="h-16 flex items-center justify-between px-6 bg-surface-light dark:bg-surface-dark border-b border-gray-200 dark:border-gray-700 z-10">
+            <div class="flex items-center">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-white">Pedidos Activos</h2>
+                <span
+                    class="ml-3 px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">Sinc.
+                    en Vivo</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="relative hidden sm:block">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                        <span class="material-icons-outlined text-gray-400 text-lg">search</span>
+                    </span>
+                    <input
+                        class="w-64 pl-10 pr-4 py-2 rounded-lg border-none bg-gray-100 dark:bg-gray-800 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-primary placeholder-gray-500 dark:placeholder-gray-400"
+                        placeholder="Buscar pedidos, SKUs..." type="text" />
+                </div>
+                <button
+                    class="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-400 transition-colors relative">
+                    <span class="material-icons-outlined">notifications</span>
+                    <span class="absolute top-2 right-2 w-2 h-2 bg-accent-red rounded-full"></span>
+                </button>
+
+                <button onclick="openNewOrderModal()"
+                    class="bg-primary hover:bg-yellow-600 text-white px-4 py-2 rounded-md text-sm font-medium shadow-md transition-all flex items-center">
+                    <span class="material-icons-outlined text-lg mr-1">add</span> Nuevo Pedido
+                </button>
+            </div>
+        </header>
+        <div class="flex-1 overflow-x-auto overflow-y-hidden bg-background-light dark:bg-background-dark p-6">
+            <div class="flex h-full space-x-6 min-w-max">
+                <!-- NEW ORDERS COLUMN -->
+                <div
+                    class="flex flex-col w-80 h-full rounded-xl bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/50">
+                    <div
+                        class="p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700/50 bg-gray-50 dark:bg-gray-800/80 rounded-t-xl sticky top-0 backdrop-blur-sm">
+                        <div class="flex items-center space-x-2">
+                            <span
+                                class="w-2.5 h-2.5 rounded-full bg-accent-green shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+                            <h3 class="font-semibold text-gray-700 dark:text-gray-200 text-sm tracking-wide">NEW ORDERS
+                            </h3>
+                        </div>
+                        <span
+                            class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded text-xs font-medium">4</span>
+                    </div>
+                    <div id="col-new" class="flex-1 overflow-y-auto p-3 space-y-3 kanban-col" ondrop="drop(event)"
+                        ondragover="allowDrop(event)">
+                        <div draggable="true" ondragstart="drag(event)" id="ord-3920"
+                            onclick="openOrderModal('ord-3920')"
+                            class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow-sm border-l-4 border-accent-green hover:shadow-md transition-all cursor-pointer group">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-mono text-gray-400">#ORD-3920</span>
+                                <span
+                                    class="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-[10px] px-1.5 py-0.5 rounded font-medium">WhatsApp</span>
+                            </div>
+                            <h4
+                                class="font-semibold text-gray-800 dark:text-gray-100 mb-1 group-hover:text-primary transition-colors">
+                                ConfiterÃ­a La Dulce</h4>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
+                                5x Confites Mavalerio (Red), 10kg Cacao Powder...
+                            </div>
+                            <div
+                                class="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-3">
+                                <div class="flex items-center text-gray-400 text-xs">
+                                    <span class="material-icons-outlined text-[14px] mr-1">schedule</span> 12m ago
+                                </div>
+                                <span class="font-bold text-gray-900 dark:text-white text-sm">$450.00</span>
+                            </div>
+                        </div>
+                        <div draggable="true" ondragstart="drag(event)" id="ord-3919"
+                            onclick="openOrderModal('ord-3919')"
+                            class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow-sm border-l-4 border-accent-green hover:shadow-md transition-all cursor-pointer group">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-mono text-gray-400">#ORD-3919</span>
+                                <span
+                                    class="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] px-1.5 py-0.5 rounded font-medium">Web</span>
+                            </div>
+                            <h4
+                                class="font-semibold text-gray-800 dark:text-gray-100 mb-1 group-hover:text-primary transition-colors">
+                                Supermercado El Rey</h4>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
+                                Bulk order: Salsas y condimentos, Panificados...
+                            </div>
+                            <div
+                                class="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-3">
+                                <div class="flex items-center text-gray-400 text-xs">
+                                    <span class="material-icons-outlined text-[14px] mr-1">schedule</span> 45m ago
+                                </div>
+                                <span class="font-bold text-gray-900 dark:text-white text-sm">$1,250.00</span>
+                            </div>
+                        </div>
+                        <div draggable="true" ondragstart="drag(event)" id="ord-3918"
+                            onclick="openOrderModal('ord-3918')"
+                            class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow-sm border-l-4 border-accent-green hover:shadow-md transition-all cursor-pointer group opacity-80">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-mono text-gray-400">#ORD-3918</span>
+                                <span
+                                    class="bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-[10px] px-1.5 py-0.5 rounded font-medium">Email</span>
+                            </div>
+                            <h4
+                                class="font-semibold text-gray-800 dark:text-gray-100 mb-1 group-hover:text-primary transition-colors">
+                                PanaderÃ­a Central</h4>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mb-3 line-clamp-2">
+                                Urgent: Chocolate Couverture 70% Dark
+                            </div>
+                            <div
+                                class="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-3">
+                                <div class="flex items-center text-gray-400 text-xs">
+                                    <span class="material-icons-outlined text-[14px] mr-1">schedule</span> 1h ago
+                                </div>
+                                <span class="font-bold text-gray-900 dark:text-white text-sm">$220.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- IN ANALYSIS COLUMN -->
+                <div
+                    class="flex flex-col w-80 h-full rounded-xl bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/50">
+                    <div
+                        class="p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700/50 bg-gray-50 dark:bg-gray-800/80 rounded-t-xl sticky top-0 backdrop-blur-sm">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-accent-orange"></span>
+                            <h3 class="font-semibold text-gray-700 dark:text-gray-200 text-sm tracking-wide">IN ANALYSIS
+                            </h3>
+                        </div>
+                        <span
+                            class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded text-xs font-medium">2</span>
+                    </div>
+                    <div id="col-analysis" class="flex-1 overflow-y-auto p-3 space-y-3 kanban-col" ondrop="drop(event)"
+                        ondragover="allowDrop(event)">
+                        <div draggable="true" ondragstart="drag(event)" id="ord-3915"
+                            onclick="openOrderModal('ord-3915')"
+                            class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-mono text-gray-400">#ORD-3915</span>
+                                <span
+                                    class="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-[10px] px-1.5 py-0.5 rounded font-medium flex items-center"><span
+                                        class="material-icons-outlined text-[10px] mr-1">warning</span> RevisiÃ³n
+                                    CrÃ©dito</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 dark:text-gray-100 mb-1">Distribuidora Norte</h4>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                                Pedido grande requiere aprobaciÃ³n logÃ­stica.
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mb-3">
+                                <div class="bg-accent-orange h-1.5 rounded-full" style="width: 40%"></div>
+                            </div>
+                            <div
+                                class="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-3">
+                                <div class="flex items-center text-gray-400 text-xs">
+                                    <span class="material-icons-outlined text-[14px] mr-1">person</span> M. Rodriguez
+                                </div>
+                                <span class="font-bold text-gray-900 dark:text-white text-sm">$5,400.00</span>
+                            </div>
+                        </div>
+                        <div draggable="true" ondragstart="drag(event)" id="ord-3912"
+                            onclick="openOrderModal('ord-3912')"
+                            class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-mono text-gray-400">#ORD-3912</span>
+                                <span
+                                    class="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] px-1.5 py-0.5 rounded font-medium">Web</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 dark:text-gray-100 mb-1">Hotel Splendor</h4>
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                                Verificando stock para Ã­tems de 'CosmÃ©tica y perfumerÃ­a'.
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mb-3">
+                                <div class="bg-accent-orange h-1.5 rounded-full" style="width: 60%"></div>
+                            </div>
+                            <div
+                                class="flex justify-between items-center border-t border-gray-100 dark:border-gray-700 pt-3">
+                                <div class="flex items-center text-gray-400 text-xs">
+                                    <span class="material-icons-outlined text-[14px] mr-1">person</span> Auto
+                                </div>
+                                <span class="font-bold text-gray-900 dark:text-white text-sm">$890.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PREPARING COLUMN -->
+                <div
+                    class="flex flex-col w-80 h-full rounded-xl bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/50">
+                    <div
+                        class="p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700/50 bg-gray-50 dark:bg-gray-800/80 rounded-t-xl sticky top-0 backdrop-blur-sm">
+                        <div class="flex items-center space-x-2">
+                            <span
+                                class="w-2.5 h-2.5 rounded-full bg-accent-blue shadow-[0_0_8px_rgba(59,130,246,0.5)]"></span>
+                            <h3 class="font-semibold text-gray-700 dark:text-gray-200 text-sm tracking-wide">PREPARING
+                            </h3>
+                        </div>
+                        <span
+                            class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded text-xs font-medium">3</span>
+                    </div>
+                    <div id="col-production" class="flex-1 overflow-y-auto p-3 space-y-3 kanban-col"
+                        ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <div draggable="true" ondragstart="drag(event)" id="ord-3910"
+                            onclick="openOrderModal('ord-3910')"
+                            class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-mono text-gray-400">#ORD-3910</span>
+                                <span
+                                    class="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] px-1.5 py-0.5 rounded font-medium">RecolecciÃ³n</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 dark:text-gray-100 mb-1">Restaurante El Faro</h4>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <span
+                                    class="text-[10px] bg-gray-100 dark:bg-gray-700 px-1.5 rounded text-gray-500">Helados</span>
+                                <span
+                                    class="text-[10px] bg-gray-100 dark:bg-gray-700 px-1.5 rounded text-gray-500">Toppings</span>
+                            </div>
+                            <div class="mt-3 flex items-center">
+                                <img alt="" class="w-5 h-5 rounded-full border border-white dark:border-gray-800"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDEmSU5PbpEMzdpiNBX4eUHYyWvLbzdl6RTovZ6_0p9aGXL7jbnnQ4LLY6NSh6qGXPBlJo3IHXICJ9WSV4bv8izUCJblSQJrVWWZZdz7qpoQ8efrF-VJqKa89AXDu3OTAYu4CbL8dFK2gJubMZHp8YcZZYa94fHGteab4yKKbvoX_ckLpSs0CZAW_jq222j5x5r4yooN6XQ1pmdudnCAGCx80W2HqxVlsiXlWPwWl7ygqT41UnL7GRRPRbdILyuoEO8qq7feDCvi2A" />
+                                <span class="text-xs text-gray-500 ml-2">Juan P. estÃ¡ recolectando</span>
+                            </div>
+                        </div>
+                        <div draggable="true" ondragstart="drag(event)" id="ord-3908"
+                            onclick="openOrderModal('ord-3908')"
+                            class="bg-surface-light dark:bg-surface-dark p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer">
+                            <div class="flex justify-between items-start mb-2">
+                                <span class="text-xs font-mono text-gray-400">#ORD-3908</span>
+                                <span
+                                    class="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-[10px] px-1.5 py-0.5 rounded font-medium">Empaquetado</span>
+                            </div>
+                            <h4 class="font-semibold text-gray-800 dark:text-gray-100 mb-1">Gourmet Market</h4>
+                            <div class="flex items-center space-x-2 mt-2">
+                                <span
+                                    class="text-[10px] bg-gray-100 dark:bg-gray-700 px-1.5 rounded text-gray-500">Conservantes</span>
+                            </div>
+                            <div class="mt-3 flex items-center">
+                                <img alt="" class="w-5 h-5 rounded-full border border-white dark:border-gray-800"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCi3wOfd9mH09QQntTdSZf04H45YaeIqFf1HU-KeHRbNzk86GPToLtzX0HUjRZonaknDx24hrJss3EINe64bn3uawmQ_4W7O7GuaV8-TklFdFWoalbcfQLnAownaeqwYwqDevmiruUnUmDvUSsZXG4Wt4dRWE93ukJPJk-qT8nDmkvgIjRckzb-59YhyTt9jH8ygEJNm0wTKmOAqGYvYn5oOzq3Pkr1FxkVyi8qNHIF0yowc-ejrks8cwi7lNvGoZOQQ7g8j50Ks58" />
+                                <span class="text-xs text-gray-500 ml-2">Sarah M. estÃ¡ empaquetando</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- READY COLUMN -->
+                <div
+                    class="flex flex-col w-80 h-full rounded-xl bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/50">
+                    <div
+                        class="p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700/50 bg-gray-50 dark:bg-gray-800/80 rounded-t-xl sticky top-0 backdrop-blur-sm">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-accent-purple"></span>
+                            <h3 class="font-semibold text-gray-700 dark:text-gray-200 text-sm tracking-wide">LISTO</h3>
+                        </div>
+                        <span
+                            class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded text-xs font-medium">1</span>
+                    </div>
+                    <div id="col-ready" class="flex-1 overflow-y-auto p-3 space-y-3 kanban-col" ondrop="drop(event)"
+                        ondragover="allowDrop(event)">
+                        <!-- Cards rendered dynamically by renderBoard() -->
+                    </div>
+                </div>
+
+                <!-- COMPLETED COLUMN -->
+                <div
+                    class="flex flex-col w-80 h-full rounded-xl bg-gray-100 dark:bg-gray-800/40 border border-gray-200 dark:border-gray-700/50 opacity-70 hover:opacity-100 transition-opacity">
+                    <div
+                        class="p-4 flex items-center justify-between border-b border-gray-200 dark:border-gray-700/50 bg-gray-50 dark:bg-gray-800/80 rounded-t-xl sticky top-0 backdrop-blur-sm">
+                        <div class="flex items-center space-x-2">
+                            <span class="material-icons-outlined text-gray-400 text-sm">check_circle</span>
+                            <h3 class="font-semibold text-gray-700 dark:text-gray-200 text-sm tracking-wide">COMPLETED
+                            </h3>
+                        </div>
+                        <span
+                            class="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded text-xs font-medium">42</span>
+                    </div>
+                    <div id="col-completed" class="flex-1 overflow-y-auto p-3 space-y-3 kanban-col grayscale-[50%]"
+                        ondrop="drop(event)" ondragover="allowDrop(event)">
+                        <div id="ord-3888" onclick="openOrderModal('ord-3888')"
+                            class="bg-surface-light dark:bg-surface-dark p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-all">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-mono text-gray-400 line-through">#ORD-3888</span>
+                                <span class="text-xs text-gray-400">Ayer</span>
+                            </div>
+                            <h4 class="font-medium text-gray-600 dark:text-gray-400 text-sm mt-1">Bakery Shop "Sol"</h4>
+                        </div>
+                        <div id="ord-3887" onclick="openOrderModal('ord-3887')"
+                            class="bg-surface-light dark:bg-surface-dark p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-all">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-mono text-gray-400 line-through">#ORD-3887</span>
+                                <span class="text-xs text-gray-400">Ayer</span>
+                            </div>
+                            <h4 class="font-medium text-gray-600 dark:text-gray-400 text-sm mt-1">Eventos Montevideo
+                            </h4>
+                        </div>
+                        <div id="ord-3886" onclick="openOrderModal('ord-3886')"
+                            class="bg-surface-light dark:bg-surface-dark p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 cursor-pointer hover:shadow-md transition-all">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs font-mono text-gray-400 line-through">#ORD-3886</span>
+                                <span class="text-xs text-gray-400">Hace 2d</span>
+                            </div>
+                            <h4 class="font-medium text-gray-600 dark:text-gray-400 text-sm mt-1">ConfiterÃ­a 18</h4>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+    <div class="fixed bottom-6 right-6 md:hidden">
+        <button class="bg-primary text-white p-4 rounded-full shadow-lg hover:bg-yellow-600 transition-colors">
+            <span class="material-icons-outlined">add</span>
+        </button>
+    </div>
+
+    <!-- Order Details Modal -->
+    <!-- Order Details Modal -->
+    <div id="orderModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+        aria-modal="true">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"
+                onclick="closeOrderModal()"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div
+                class="inline-block align-bottom bg-surface-light dark:bg-surface-dark rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full border border-gray-200 dark:border-gray-700">
+                <div class="bg-surface-light dark:bg-surface-dark px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+
+                    <!-- Header -->
+                    <div class="sm:flex sm:items-start justify-between mb-6">
+                        <div class="flex items-center">
+                            <div
+                                class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 sm:mx-0 sm:h-10 sm:w-10">
+                                <span class="material-icons-outlined text-primary">inventory_2</span>
+                            </div>
+                            <div class="ml-4">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-gray-100"
+                                    id="modal-title">
+                                    Detalle del Pedido <span id="modal-order-id"
+                                        class="text-gray-500 text-sm font-mono ml-2"></span>
+                                    <span id="modal-status-badge"
+                                        class="ml-3 px-2 py-0.5 rounded text-xs font-medium bg-gray-700 text-gray-300 border border-gray-600">Pendiente</span>
+                                </h3>
+                                <p id="modal-created-at" class="text-xs text-gray-500 mt-1"></p>
+                            </div>
+                        </div>
+                        <div class="flex space-x-2 items-center">
+                            <button id="btn-edit-mode" onclick="toggleEditMode()"
+                                class="text-sm text-primary hover:text-yellow-600 font-medium px-3 py-1 border border-primary/30 rounded">
+                                <span class="material-icons-outlined text-sm align-middle mr-1">edit</span> Editar
+                            </button>
+                            <button id="btn-save-changes" onclick="saveOrderChanges()"
+                                class="hidden text-sm text-white bg-green-600 hover:bg-green-700 font-medium px-3 py-1 rounded shadow-sm">
+                                <span class="material-icons-outlined text-sm align-middle mr-1">save</span> Guardar
+                            </button>
+
+                            <!-- Move to Column -->
+                            <select id="modal-move-column" onchange="moveOrderToColumn(this)"
+                                class="text-sm bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded px-2 py-1 focus:ring-primary focus:border-primary cursor-pointer">
+                                <option value="" disabled selected>Mover a…</option>
+                                <option value="col-new">📥 Nuevo</option>
+                                <option value="col-analysis">🔍 En Análisis</option>
+                                <option value="col-production">⚙️ Preparando</option>
+                                <option value="col-ready">✅ Listo</option>
+                                <option value="col-completed">📦 Completado</option>
+                            </select>
+
+                            <!-- Delete Order -->
+                            <button id="btn-delete-order" onclick="deleteOrderFromModal()"
+                                class="text-sm text-red-400 hover:text-red-300 hover:bg-red-900/20 font-medium px-2 py-1 rounded border border-red-400/30 transition-colors"
+                                title="Eliminar pedido">
+                                <span class="material-icons-outlined text-sm align-middle">delete_outline</span>
+                            </button>
+
+                            <button onclick="closeOrderModal()" class="text-gray-400 hover:text-gray-500">
+                                <span class="material-icons-outlined">close</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-6">
+                        <!-- Left Column: Customer & History -->
+                        <div class="col-span-12 md:col-span-4 space-y-6">
+                            <!-- Customer Card -->
+                            <div
+                                class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <h4 class="text-xs font-semibold uppercase text-gray-400 mb-3 flex items-center">
+                                    <span class="material-icons-outlined text-sm mr-1">person</span> Cliente
+                                </h4>
+                                <div class="flex items-center mb-4">
+                                    <div id="modal-customer-initials"
+                                        class="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white font-bold text-sm">
+                                    </div>
+                                    <div class="ml-3 overflow-hidden">
+                                        <p id="modal-customer-name"
+                                            class="font-bold text-gray-800 dark:text-gray-200 text-sm truncate"></p>
+                                        <p id="modal-customer-type"
+                                            class="text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded inline-block mt-0.5">
+                                            GENERAL</p>
+                                    </div>
+                                </div>
+                                <div class="space-y-2 text-xs text-gray-600 dark:text-gray-400">
+                                    <div class="flex items-start">
+                                        <span class="material-icons-outlined text-[14px] mr-2 opacity-70">email</span>
+                                        <span id="modal-customer-email" class="break-all">email@example.com</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="material-icons-outlined text-[14px] mr-2 opacity-70">phone</span>
+                                        <span id="modal-customer-phone">+598 99 123 456</span>
+                                    </div>
+                                    <div class="flex items-start">
+                                        <span
+                                            class="material-icons-outlined text-[14px] mr-2 opacity-70">location_on</span>
+                                        <span id="modal-customer-address">DirecciÃ³n 1234</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- CRM Stats -->
+                            <div
+                                class="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+                                <h4 class="text-xs font-semibold uppercase text-gray-400 mb-3 flex items-center">
+                                    <span class="material-icons-outlined text-sm mr-1">analytics</span> EstadÃ­sticas
+                                    CRM
+                                </h4>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div
+                                        class="bg-surface-light dark:bg-surface-dark p-2 rounded border border-gray-200 dark:border-gray-700 text-center">
+                                        <span class="block text-[10px] text-gray-500">LTV Estimado</span>
+                                        <span id="modal-stats-ltv"
+                                            class="block text-sm font-bold text-green-500">$0.00</span>
+                                    </div>
+                                    <div
+                                        class="bg-surface-light dark:bg-surface-dark p-2 rounded border border-gray-200 dark:border-gray-700 text-center">
+                                        <span class="block text-[10px] text-gray-500">Pedidos</span>
+                                        <span id="modal-stats-count"
+                                            class="block text-sm font-bold text-blue-500">0</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- History -->
+                            <div>
+                                <h4 class="text-xs font-semibold uppercase text-gray-400 mb-2">Historial Reciente</h4>
+                                <div id="modal-history-list"
+                                    class="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                                    <!-- History items injected here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Column: Order Details -->
+                        <div class="col-span-12 md:col-span-8">
+                            <!-- Items Table -->
+                            <div
+                                class="bg-surface-light dark:bg-surface-dark rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden mb-4">
+                                <table class="w-full text-sm text-left">
+                                    <thead class="bg-gray-50 dark:bg-gray-800 text-xs text-gray-500 uppercase">
+                                        <tr>
+                                            <th class="px-4 py-2 font-medium">ArtÃ­culo</th>
+                                            <th class="px-4 py-2 font-medium text-center">Cant.</th>
+                                            <th class="px-4 py-2 font-medium text-right">Precio</th>
+                                            <th class="px-4 py-2 font-medium text-right">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="modal-items-table" class="divide-y divide-gray-200 dark:divide-gray-700">
+                                        <!-- Items injected here -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Financials & Notes -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Notes -->
+                                <div class="space-y-4">
+                                    <div>
+                                        <h4 class="text-xs font-semibold uppercase text-gray-400 mb-1">Notas del Pedido
+                                        </h4>
+                                        <div id="modal-notes"
+                                            class="text-sm text-gray-600 dark:text-gray-300 italic bg-yellow-50 dark:bg-yellow-900/10 p-3 rounded border border-yellow-200 dark:border-yellow-900/30 min-h-[60px]">
+                                            Sin notas.
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-xs font-semibold uppercase text-gray-400 mb-1">MÃ©todo de Pago
+                                        </h4>
+                                        <div class="flex items-center">
+                                            <span id="view-payment"
+                                                class="font-medium text-gray-800 dark:text-gray-200 text-sm">Contado</span>
+                                            <select id="edit-payment"
+                                                class="hidden text-sm w-full py-1 px-2 border-primary border text-gray-900 rounded bg-white dark:bg-gray-700 dark:text-white focus:outline-none">
+                                                <option value="Contado">Contado</option>
+                                                <option value="CrÃ©dito 15 dÃ­as">CrÃ©dito 15 dÃ­as</option>
+                                                <option value="CrÃ©dito 30 dÃ­as">CrÃ©dito 30 dÃ­as</option>
+                                                <option value="Transferencia Bancaria">Transferencia Bancaria</option>
+                                                <option value="Cheque 30 dÃ­as">Cheque 30 dÃ­as</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Totals -->
+                                <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg self-start">
+                                    <div class="flex justify-between text-xs text-gray-500 mb-1">
+                                        <span>Subtotal</span>
+                                        <span id="modal-subtotal">$0.00</span>
+                                    </div>
+                                    <div class="flex justify-between text-xs text-gray-500 mb-2">
+                                        <span>IVA (22%)</span>
+                                        <span id="modal-tax">$0.00</span>
+                                    </div>
+                                    <div
+                                        class="border-t border-gray-200 dark:border-gray-700 my-2 pt-2 flex justify-between items-center">
+                                        <span class="font-bold text-gray-900 dark:text-white">Total</span>
+                                        <span id="modal-total-right" class="font-bold text-lg text-primary">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4 flex justify-end space-x-3">
+                        <button type="button"
+                            class="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:text-sm"
+                            onclick="printOrder()">
+                            <span class="material-icons-outlined text-sm mr-2">print</span> Imprimir Orden
+                        </button>
+                        <button type="button"
+                            class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-yellow-600 sm:text-sm"
+                            onclick="closeOrderModal()">
+                            Cerrar
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Invoice Modal -->
+    <div id="invoiceModal" class="fixed inset-0 z-[60] hidden overflow-y-auto" aria-labelledby="modal-title"
+        role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"
+                onclick="closeInvoiceModal()"></div>
+
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+
+            <div
+                class="inline-block align-middle bg-white text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-sm w-full font-mono text-sm border border-gray-200">
+
+                <div id="invoice-content" class="p-6 bg-white text-black">
+                    <!-- Header -->
+                    <div class="text-center mb-6">
+                        <div class="flex justify-center mb-2">
+                            <span class="material-icons-outlined text-4xl text-black">spa</span>
+                        </div>
+                        <h2 class="text-xl font-bold uppercase tracking-wider mb-1">AROMACOS</h2>
+                        <h3 class="text-xs font-bold uppercase mb-4">Dominal S.A.</h3>
+
+                        <div class="text-[10px] space-y-1">
+                            <p>Aromacos</p>
+                            <p>Maldonado 990</p>
+                            <p>Montevideo, Montevideo</p>
+                            <p>Tel: 2902 7429</p>
+                            <p>info@aromacos.com.uy</p>
+                        </div>
+                    </div>
+
+                    <!-- Invoice Info -->
+                    <div class="border-t border-b border-black py-2 mb-4 text-[10px]">
+                        <div class="flex justify-between">
+                            <span>RUC EMISOR</span>
+                            <span class="font-bold">213814460016</span>
+                        </div>
+                        <div class="flex justify-between mt-1">
+                            <span>TIPO DE DOCUMENTO</span>
+                            <span class="font-bold">e-Ticket</span>
+                        </div>
+                        <div class="flex justify-between mt-1">
+                            <span>SERIE</span>
+                            <span class="font-bold">A</span>
+                        </div>
+                        <div class="flex justify-between mt-1">
+                            <span>NÃšMERO</span>
+                            <span class="font-bold">43574</span>
+                        </div>
+                        <div class="flex justify-between mt-1">
+                            <span>Contado</span>
+                            <span class="font-bold" id="inv-date"></span>
+                        </div>
+                        <div class="flex justify-between mt-1">
+                            <span>CONSUMO FINAL</span>
+                        </div>
+                    </div>
+
+                    <!-- Customer -->
+                    <div class="mb-4 text-[10px] uppercase border-b border-black pb-2">
+                        <div class="flex">
+                            <span class="w-16">NOMBRE</span>
+                            <span class="font-bold truncate flex-1" id="inv-customer"></span>
+                        </div>
+                        <!-- <div class="flex mt-1">
+                            <span class="w-16">DOMICILIO</span>
+                            <span class="truncate flex-1">MONTEVIDEO, MONTEVIDEO</span>
+                        </div> -->
+                    </div>
+
+                    <!-- Items -->
+                    <table class="w-full text-[10px] mb-4">
+                        <thead>
+                            <tr class="border-b border-black">
+                                <th class="text-left py-1">Cant</th>
+                                <th class="text-left py-1">DescripciÃ³n</th>
+                                <th class="text-right py-1">Importe</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inv-items">
+                            <!-- Items go here -->
+                        </tbody>
+                    </table>
+
+                    <!-- Totals -->
+                    <div class="border-t border-black pt-2 mb-6">
+                        <div class="flex justify-between font-bold text-lg">
+                            <span>TOTAL A PAGAR</span>
+                            <span id="inv-total"></span>
+                        </div>
+                        <div class="mt-2 text-[10px] text-right">
+                            <p>Subtotal gravado (22%): <span id="inv-subtotal"></span></p>
+                            <p>Total IVA (22%): <span id="inv-tax"></span></p>
+                        </div>
+                    </div>
+
+                    <!-- Footer / QR -->
+                    <div class="text-center">
+                        <div class="mb-2 text-[10px]">
+                            <p class="font-bold">PRE-FACTURA (DOCUMENTO NO VÃLIDO COMO FACTURA)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="bg-gray-100 px-4 py-3 sm:px-6 flex justify-between print:hidden">
+                    <button type="button"
+                        class="inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:text-sm"
+                        onclick="closeInvoiceModal()">
+                        Cerrar
+                    </button>
+                    <button type="button"
+                        class="inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gray-900 text-base font-medium text-white hover:bg-gray-800 focus:outline-none sm:text-sm"
+                        onclick="printInvoice()">
+                        <span class="material-icons-outlined text-sm mr-2">print</span> Imprimir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== NEW ORDER MODAL ===== -->
+    <div id="newOrderModal" class="hidden fixed inset-0 z-[60] overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 py-6">
+            <!-- Overlay -->
+            <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" onclick="closeNewOrderModal()"></div>
+            <!-- Modal Content -->
+            <div class="relative bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl w-full max-w-lg z-10">
+                <!-- Header -->
+                <div class="flex items-center justify-between px-6 py-4 border-b border-gray-700">
+                    <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                        <span class="material-icons-outlined text-primary">add_circle</span> Nuevo Pedido
+                    </h3>
+                    <button onclick="closeNewOrderModal()" class="text-gray-400 hover:text-white transition-colors">
+                        <span class="material-icons-outlined">close</span>
+                    </button>
+                </div>
+                <!-- Body -->
+                <div class="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+                    <!-- Customer Info -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="col-span-2">
+                            <label class="block text-xs text-gray-400 mb-1 font-medium">Cliente *</label>
+                            <input id="new-order-customer" type="text" placeholder="Nombre del cliente"
+                                class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-2.5 focus:ring-primary focus:border-primary" />
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1 font-medium">Teléfono</label>
+                            <input id="new-order-phone" type="tel" placeholder="+598 99 123 456"
+                                class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-2.5 focus:ring-primary focus:border-primary" />
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1 font-medium">Email</label>
+                            <input id="new-order-email" type="email" placeholder="cliente@email.com"
+                                class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-2.5 focus:ring-primary focus:border-primary" />
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1 font-medium">Tipo Cliente</label>
+                            <select id="new-order-type"
+                                class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-2.5 focus:ring-primary focus:border-primary">
+                                <option value="PARTICULAR">Particular</option>
+                                <option value="REPOSTERÍA">Repostería</option>
+                                <option value="GASTRONOMÍA">Gastronomía</option>
+                                <option value="PANADERÍA">Panadería</option>
+                                <option value="RETAIL">Retail</option>
+                                <option value="DISTRIBUIDOR">Distribuidor</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1 font-medium">Origen</label>
+                            <select id="new-order-source"
+                                class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-2.5 focus:ring-primary focus:border-primary">
+                                <option value="Manual">Manual</option>
+                                <option value="WhatsApp">WhatsApp</option>
+                                <option value="Teléfono">Teléfono</option>
+                                <option value="Email">Email</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs text-gray-400 mb-1 font-medium">Dirección</label>
+                            <input id="new-order-address" type="text" placeholder="Retiro en Local"
+                                class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-2.5 focus:ring-primary focus:border-primary" />
+                        </div>
+                    </div>
+
+                    <!-- Items Section -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs text-gray-400 font-medium">Items del Pedido *</label>
+                            <button type="button" onclick="addItemRow()"
+                                class="text-xs text-primary hover:text-yellow-300 font-medium flex items-center gap-0.5 transition-colors">
+                                <span class="material-icons-outlined text-sm">add</span> Agregar
+                            </button>
+                        </div>
+                        <div id="new-order-items">
+                            <!-- Dynamic rows inserted here by addItemRow() -->
+                        </div>
+                    </div>
+
+                    <!-- Total -->
+                    <div
+                        class="flex justify-between items-center bg-gray-900/50 px-4 py-3 rounded-lg border border-gray-700">
+                        <span class="text-sm text-gray-300 font-medium">Total:</span>
+                        <span id="new-order-total-display" class="text-xl font-bold text-white">$0.00</span>
+                    </div>
+
+                    <!-- Notes & Payment -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1 font-medium">Forma de Pago</label>
+                            <select id="new-order-payment"
+                                class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-2.5 focus:ring-primary focus:border-primary">
+                                <option value="Contado">Contado</option>
+                                <option value="Transferencia Bancaria">Transferencia</option>
+                                <option value="Pago al retirar">Pago al retirar</option>
+                                <option value="Crédito 30 días">Crédito 30 días</option>
+                                <option value="Cheque 30 días">Cheque 30 días</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1 font-medium">Notas</label>
+                            <input id="new-order-notes" type="text" placeholder="Notas adicionales..."
+                                class="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg px-3 py-2.5 focus:ring-primary focus:border-primary" />
+                        </div>
+                    </div>
+                </div>
+                <!-- Footer -->
+                <div class="flex justify-end gap-3 px-6 py-4 border-t border-gray-700">
+                    <button onclick="closeNewOrderModal()"
+                        class="px-4 py-2 text-sm font-medium text-gray-300 bg-gray-700 border border-gray-600 rounded-lg hover:bg-gray-600 transition-colors">
+                        Cancelar
+                    </button>
+                    <button onclick="submitNewOrder()"
+                        class="px-5 py-2 text-sm font-medium text-white bg-primary hover:bg-yellow-600 rounded-lg shadow-md transition-colors flex items-center gap-1.5">
+                        <span class="material-icons-outlined text-base">check</span> Crear Pedido
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts (loaded in dependency order) -->
+    <script src="js/utils.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/render.js"></script>
+    <script src="js/modal.js"></script>
+    <script src="js/new-order.js"></script>
+    <script src="js/invoice.js"></script>
+    <script src="js/dashboard-notifications.js"></script>
+    <script src="js/drag-drop.js"></script>
+    <div class="absolute bottom-0 right-0 w-96 h-96 pointer-events-none opacity-5 dark:opacity-10 z-0">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M44.7,-76.4C58.9,-69.2,71.8,-59.1,81.6,-46.6C91.4,-34.1,98.1,-19.2,95.8,-4.9C93.5,9.4,82.2,23.1,71.1,34.8C60,46.5,49,56.2,36.7,63.6C24.4,71,10.8,76.1,-1.8,79.2C-14.4,82.3,-27.7,83.4,-39.7,78.2C-51.7,73,-62.4,61.5,-70.8,48.5C-79.2,35.5,-85.3,21,-86.3,6.2C-87.3,-8.6,-83.2,-23.7,-74.3,-36.4C-65.4,-49.1,-51.7,-59.4,-37.9,-66.8C-24.1,-74.2,-10.2,-78.7,2.9,-83.7C16,-88.7,29,-94.2,40.5,-83.6L44.7,-76.4Z"
+                fill="#D4AF37" transform="translate(100 100)"></path>
+        </svg>
+    </div>
+
+</body>
+
+</html>

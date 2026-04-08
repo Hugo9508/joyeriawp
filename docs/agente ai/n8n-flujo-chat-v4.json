@@ -1,0 +1,261 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "jaflujodev",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -464,
+                4944
+            ],
+            "id": "12300b11-865b-4d7b-87b2-874ddafef771",
+            "name": "Webhook Web Chat3",
+            "webhookId": "send-to-whatsapp"
+        },
+        {
+            "parameters": {
+                "jsCode": "// 🔄 CÓDIGO UNIVERSAL v4 — FIX: conversation_id propagado\nconst body = $input.item.json.body;\nconsole.log('📥 Datos recibidos:', JSON.stringify(body, null, 2));\n\n// ─── CASO 1: WhatsApp entrante (Evolution API) ───────────────────────────────\nif (body.event === 'messages.upsert') {\n  const msgData = body.data;\n  if (msgData.key.fromMe) throw new Error('⏭️ Mensaje del bot, ignorando');\n  const remoteJid = msgData.key.remoteJidAlt || msgData.key.remoteJid;\n  const phoneNumber = remoteJid.split('@')[0];\n  const messageText = msgData.message?.conversation ||\n                      msgData.message?.extendedTextMessage?.text ||\n                      '[Multimedia]';\n  return {\n    json: {\n      type: 'whatsapp_incoming',\n      phoneNumber,\n      text: messageText,\n      senderName: msgData.pushName || 'Usuario',\n      timestamp: msgData.messageTimestamp * 1000,\n      conversation_id: ''\n    }\n  };\n}\n\n// ─── CASO 2: Web Chat nuevo formato (event: web_message) ─────────────────────\nelse if (body.event === 'web_message' && body.data) {\n  const data = body.data;\n\n  // ✅ FIX: storeNumber es el número de la TIENDA (vendedor), senderPhone es el CLIENTE\n  let storeRaw = String(data.storeNumber || '').replace(/[^0-9]/g, '');\n  let clientRaw = String(data.senderPhone || '').replace(/[^0-9]/g, '');\n\n  // Normalizar número de tienda (remoteJid para Evolution API = vendedor)\n  let storeJid = storeRaw;\n  if (!storeRaw.startsWith('598') && !storeRaw.startsWith('55')) {\n    if (storeRaw.length === 9) storeJid = '598' + storeRaw;\n    else if (storeRaw.length === 11) storeJid = '55' + storeRaw;\n  }\n\n  // Número del cliente para hacer polling / identificación en el chat web\n  let clientPhone = clientRaw;\n\n  // ✅ FIX: conversation_id del cliente para continuidad en Dify\n  const conversationId = data.conversation_id || body.metadata?.conversation_id || '';\n\n  return {\n    json: {\n      type: 'chat_outgoing',\n      remoteJid: storeJid,      // Vendedor — para notificación Evolution API\n      phoneNumber: clientPhone, // Cliente — para identificar en el chat web\n      senderPhone: clientPhone,\n      senderName: data.senderName || 'Cliente Web',\n      text: data.text,\n      platform: body.metadata?.platform || 'web_boutique',\n      conversation_id: conversationId,\n      timestamp: body.metadata?.timestamp ? new Date(body.metadata.timestamp).getTime() : Date.now()\n    }\n  };\n}\n\n// ─── CASO 3: Web Chat formato antiguo ────────────────────────────────────────\nelse if ((body.storePhoneNumber || body.phoneNumber) && body.text) {\n  let storeRaw = String(body.storePhoneNumber || '').replace(/[^0-9]/g, '');\n  let clientRaw = String(body.senderPhone || body.phoneNumber || storeRaw).replace(/[^0-9]/g, '');\n  let storeJid = storeRaw;\n  if (!storeRaw.startsWith('598') && !storeRaw.startsWith('55')) {\n    if (storeRaw.length === 9) storeJid = '598' + storeRaw;\n    else if (storeRaw.length === 11) storeJid = '55' + storeRaw;\n  }\n  const conversationId = body.conversation_id || '';\n  return {\n    json: {\n      type: 'chat_outgoing',\n      remoteJid: storeJid,\n      phoneNumber: clientRaw,\n      senderPhone: clientRaw,\n      text: body.text,\n      senderName: body.senderName || 'Cliente Web',\n      platform: body.metadata?.platform || 'unknown',\n      conversation_id: conversationId,\n      timestamp: body.metadata?.timestamp ? new Date(body.metadata.timestamp).getTime() : Date.now()\n    }\n  };\n}\n\nelse {\n  throw new Error('❌ Formato inválido: ' + JSON.stringify({ event: body.event, keys: Object.keys(body) }));\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -240,
+                4944
+            ],
+            "id": "028ecaea-e534-4f94-93a9-c0a25585c313",
+            "name": "Preparar Mensaje2"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 1
+                    },
+                    "conditions": [
+                        {
+                            "id": "condition-outgoing",
+                            "leftValue": "={{ $json.type }}",
+                            "rightValue": "chat_outgoing",
+                            "operator": {
+                                "type": "string",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                -16,
+                4944
+            ],
+            "id": "b6f26867-22ec-4ced-887e-47f42b2f06b9",
+            "name": "¿Es mensaje del Chat?3"
+        },
+        {
+            "parameters": {
+                "resource": "messages-api",
+                "instanceName": "Maya",
+                "remoteJid": "={{ $json.remoteJid }}",
+                "messageText": "=🛍️ *Nuevo mensaje - Web Boutique*\n\n👤 *Cliente:* {{ $json.senderName }}\n📱 *Teléfono:* {{ $json.senderPhone }}\n🕐 *Hora:* {{ new Date($json.timestamp).toLocaleString('es-UY', {timeZone: 'America/Montevideo'}) }}\n\n💬 *Mensaje:*\n{{ $json.text }}\n\n---\n_Para responder al cliente: {{ $json.senderPhone }}_",
+                "options_message": {}
+            },
+            "type": "n8n-nodes-evolution-api.evolutionApi",
+            "typeVersion": 1,
+            "position": [
+                208,
+                4800
+            ],
+            "id": "7c7e2ea0-8e72-4a3c-8690-bc6600b0b5b2",
+            "name": "📤 Notificar Vendedor1",
+            "credentials": {
+                "evolutionApi": {
+                    "id": "6r5z9RoXouEeeobi",
+                    "name": "Evolution Maya"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "user": "={{ $('Preparar Mensaje2').item.json.phoneNumber }}",
+                "query": "={{ $('Preparar Mensaje2').item.json.text }}",
+                "conversationId": "={{ $('Preparar Mensaje2').item.json.conversation_id || '' }}",
+                "responseMode": "streaming"
+            },
+            "type": "n8n-nodes-difyai.difyAi",
+            "typeVersion": 1,
+            "position": [
+                208,
+                5040
+            ],
+            "id": "45f7ca22-acd7-4ebe-9244-9d121d05222f",
+            "name": "🤖 Dify Luna1",
+            "credentials": {
+                "difyApi": {
+                    "id": "4VHrD6jV7wt07VYZ",
+                    "name": "Dify account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "const item = $input.item.json;\nlet rawData = '';\nif (Array.isArray(item)) rawData = item[0] || '';\nelse if (item.body) rawData = Array.isArray(item.body) ? item.body[0] : item.body;\nelse if (item.data) rawData = Array.isArray(item.data) ? item.data[0] : item.data;\nelse rawData = item;\nif (typeof rawData !== 'string') rawData = JSON.stringify(rawData);\n\nconst lines = rawData.split('\\n');\nlet fullAnswer = '';\nlet conversationId = '';\nlet messageId = '';\n\nfor (const line of lines) {\n  const trimmed = line.trim();\n  if (!trimmed || !trimmed.startsWith('data: ')) continue;\n  try {\n    const event = JSON.parse(trimmed.substring(6));\n    if ((event.event === 'agent_message' || event.event === 'message') && event.answer) {\n      fullAnswer += event.answer;\n    }\n    if (event.event === 'message_end') {\n      conversationId = event.conversation_id || '';\n      messageId = event.message_id || event.id || '';\n    }\n  } catch(e) {}\n}\n\nconst finalAnswer = fullAnswer.trim() || 'Lo siento, no pude procesar tu mensaje. Intenta de nuevo.';\n\nreturn [{\n  success: !!fullAnswer.trim(),\n  response: finalAnswer,\n  conversation_id: conversationId,\n  message_id: messageId\n}];"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                432,
+                5040
+            ],
+            "id": "41461e59-8469-4f5d-af19-0a991a14c507",
+            "name": "🔄 Procesar Stream2"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ {\n  \"success\": true,\n  \"type\": \"bot_response\",\n  \"response\": $json.response,\n  \"conversation_id\": $json.conversation_id,\n  \"phoneNumber\": $('Preparar Mensaje2').item.json.phoneNumber\n} }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                656,
+                5040
+            ],
+            "id": "ae5c6bb5-8449-46cf-9929-abf57a2de727",
+            "name": "✅ Responder al Chat (Respuesta Dify)"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://joyeria.a380.com.br/api/webhook",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ {\n  \"text\": $json.text,\n  \"senderName\": $json.senderName,\n  \"timestamp\": $json.timestamp,\n  \"phoneNumber\": $json.phoneNumber,\n  \"type\": \"whatsapp_incoming\"\n} }}",
+                "options": {
+                    "response": {
+                        "response": {}
+                    }
+                }
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                208,
+                5232
+            ],
+            "id": "36af38dc-3d0b-4662-9d21-454134296e4d",
+            "name": "📨 WhatsApp → Chat Web1"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"type\": $json.type, \"message\": \"Mensaje de WhatsApp enviado al chat\" } }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                432,
+                5232
+            ],
+            "id": "cb194daf-3d50-4b32-a0df-61e06c0129e8",
+            "name": "✅ Responder: WhatsApp recibido1"
+        }
+    ],
+    "connections": {
+        "Webhook Web Chat3": {
+            "main": [
+                [
+                    {
+                        "node": "Preparar Mensaje2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Preparar Mensaje2": {
+            "main": [
+                [
+                    {
+                        "node": "¿Es mensaje del Chat?3",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "¿Es mensaje del Chat?3": {
+            "main": [
+                [
+                    {
+                        "node": "📤 Notificar Vendedor1",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "🤖 Dify Luna1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "📨 WhatsApp → Chat Web1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🤖 Dify Luna1": {
+            "main": [
+                [
+                    {
+                        "node": "🔄 Procesar Stream2",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🔄 Procesar Stream2": {
+            "main": [
+                [
+                    {
+                        "node": "✅ Responder al Chat (Respuesta Dify)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📨 WhatsApp → Chat Web1": {
+            "main": [
+                [
+                    {
+                        "node": "✅ Responder: WhatsApp recibido1",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "48879120a3f3dc46e2394aadd0f93e174d47f6eef6bd3799c4f575c713076dca"
+    }
+}

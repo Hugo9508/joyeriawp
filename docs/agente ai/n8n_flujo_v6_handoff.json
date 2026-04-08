@@ -1,0 +1,785 @@
+{
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "jaflujodev",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -700,
+                5700
+            ],
+            "id": "wh-v6",
+            "name": "Webhook Chat v6",
+            "webhookId": "send-to-whatsapp"
+        },
+        {
+            "parameters": {
+                "jsCode": "// ─── PREPARAR DATOS v6 (con detección de handoff) ───\nconst body = $input.item.json.body;\n\n// ─── CASO 1: WhatsApp entrante (Evolution API) ───\nif (body.event === 'messages.upsert') {\n  const msgData = body.data;\n  const remoteJid = msgData.key.remoteJidAlt || msgData.key.remoteJid;\n  const phoneNumber = remoteJid.split('@')[0];\n  const isFromSeller = !!msgData.key.fromMe;\n  const messageText = msgData.message?.conversation ||\n                      msgData.message?.extendedTextMessage?.text || '[Multimedia]';\n  return {\n    json: {\n      type: isFromSeller ? 'seller_reply' : 'whatsapp_incoming',\n      phoneNumber,\n      text: messageText,\n      senderName: isFromSeller ? 'Vendedor' : (msgData.pushName || 'Usuario'),\n      timestamp: msgData.messageTimestamp * 1000,\n      conversation_id: '',\n      storeJid: '',\n      isFromSeller\n    }\n  };\n}\n\n// ─── CASO 2: Web Chat ───\nconst data = body.data || body;\nconst clientPhone = String(data.senderPhone || data.phoneNumber || '').replace(/[^0-9]/g, '');\nlet storeRaw = String(data.storeNumber || data.storePhoneNumber || '59895435644').replace(/[^0-9]/g, '');\nlet storeJid = storeRaw;\nif (storeRaw.length === 9) storeJid = '598' + storeRaw;\nconst conversationId = data.conversation_id || body.metadata?.conversation_id || '';\n\n// Detectar comandos del vendedor\nconst text = data.text || body.text || '';\nconst isCommand = text.startsWith('#pausa') || text.startsWith('#activar');\n\nreturn {\n  json: {\n    type: isCommand ? 'command' : 'chat_outgoing',\n    command: isCommand ? text.split(' ')[0].toLowerCase() : '',\n    phoneNumber: clientPhone,\n    senderPhone: clientPhone,\n    senderName: data.senderName || 'Cliente Web',\n    text: text,\n    conversation_id: conversationId,\n    storeJid: storeJid,\n    platform: body.metadata?.platform || 'web_boutique',\n    timestamp: body.metadata?.timestamp ? new Date(body.metadata.timestamp).getTime() : Date.now(),\n    isFromSeller: false\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -476,
+                5700
+            ],
+            "id": "prep-v6",
+            "name": "Preparar Datos v6"
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 1
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.type }}",
+                                        "rightValue": "seller_reply",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": "Vendedor Responde"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 1
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.type }}",
+                                        "rightValue": "command",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": "Comando"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 1
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.type }}",
+                                        "rightValue": "chat_outgoing",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": "Chat Web"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 1
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.type }}",
+                                        "rightValue": "whatsapp_incoming",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": "WhatsApp Entrante"
+                        }
+                    ]
+                },
+                "options": {
+                    "fallbackOutput": "extra"
+                }
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.2,
+            "position": [
+                -252,
+                5700
+            ],
+            "id": "router-v6",
+            "name": "🔀 Router"
+        },
+        {
+            "parameters": {
+                "jsCode": "// ─── VENDEDOR RESPONDIÓ → PAUSAR IA ───\nconst phone = $input.item.json.phoneNumber;\nconst resumeAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();\n\nreturn {\n  json: {\n    client_phone: phone,\n    is_paused: true,\n    paused_by: 'auto',\n    paused_at: new Date().toISOString(),\n    resume_at: resumeAt,\n    seller_name: 'Vendedor',\n    action: 'pause'\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                0,
+                5500
+            ],
+            "id": "pause-prep",
+            "name": "⏸️ Preparar Pausa"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://hmcwbizjawrhpkiyydye.supabase.co/rest/v1/chat_handoff",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "={{ $env.SUPABASE_KEY }}"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "=Bearer {{ $env.SUPABASE_KEY }}"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        },
+                        {
+                            "name": "Prefer",
+                            "value": "resolution=merge-duplicates"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ {\n  \"client_phone\": $json.client_phone,\n  \"is_paused\": $json.is_paused,\n  \"paused_by\": $json.paused_by,\n  \"paused_at\": $json.paused_at,\n  \"resume_at\": $json.resume_at,\n  \"seller_name\": $json.seller_name\n} }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                224,
+                5500
+            ],
+            "id": "upsert-pause",
+            "name": "💾 Guardar Pausa (HTTP)"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"type\": \"handoff\", \"message\": \"IA pausada por 30 min\" } }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                448,
+                5500
+            ],
+            "id": "resp-pause",
+            "name": "✅ Resp: Pausa OK"
+        },
+        {
+            "parameters": {
+                "jsCode": "// ─── PROCESAR COMANDO #pausa / #activar ───\nconst cmd = $input.item.json.command;\nconst phone = $input.item.json.phoneNumber;\n\nif (cmd === '#pausa') {\n  return {\n    json: {\n      client_phone: phone,\n      is_paused: true,\n      paused_by: 'command',\n      paused_at: new Date().toISOString(),\n      resume_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),\n      seller_name: 'Vendedor (comando)',\n      response_msg: '🛑 IA pausada para este cliente. Escribe #activar para reactivar.'\n    }\n  };\n} else {\n  return {\n    json: {\n      client_phone: phone,\n      is_paused: false,\n      paused_by: '',\n      paused_at: new Date().toISOString(),\n      resume_at: null,\n      seller_name: '',\n      response_msg: '✅ IA reactivada para este cliente.'\n    }\n  };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                0,
+                5650
+            ],
+            "id": "cmd-process",
+            "name": "🎮 Procesar Comando"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://hmcwbizjawrhpkiyydye.supabase.co/rest/v1/chat_handoff",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "={{ $env.SUPABASE_KEY }}"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "=Bearer {{ $env.SUPABASE_KEY }}"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        },
+                        {
+                            "name": "Prefer",
+                            "value": "resolution=merge-duplicates"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ {\n  \"client_phone\": $json.client_phone,\n  \"is_paused\": $json.is_paused,\n  \"paused_by\": $json.paused_by,\n  \"paused_at\": $json.paused_at,\n  \"resume_at\": $json.resume_at,\n  \"seller_name\": $json.seller_name\n} }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                224,
+                5650
+            ],
+            "id": "upsert-cmd",
+            "name": "💾 Guardar Estado (HTTP)"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"type\": \"command\", \"message\": $json.response_msg } }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                448,
+                5650
+            ],
+            "id": "resp-cmd",
+            "name": "✅ Resp: Comando OK"
+        },
+        {
+            "parameters": {
+                "method": "GET",
+                "url": "=https://hmcwbizjawrhpkiyydye.supabase.co/rest/v1/chat_handoff?client_phone=eq.{{ $json.phoneNumber }}&limit=1",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "={{ $env.SUPABASE_KEY }}"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "=Bearer {{ $env.SUPABASE_KEY }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                0,
+                5820
+            ],
+            "id": "check-handoff",
+            "name": "🔍 Consultar Handoff (HTTP)",
+            "continueOnFail": true
+        },
+        {
+            "parameters": {
+                "jsCode": "// ─── DECIDIR SI LA IA PUEDE RESPONDER ───\nconst handoffArr = $input.item.json;\nconst originalMsg = $('Preparar Datos v6').item.json;\n\n// La respuesta de Supabase REST es un array\n// Si viene como objeto (por httpRequest), intentar extraer\nlet handoff = null;\nif (Array.isArray(handoffArr)) {\n  handoff = handoffArr[0] || null;\n} else if (handoffArr && handoffArr.client_phone) {\n  handoff = handoffArr;\n}\n\n// Si no hay registro de handoff, la IA está activa\nif (!handoff) {\n  return { json: { ...originalMsg, ai_active: true } };\n}\n\n// Si está pausado pero ya pasó el tiempo de resume\nif (handoff.is_paused && handoff.resume_at) {\n  const resumeTime = new Date(handoff.resume_at).getTime();\n  if (Date.now() > resumeTime) {\n    return { json: { ...originalMsg, ai_active: true, expired_pause: true } };\n  }\n}\n\n// Si está pausado y el timer no ha expirado\nif (handoff.is_paused) {\n  return { json: { ...originalMsg, ai_active: false } };\n}\n\n// No está pausado\nreturn { json: { ...originalMsg, ai_active: true } };"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                224,
+                5820
+            ],
+            "id": "decide-ai",
+            "name": "🧠 ¿IA Activa?"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 1
+                    },
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $json.ai_active }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                448,
+                5820
+            ],
+            "id": "if-ai-active",
+            "name": "¿IA Activa?"
+        },
+        {
+            "parameters": {
+                "resource": "messages-api",
+                "instanceName": "Maya",
+                "remoteJid": "={{ $json.storeJid }}",
+                "messageText": "=🛍️ *Web Boutique*\n👤 {{ $json.senderName }} ({{ $json.senderPhone }})\n💬 {{ $json.text }}",
+                "options_message": {}
+            },
+            "type": "n8n-nodes-evolution-api.evolutionApi",
+            "typeVersion": 1,
+            "position": [
+                672,
+                5700
+            ],
+            "id": "notify-seller-v6",
+            "name": "📤 Notificar Vendedor",
+            "credentials": {
+                "evolutionApi": {
+                    "id": "6r5z9RoXouEeeobi",
+                    "name": "Evolution Maya"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "user": "={{ $json.phoneNumber }}",
+                "query": "={{ $json.text }}",
+                "conversationId": "={{ $json.conversation_id }}",
+                "responseMode": "blocking"
+            },
+            "type": "n8n-nodes-difyai.difyAi",
+            "typeVersion": 1,
+            "position": [
+                672,
+                5820
+            ],
+            "id": "dify-v6",
+            "name": "🤖 Dify (Blocking)",
+            "credentials": {
+                "difyApi": {
+                    "id": "4VHrD6jV7wt07VYZ",
+                    "name": "Dify account"
+                }
+            },
+            "continueOnFail": true
+        },
+        {
+            "parameters": {
+                "jsCode": "// ─── VERIFICAR RESPUESTA DE DIFY ───\nconst item = $input.item.json;\nconst answer = item.answer || item.response || item.data?.answer || '';\nconst conversationId = item.conversation_id || item.data?.conversation_id || '';\nconst hasError = !!item.error || !answer.trim();\n\nreturn {\n  json: {\n    success: !hasError,\n    answer: answer.trim(),\n    conversation_id: conversationId,\n    error: hasError ? (item.error || 'Respuesta vacía de Dify') : null\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                896,
+                5820
+            ],
+            "id": "verify-dify-v6",
+            "name": "🔍 Verificar Respuesta"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 1
+                    },
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $json.success }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                1120,
+                5820
+            ],
+            "id": "if-dify-ok",
+            "name": "¿Dify OK?"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ {\n  \"success\": true,\n  \"type\": \"bot_response\",\n  \"response\": $json.answer,\n  \"conversation_id\": $json.conversation_id,\n  \"phoneNumber\": $('Preparar Datos v6').item.json.phoneNumber\n} }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                1344,
+                5740
+            ],
+            "id": "resp-ok-v6",
+            "name": "✅ Responder OK"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ {\n  \"success\": true,\n  \"type\": \"bot_response\",\n  \"response\": \"Gracias por tu interés. En este momento tengo mucha demanda y no puedo responderte al instante. Para una atención personalizada, te invito a escribirnos directamente por WhatsApp haciendo clic en el ícono verde de abajo. ¡Estaremos encantados de atenderte! ✨\",\n  \"conversation_id\": \"\",\n  \"phoneNumber\": $('Preparar Datos v6').item.json.phoneNumber\n} }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                1344,
+                5920
+            ],
+            "id": "resp-fallback-v6",
+            "name": "⚠️ Responder Fallback"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ {\n  \"success\": true,\n  \"type\": \"bot_response\",\n  \"response\": \"¡Hola! Ahora mismo nuestro equipo de ventas está atendiendo tu consulta personalmente. Te responderemos a la brevedad por WhatsApp. 😊\",\n  \"conversation_id\": $('Preparar Datos v6').item.json.conversation_id || '',\n  \"phoneNumber\": $('Preparar Datos v6').item.json.phoneNumber\n} }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                672,
+                5960
+            ],
+            "id": "resp-paused",
+            "name": "🤝 Resp: Vendedor Atendiendo"
+        },
+        {
+            "parameters": {
+                "resource": "messages-api",
+                "instanceName": "Maya",
+                "remoteJid": "={{ $('Preparar Datos v6').item.json.storeJid }}",
+                "messageText": "=🤖 *Respuesta IA para {{ $('Preparar Datos v6').item.json.senderName }}*\n\n{{ $json.answer }}",
+                "options_message": {}
+            },
+            "type": "n8n-nodes-evolution-api.evolutionApi",
+            "typeVersion": 1,
+            "position": [
+                1568,
+                5740
+            ],
+            "id": "notify-ia-resp",
+            "name": "📤 Notificar Respuesta IA",
+            "credentials": {
+                "evolutionApi": {
+                    "id": "6r5z9RoXouEeeobi",
+                    "name": "Evolution Maya"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "resource": "messages-api",
+                "instanceName": "Maya",
+                "remoteJid": "={{ $json.storeJid }}",
+                "messageText": "=💬 *Cliente Web (IA pausada)*\n👤 {{ $json.senderName }} ({{ $json.senderPhone }})\n💬 {{ $json.text }}\n\n⚠️ _Recordá que la IA está pausada para este cliente._",
+                "options_message": {}
+            },
+            "type": "n8n-nodes-evolution-api.evolutionApi",
+            "typeVersion": 1,
+            "position": [
+                672,
+                6080
+            ],
+            "id": "notify-paused",
+            "name": "📤 Notificar (Pausado)",
+            "credentials": {
+                "evolutionApi": {
+                    "id": "6r5z9RoXouEeeobi",
+                    "name": "Evolution Maya"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://joyeria.a380.com.br/api/webhook",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ {\n  \"text\": $json.text,\n  \"senderName\": $json.senderName,\n  \"timestamp\": $json.timestamp,\n  \"phoneNumber\": $json.phoneNumber,\n  \"type\": \"whatsapp_incoming\"\n} }}",
+                "options": {
+                    "response": {
+                        "response": {}
+                    }
+                }
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                0,
+                6000
+            ],
+            "id": "wa-to-web",
+            "name": "📨 WhatsApp → Chat Web"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"type\": \"whatsapp\", \"message\": \"WhatsApp recibido\" } }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                224,
+                6000
+            ],
+            "id": "resp-wa-ok",
+            "name": "✅ Resp: WhatsApp OK"
+        }
+    ],
+    "connections": {
+        "Webhook Chat v6": {
+            "main": [
+                [
+                    {
+                        "node": "Preparar Datos v6",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Preparar Datos v6": {
+            "main": [
+                [
+                    {
+                        "node": "🔀 Router",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🔀 Router": {
+            "main": [
+                [
+                    {
+                        "node": "⏸️ Preparar Pausa",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "🎮 Procesar Comando",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "🔍 Consultar Handoff (HTTP)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "📨 WhatsApp → Chat Web",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "⏸️ Preparar Pausa": {
+            "main": [
+                [
+                    {
+                        "node": "💾 Guardar Pausa (HTTP)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "💾 Guardar Pausa (HTTP)": {
+            "main": [
+                [
+                    {
+                        "node": "✅ Resp: Pausa OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🎮 Procesar Comando": {
+            "main": [
+                [
+                    {
+                        "node": "💾 Guardar Estado (HTTP)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "💾 Guardar Estado (HTTP)": {
+            "main": [
+                [
+                    {
+                        "node": "✅ Resp: Comando OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🔍 Consultar Handoff (HTTP)": {
+            "main": [
+                [
+                    {
+                        "node": "🧠 ¿IA Activa?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🧠 ¿IA Activa?": {
+            "main": [
+                [
+                    {
+                        "node": "¿IA Activa?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "¿IA Activa?": {
+            "main": [
+                [
+                    {
+                        "node": "📤 Notificar Vendedor",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "🤖 Dify (Blocking)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "🤝 Resp: Vendedor Atendiendo",
+                        "type": "main",
+                        "index": 0
+                    },
+                    {
+                        "node": "📤 Notificar (Pausado)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🤖 Dify (Blocking)": {
+            "main": [
+                [
+                    {
+                        "node": "🔍 Verificar Respuesta",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🔍 Verificar Respuesta": {
+            "main": [
+                [
+                    {
+                        "node": "¿Dify OK?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "¿Dify OK?": {
+            "main": [
+                [
+                    {
+                        "node": "✅ Responder OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "⚠️ Responder Fallback",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "✅ Responder OK": {
+            "main": [
+                [
+                    {
+                        "node": "📤 Notificar Respuesta IA",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📨 WhatsApp → Chat Web": {
+            "main": [
+                [
+                    {
+                        "node": "✅ Resp: WhatsApp OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "48879120a3f3dc46e2394aadd0f93e174d47f6eef6bd3799c4f575c713076dca"
+    }
+}

@@ -1,0 +1,1342 @@
+{
+    "name": "Joyería Alianza - Chat v8 (Smart Handoff + Sheets CRM)",
+    "nodes": [
+        {
+            "parameters": {
+                "httpMethod": "POST",
+                "path": "jaflujodev",
+                "responseMode": "responseNode",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 2.1,
+            "position": [
+                -2400,
+                10400
+            ],
+            "id": "6d5ddb36-6f51-4d0c-8f5c-330d7af7299a",
+            "name": "Webhook Chat v8",
+            "webhookId": "send-to-whatsapp"
+        },
+        {
+            "parameters": {
+                "jsCode": "// ─── PREPARAR DATOS v8 (canal + handoff) ───\nconst body = $input.item.json.body;\n\n// ─── CASO 1: WhatsApp entrante (Evolution API) ───\nif (body.event === 'messages.upsert') {\n  const msgData = body.data;\n  const remoteJid = msgData.key.remoteJidAlt || msgData.key.remoteJid;\n  const phoneNumber = remoteJid.split('@')[0];\n  const isFromSeller = !!msgData.key.fromMe;\n  const messageText = msgData.message?.conversation ||\n                      msgData.message?.extendedTextMessage?.text || '[Multimedia]';\n  return {\n    json: {\n      type: isFromSeller ? 'seller_reply' : 'whatsapp_incoming',\n      phoneNumber,\n      text: `[Canal: WhatsApp] ${messageText}`,\n      originalText: messageText,\n      senderName: isFromSeller ? 'Vendedor' : (msgData.pushName || 'Usuario'),\n      timestamp: msgData.messageTimestamp * 1000,\n      conversation_id: '',\n      storeJid: '',\n      canal: 'WhatsApp',\n      isFromSeller\n    }\n  };\n}\n\n// ─── CASO 2: Web Chat ───\nconst data = body.data || body;\nconst clientPhone = String(data.senderPhone || data.phoneNumber || '').replace(/[^0-9]/g, '');\nlet storeRaw = String(data.storeNumber || data.storePhoneNumber || '59895435644').replace(/[^0-9]/g, '');\nlet storeJid = storeRaw;\nif (storeRaw.length === 9) storeJid = '598' + storeRaw;\nconst conversationId = data.conversation_id || body.metadata?.conversation_id || '';\nconst text = data.text || body.text || '';\nconst isCommand = text.startsWith('#pausa') || text.startsWith('#activar');\n\n// Limpiar texto de producto estructurado\nlet cleanText = text;\nif (text.includes('*Producto:*') || text.includes('Producto:')) {\n  const match = text.match(/\\*?Producto:\\*?\\s*(.+)/i);\n  const product = match ? match[1].trim() : 'una pieza';\n  cleanText = `Hola, me interesa el ${product}`;\n}\n\nreturn {\n  json: {\n    type: isCommand ? 'command' : 'chat_outgoing',\n    command: isCommand ? text.split(' ')[0].toLowerCase() : '',\n    phoneNumber: clientPhone,\n    senderPhone: clientPhone,\n    senderName: data.senderName || 'Cliente Web',\n    text: `[Canal: Web Boutique] ${cleanText}`,\n    originalText: text,\n    conversation_id: conversationId,\n    storeJid: storeJid,\n    canal: 'Web Boutique',\n    platform: body.metadata?.platform || 'web_boutique',\n    timestamp: body.metadata?.timestamp ? new Date(body.metadata.timestamp).getTime() : Date.now(),\n    isFromSeller: false\n  }\n};"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -2200,
+                10400
+            ],
+            "id": "68ea356e-ee0d-4eed-a153-6ce9bbb47d8e",
+            "name": "Preparar Datos v8"
+        },
+        {
+            "parameters": {
+                "rules": {
+                    "values": [
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 1
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.type }}",
+                                        "rightValue": "seller_reply",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": "Vendedor Responde"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 1
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.type }}",
+                                        "rightValue": "command",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": "Comando"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 1
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.type }}",
+                                        "rightValue": "chat_outgoing",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": "Chat Web"
+                        },
+                        {
+                            "conditions": {
+                                "options": {
+                                    "caseSensitive": true,
+                                    "leftValue": "",
+                                    "typeValidation": "strict",
+                                    "version": 1
+                                },
+                                "conditions": [
+                                    {
+                                        "leftValue": "={{ $json.type }}",
+                                        "rightValue": "whatsapp_incoming",
+                                        "operator": {
+                                            "type": "string",
+                                            "operation": "equals"
+                                        }
+                                    }
+                                ],
+                                "combinator": "and"
+                            },
+                            "renameOutput": "WhatsApp Entrante"
+                        }
+                    ]
+                },
+                "options": {
+                    "fallbackOutput": "extra"
+                }
+            },
+            "type": "n8n-nodes-base.switch",
+            "typeVersion": 3.2,
+            "position": [
+                -2000,
+                10400
+            ],
+            "id": "c9aed583-360b-412c-a6cb-f292ea6bd9cd",
+            "name": "🔀 Router"
+        },
+        {
+            "parameters": {
+                "jsCode": "const phone = $input.item.json.phoneNumber;\nconst resumeAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();\nreturn { json: { client_phone: phone, is_paused: true, paused_by: 'auto', paused_at: new Date().toISOString(), resume_at: resumeAt, seller_name: 'Vendedor', action: 'pause' } };"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -1700,
+                10200
+            ],
+            "id": "63c37c71-7121-4331-868b-d824b357fe2b",
+            "name": "⏸️ Preparar Pausa"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://hmcwbizjawrhpkiyydye.supabase.co/rest/v1/chat_handoff",
+                "authentication": "predefinedCredentialType",
+                "nodeCredentialType": "supabaseApi",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "={{ $env.SUPABASE_KEY }}"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "=Bearer {{ $env.SUPABASE_KEY }}"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        },
+                        {
+                            "name": "Prefer",
+                            "value": "resolution=merge-duplicates"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ { \"client_phone\": $json.client_phone, \"is_paused\": $json.is_paused, \"paused_by\": $json.paused_by, \"paused_at\": $json.paused_at, \"resume_at\": $json.resume_at, \"seller_name\": $json.seller_name } }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                -1500,
+                10200
+            ],
+            "id": "0479b299-ebf6-4362-b35a-ed0d94b07b1a",
+            "name": "💾 Guardar Pausa",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "y8DfPHX391IPTiG3",
+                    "name": "Supabassupabasejabonnavarro@tuamaeaque"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"type\": \"handoff\", \"message\": \"IA pausada por 30 min\" } }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                -1300,
+                10200
+            ],
+            "id": "c354ae6b-e212-4139-b5f0-c8da7d51a1fb",
+            "name": "✅ Resp: Pausa OK"
+        },
+        {
+            "parameters": {
+                "jsCode": "const cmd = $input.item.json.command;\nconst phone = $input.item.json.phoneNumber;\nif (cmd === '#pausa') {\n  return { json: { client_phone: phone, is_paused: true, paused_by: 'command', paused_at: new Date().toISOString(), resume_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(), seller_name: 'Vendedor (comando)', response_msg: '🛑 IA pausada para este cliente. Escribe #activar para reactivar.' } };\n} else {\n  return { json: { client_phone: phone, is_paused: false, paused_by: '', paused_at: new Date().toISOString(), resume_at: null, seller_name: '', response_msg: '✅ IA reactivada para este cliente.' } };\n}"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -1700,
+                10350
+            ],
+            "id": "f06042c5-541e-4fc6-9973-6a1e5c48cab8",
+            "name": "🎮 Procesar Comando"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://hmcwbizjawrhpkiyydye.supabase.co/rest/v1/chat_handoff",
+                "authentication": "predefinedCredentialType",
+                "nodeCredentialType": "supabaseApi",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "={{ $env.SUPABASE_KEY }}"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "=Bearer {{ $env.SUPABASE_KEY }}"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        },
+                        {
+                            "name": "Prefer",
+                            "value": "resolution=merge-duplicates"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ { \"client_phone\": $json.client_phone, \"is_paused\": $json.is_paused, \"paused_by\": $json.paused_by, \"paused_at\": $json.paused_at, \"resume_at\": $json.resume_at, \"seller_name\": $json.seller_name } }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                -1500,
+                10350
+            ],
+            "id": "36e23e0e-3dff-4450-acfd-f59d6e4c81a1",
+            "name": "💾 Guardar Estado",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "y8DfPHX391IPTiG3",
+                    "name": "Supabassupabasejabonnavarro@tuamaeaque"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"type\": \"command\", \"message\": $json.response_msg } }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                -1300,
+                10350
+            ],
+            "id": "7ee33722-ead2-4148-8d1a-9a19b397715e",
+            "name": "✅ Resp: Comando OK"
+        },
+        {
+            "parameters": {
+                "url": "=https://hmcwbizjawrhpkiyydye.supabase.co/rest/v1/chat_handoff?client_phone=eq.{{ $json.phoneNumber }}&limit=1",
+                "authentication": "predefinedCredentialType",
+                "nodeCredentialType": "supabaseApi",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "={{ $env.SUPABASE_KEY }}"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "=Bearer {{ $env.SUPABASE_KEY }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                -1700,
+                10500
+            ],
+            "id": "a90f83aa-c6f7-4463-a571-43332adc6c69",
+            "name": "🔍 Consultar Handoff",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "y8DfPHX391IPTiG3",
+                    "name": "Supabassupabasejabonnavarro@tuamaeaque"
+                }
+            },
+            "continueOnFail": true
+        },
+        {
+            "parameters": {
+                "jsCode": "const handoffArr = $input.item.json;\nconst originalMsg = $('Preparar Datos v8').item.json;\nlet handoff = null;\nif (Array.isArray(handoffArr)) { handoff = handoffArr[0] || null; }\nelse if (handoffArr && handoffArr.client_phone) { handoff = handoffArr; }\nif (!handoff) { return { json: { ...originalMsg, ai_active: true } }; }\nif (handoff.is_paused && handoff.resume_at) {\n  if (Date.now() > new Date(handoff.resume_at).getTime()) {\n    return { json: { ...originalMsg, ai_active: true, expired_pause: true } };\n  }\n}\nif (handoff.is_paused) { return { json: { ...originalMsg, ai_active: false } }; }\nreturn { json: { ...originalMsg, ai_active: true } };"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -1500,
+                10500
+            ],
+            "id": "d4c1313b-9358-4803-8106-25fa42726569",
+            "name": "🧠 ¿IA Activa?"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 1
+                    },
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $json.ai_active }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                -1300,
+                10500
+            ],
+            "id": "945005ac-ecee-40ec-8c42-e47c930a08e0",
+            "name": "¿IA Activa?"
+        },
+        {
+            "parameters": {
+                "operation": "append",
+                "documentId": {
+                    "__rl": true,
+                    "value": "YOUR_GOOGLE_SHEET_ID",
+                    "mode": "id"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": "Historial",
+                    "mode": "list"
+                },
+                "columns": {
+                    "mappingMode": "defineBelow",
+                    "value": {
+                        "timestamp": "={{ $now.toISO() }}",
+                        "conversation_id": "={{ $json.conversation_id }}",
+                        "canal": "={{ $json.canal }}",
+                        "sender": "={{ $json.senderName }}",
+                        "mensaje": "={{ $json.originalText }}",
+                        "phone": "={{ $json.phoneNumber }}"
+                    }
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 4.5,
+            "position": [
+                -1100,
+                10450
+            ],
+            "id": "a1b2c3d4-1111-4000-a000-000000000001",
+            "name": "📊 Guardar Msg Cliente",
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "CONFIGURAR_GOOGLE_SHEETS",
+                    "name": "Google Sheets"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "user": "={{ $json.phoneNumber }}",
+                "query": "={{ $json.text }}",
+                "conversationId": "={{ $json.conversation_id }}"
+            },
+            "type": "n8n-nodes-difyai.difyAi",
+            "typeVersion": 1,
+            "position": [
+                -900,
+                10450
+            ],
+            "id": "1f334e94-70a5-4dcd-9097-03d0174d858e",
+            "name": "🤖 Dify Alma",
+            "credentials": {
+                "difyApi": {
+                    "id": "oJqYFYdLcHE7q7pG",
+                    "name": "Dify Alma - ACTUALIZAR API KEY"
+                }
+            },
+            "continueOnFail": true
+        },
+        {
+            "parameters": {
+                "jsCode": "const item = $input.item.json;\nconst answer = item.answer || item.response || item.data?.answer || '';\nconst conversationId = item.conversation_id || item.data?.conversation_id || '';\nconst hasError = !!item.error || !answer.trim();\nconst hasHandoff = answer.includes('[HANDOFF]');\nconst cleanAnswer = answer.replace('[HANDOFF]', '').trim();\nreturn { json: { success: !hasError, answer: cleanAnswer, raw_answer: answer, has_handoff: hasHandoff, conversation_id: conversationId, error: hasError ? (item.error || 'Respuesta vacía de Dify') : null } };"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                -700,
+                10450
+            ],
+            "id": "849fc7ed-456a-40d6-9226-bd25e92a6050",
+            "name": "🔍 Verificar Respuesta"
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 1
+                    },
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $json.success }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                -500,
+                10450
+            ],
+            "id": "4f260be3-b599-45d7-9c96-ca70604724d5",
+            "name": "¿Dify OK?"
+        },
+        {
+            "parameters": {
+                "operation": "append",
+                "documentId": {
+                    "__rl": true,
+                    "value": "YOUR_GOOGLE_SHEET_ID",
+                    "mode": "id"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": "Historial",
+                    "mode": "list"
+                },
+                "columns": {
+                    "mappingMode": "defineBelow",
+                    "value": {
+                        "timestamp": "={{ $now.toISO() }}",
+                        "conversation_id": "={{ $json.conversation_id }}",
+                        "canal": "={{ $('Preparar Datos v8').item.json.canal }}",
+                        "sender": "=Alma",
+                        "mensaje": "={{ $json.answer }}",
+                        "phone": "={{ $('Preparar Datos v8').item.json.phoneNumber }}"
+                    }
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 4.5,
+            "position": [
+                -300,
+                10400
+            ],
+            "id": "a1b2c3d4-2222-4000-a000-000000000002",
+            "name": "📊 Guardar Resp Alma",
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "CONFIGURAR_GOOGLE_SHEETS",
+                    "name": "Google Sheets"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "conditions": {
+                    "options": {
+                        "caseSensitive": true,
+                        "leftValue": "",
+                        "typeValidation": "strict",
+                        "version": 1
+                    },
+                    "conditions": [
+                        {
+                            "leftValue": "={{ $json.has_handoff }}",
+                            "rightValue": true,
+                            "operator": {
+                                "type": "boolean",
+                                "operation": "equals"
+                            }
+                        }
+                    ],
+                    "combinator": "and"
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.if",
+            "typeVersion": 2,
+            "position": [
+                -100,
+                10400
+            ],
+            "id": "a1b2c3d4-3333-4000-a000-000000000003",
+            "name": "¿Tiene [HANDOFF]?"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ {\n  \"success\": true,\n  \"type\": \"bot_response\",\n  \"response\": $json.answer,\n  \"conversation_id\": $json.conversation_id,\n  \"phoneNumber\": $('Preparar Datos v8').item.json.phoneNumber\n} }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                100,
+                10500
+            ],
+            "id": "ff1fc5ae-db45-4c13-9154-d666bb960a31",
+            "name": "✅ Responder OK"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ {\n  \"success\": true,\n  \"type\": \"bot_response\",\n  \"response\": \"Gracias por tu interés. En este momento tengo mucha demanda. Para una atención personalizada, te invito a escribirnos por WhatsApp haciendo clic en el ícono verde. ¡Estaremos encantados de atenderte! ✨\",\n  \"conversation_id\": \"\",\n  \"phoneNumber\": $('Preparar Datos v8').item.json.phoneNumber\n} }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                -300,
+                10600
+            ],
+            "id": "b42c097e-4f52-4233-91ea-ad888fea8b52",
+            "name": "⚠️ Responder Fallback"
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ {\n  \"success\": true,\n  \"type\": \"bot_response\",\n  \"response\": $('🔍 Verificar Respuesta').item.json.answer + '\\n\\n👉 Para continuar con tu compra, hablá directamente con nuestra asesora:\\n🔗 https://wa.me/59895435644',\n  \"conversation_id\": $('🔍 Verificar Respuesta').item.json.conversation_id,\n  \"phoneNumber\": $('Preparar Datos v8').item.json.phoneNumber\n} }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                100,
+                10200
+            ],
+            "id": "a1b2c3d4-4444-4000-a000-000000000004",
+            "name": "🤝 Resp Handoff Cliente"
+        },
+        {
+            "parameters": {
+                "operation": "read",
+                "documentId": {
+                    "__rl": true,
+                    "value": "YOUR_GOOGLE_SHEET_ID",
+                    "mode": "id"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": "Historial",
+                    "mode": "list"
+                },
+                "filtersUI": {
+                    "values": [
+                        {
+                            "lookupColumn": "conversation_id",
+                            "lookupValue": "={{ $('🔍 Verificar Respuesta').item.json.conversation_id }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 4.5,
+            "position": [
+                300,
+                10200
+            ],
+            "id": "a1b2c3d4-5555-4000-a000-000000000005",
+            "name": "📖 Leer Historial",
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "CONFIGURAR_GOOGLE_SHEETS",
+                    "name": "Google Sheets"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "// Combinar filas del historial en texto para el LLM\nconst items = $input.all();\nconst historial = items.map(i => `[${i.json.timestamp}] ${i.json.sender}: ${i.json.mensaje}`).join('\\n');\nconst originalData = $('Preparar Datos v8').item.json;\nreturn { json: { historial, conversation_id: originalData.conversation_id, phoneNumber: originalData.phoneNumber, senderName: originalData.senderName, canal: originalData.canal, storeJid: originalData.storeJid } };"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                500,
+                10200
+            ],
+            "id": "a1b2c3d4-6666-4000-a000-000000000006",
+            "name": "📋 Formatear Historial"
+        },
+        {
+            "parameters": {
+                "promptType": "define",
+                "text": "={{ $json.historial }}",
+                "messages": {
+                    "messageValues": [
+                        {
+                            "message": "Analiza este historial de chat entre un cliente y Alma de Joyería Alianza. Extrae SOLO un JSON con estos campos (si no se mencionó, pon 'No especificado'):\n{\"nombre\":\"\",\"producto\":\"\",\"para_quien\":\"\",\"ocasion\":\"\",\"urgencia\":\"\",\"preferencias\":\"\",\"nivel_interes\":\"bajo/medio/alto\",\"resumen\":\"2 líneas max\"}\nDevolvé SOLO el JSON, nada más."
+                        }
+                    ]
+                },
+                "batching": {}
+            },
+            "type": "@n8n/n8n-nodes-langchain.chainLlm",
+            "typeVersion": 1.7,
+            "position": [
+                700,
+                10150
+            ],
+            "id": "a1b2c3d4-7777-4000-a000-000000000007",
+            "name": "🧠 LLM Resumen",
+            "retryOnFail": true
+        },
+        {
+            "parameters": {
+                "model": {
+                    "__rl": true,
+                    "value": "gpt-4.1-mini",
+                    "mode": "list"
+                },
+                "options": {
+                    "maxTokens": 300,
+                    "temperature": 0.2
+                }
+            },
+            "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+            "typeVersion": 1.2,
+            "position": [
+                700,
+                10350
+            ],
+            "id": "a1b2c3d4-8888-4000-a000-000000000008",
+            "name": "OpenAI Model",
+            "credentials": {
+                "openAiApi": {
+                    "id": "RtDfEvCFWwteC4hN",
+                    "name": "OpenAi maico"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "jsCode": "// Parsear JSON del LLM y preparar datos para Sheets + WhatsApp\nconst llmOutput = $json.response?.text || $json.text || $json.output || $json.response || '{}';\nlet parsed = {};\ntry {\n  const jsonMatch = llmOutput.match(/\\{[\\s\\S]*\\}/);\n  parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : {};\n} catch(e) { parsed = { resumen: llmOutput }; }\nconst prev = $('📋 Formatear Historial').item.json;\nreturn { json: { ...parsed, phoneNumber: prev.phoneNumber, senderName: prev.senderName, canal: prev.canal, storeJid: prev.storeJid, conversation_id: prev.conversation_id, fecha: new Date().toISOString().split('T')[0] } };"
+            },
+            "type": "n8n-nodes-base.code",
+            "typeVersion": 2,
+            "position": [
+                900,
+                10200
+            ],
+            "id": "a1b2c3d4-9999-4000-a000-000000000009",
+            "name": "📋 Procesar Resumen"
+        },
+        {
+            "parameters": {
+                "operation": "append",
+                "documentId": {
+                    "__rl": true,
+                    "value": "YOUR_GOOGLE_SHEET_ID",
+                    "mode": "id"
+                },
+                "sheetName": {
+                    "__rl": true,
+                    "value": "Prospectos",
+                    "mode": "list"
+                },
+                "columns": {
+                    "mappingMode": "defineBelow",
+                    "value": {
+                        "fecha": "={{ $json.fecha }}",
+                        "canal": "={{ $json.canal }}",
+                        "nombre": "={{ $json.nombre || $json.senderName }}",
+                        "telefono": "={{ $json.phoneNumber }}",
+                        "producto": "={{ $json.producto || 'No especificado' }}",
+                        "para_quien": "={{ $json.para_quien || 'No especificado' }}",
+                        "ocasion": "={{ $json.ocasion || 'No especificado' }}",
+                        "urgencia": "={{ $json.urgencia || 'No especificado' }}",
+                        "preferencias": "={{ $json.preferencias || 'No especificado' }}",
+                        "nivel_interes": "={{ $json.nivel_interes || 'No especificado' }}",
+                        "estado": "=Handoff enviado",
+                        "conversation_id": "={{ $json.conversation_id }}"
+                    }
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.googleSheets",
+            "typeVersion": 4.5,
+            "position": [
+                1100,
+                10200
+            ],
+            "id": "a1b2c3d4-aaaa-4000-a000-000000000010",
+            "name": "📊 Guardar Prospecto",
+            "credentials": {
+                "googleSheetsOAuth2Api": {
+                    "id": "CONFIGURAR_GOOGLE_SHEETS",
+                    "name": "Google Sheets"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "resource": "messages-api",
+                "instanceName": "Maya",
+                "remoteJid": "={{ $json.storeJid || '59895435644' }}",
+                "messageText": "=🛍️ *Prospecto calificado desde {{ $json.canal }}*\n\n👤 {{ $json.nombre || $json.senderName }} ({{ $json.phoneNumber }})\n💍 {{ $json.producto || 'No especificado' }}\n🎁 {{ $json.para_quien || '-' }} - {{ $json.ocasion || '-' }}\n⏰ {{ $json.urgencia || '-' }}\n✨ {{ $json.preferencias || '-' }}\n🔥 Interés: {{ $json.nivel_interes || '-' }}\n\n📝 {{ $json.resumen || 'Ver historial en Sheets' }}",
+                "options_message": {}
+            },
+            "type": "n8n-nodes-evolution-api.evolutionApi",
+            "typeVersion": 1,
+            "position": [
+                1300,
+                10200
+            ],
+            "id": "a1b2c3d4-bbbb-4000-a000-000000000011",
+            "name": "📱 Enviar Resumen Vendedor",
+            "credentials": {
+                "evolutionApi": {
+                    "id": "6r5z9RoXouEeeobi",
+                    "name": "Evolution Maya"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://hmcwbizjawrhpkiyydye.supabase.co/rest/v1/chat_handoff",
+                "authentication": "predefinedCredentialType",
+                "nodeCredentialType": "supabaseApi",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "apikey",
+                            "value": "={{ $env.SUPABASE_KEY }}"
+                        },
+                        {
+                            "name": "Authorization",
+                            "value": "=Bearer {{ $env.SUPABASE_KEY }}"
+                        },
+                        {
+                            "name": "Content-Type",
+                            "value": "application/json"
+                        },
+                        {
+                            "name": "Prefer",
+                            "value": "resolution=merge-duplicates"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ { \"client_phone\": $json.phoneNumber, \"is_paused\": true, \"paused_by\": 'handoff_auto', \"paused_at\": new Date().toISOString(), \"resume_at\": new Date(Date.now() + 30 * 60 * 1000).toISOString(), \"seller_name\": 'Vendedor' } }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1500,
+                10200
+            ],
+            "id": "a1b2c3d4-cccc-4000-a000-000000000012",
+            "name": "💾 Pausar IA Handoff",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "y8DfPHX391IPTiG3",
+                    "name": "Supabassupabasejabonnavarro@tuamaeaque"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"type\": \"bot_response\", \"response\": \"¡Hola! Nuestro equipo está atendiendo tu consulta personalmente. Te responderemos a la brevedad por WhatsApp. 😊\", \"conversation_id\": $('Preparar Datos v8').item.json.conversation_id || '', \"phoneNumber\": $('Preparar Datos v8').item.json.phoneNumber } }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                -1100,
+                10700
+            ],
+            "id": "aeb7b7a1-7d6f-483a-bf8c-a50f7dd85e26",
+            "name": "🤝 Resp: Vendedor Atendiendo"
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "https://joyeria.a380.com.br/api/webhook",
+                "authentication": "predefinedCredentialType",
+                "nodeCredentialType": "supabaseApi",
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "={{ { \"text\": $json.originalText || $json.text, \"senderName\": $json.senderName, \"timestamp\": $json.timestamp, \"phoneNumber\": $json.phoneNumber, \"type\": \"whatsapp_incoming\" } }}",
+                "options": {
+                    "response": {
+                        "response": {}
+                    }
+                }
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                -1700,
+                10750
+            ],
+            "id": "ec310776-edd9-4776-ae12-5b984f6a45a4",
+            "name": "📨 WhatsApp → Chat Web",
+            "credentials": {
+                "supabaseApi": {
+                    "id": "y8DfPHX391IPTiG3",
+                    "name": "Supabassupabasejabonnavarro@tuamaeaque"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "respondWith": "json",
+                "responseBody": "={{ { \"success\": true, \"type\": \"whatsapp\", \"message\": \"WhatsApp recibido\" } }}",
+                "options": {}
+            },
+            "type": "n8n-nodes-base.respondToWebhook",
+            "typeVersion": 1.5,
+            "position": [
+                -1500,
+                10750
+            ],
+            "id": "5bca5e2a-d77a-4b13-aaf9-6b3445c874d5",
+            "name": "✅ Resp: WhatsApp OK"
+        },
+        {
+            "parameters": {
+                "content": "## ⚙️ CONFIGURACIÓN INICIAL\n\n**Antes de activar el workflow, configurar:**\n\n1. **Credencial Dify:** Ir a Credentials → buscar \"Dify Alma\" → actualizar API Key a `app-4ywbOMEo8yMuls03aWsDluhr`\n2. **Google Sheets:** Crear credencial OAuth2 de Google y asignarla a los 4 nodos de Sheets\n3. **Sheet ID:** Reemplazar `YOUR_GOOGLE_SHEET_ID` en los nodos de Sheets con el ID real de la planilla\n4. **Hojas requeridas:** \"Historial\" (timestamp, conversation_id, canal, sender, mensaje, phone) y \"Prospectos\" (fecha, canal, nombre, telefono, producto, para_quien, ocasion, urgencia, preferencias, nivel_interes, estado, conversation_id)\n5. **Variables de entorno:** Verificar que `SUPABASE_KEY` esté configurada\n\n⚠️ El webhook path es `jaflujodev` — asegurate de que coincida con la URL en tu frontend",
+                "height": 400,
+                "width": 560,
+                "color": 3
+            },
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -2500,
+                9800
+            ],
+            "typeVersion": 1,
+            "id": "note-0001-config-global",
+            "name": "📌 Config Global"
+        },
+        {
+            "parameters": {
+                "content": "## 🚪 ENTRADA + ROUTING\n\n**Webhook** recibe POST del chat web o de Evolution API (WhatsApp).\n\n**Preparar Datos v8** detecta el origen:\n- `messages.upsert` → WhatsApp (Evolution API)\n- Otro → Web Chat\n\nInyecta el **canal** en el texto: `[Canal: Web Boutique]` o `[Canal: WhatsApp]` para que Alma adapte su tono.\n\nTambién limpia mensajes estructurados de producto (ej: `*Producto:* Anillo`) convirtiéndolos a lenguaje natural.\n\n**Router** distribuye a 4 salidas:\n0. Vendedor responde → Pausar IA\n1. Comando (#pausa/#activar)\n2. Chat Web → Flujo principal\n3. WhatsApp entrante → Forward",
+                "height": 380,
+                "width": 700,
+                "color": 6
+            },
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -2500,
+                10280
+            ],
+            "typeVersion": 1,
+            "id": "note-0002-entrada-routing",
+            "name": "📌 Entrada y Routing"
+        },
+        {
+            "parameters": {
+                "content": "## ⏸️ VENDEDOR RESPONDE\n\nCuando el vendedor responde por WhatsApp (fromMe=true), se **pausa la IA automáticamente por 30 min** en Supabase.\n\nEsto evita que Alma interfiera cuando el vendedor está atendiendo.\n\nLa pausa se guarda en la tabla `chat_handoff` con `resolution=merge-duplicates` (upsert por teléfono).",
+                "height": 220,
+                "width": 480,
+                "color": 4
+            },
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -1800,
+                10060
+            ],
+            "typeVersion": 1,
+            "id": "note-0003-seller-pause",
+            "name": "📌 Vendedor Responde"
+        },
+        {
+            "parameters": {
+                "content": "## 🎮 COMANDOS MANUALES\n\n`#pausa` → Pausa la IA por 1 hora\n`#activar` → Reactiva la IA inmediatamente\n\nEstos comandos se envían desde el chat y permiten control manual del handoff.",
+                "height": 160,
+                "width": 400,
+                "color": 4
+            },
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -1800,
+                10280
+            ],
+            "typeVersion": 1,
+            "id": "note-0004-comandos",
+            "name": "📌 Comandos"
+        },
+        {
+            "parameters": {
+                "content": "## 🔍 VERIFICACIÓN DE HANDOFF\n\nAntes de enviar a Dify, se consulta Supabase para ver si la IA está pausada para este cliente.\n\n- **IA Activa** → Continúa al flujo de chat (Sheets + Dify)\n- **IA Pausada** → Responde \"Nuestro equipo está atendiendo tu consulta\"\n- **Pausa expirada** → Se reactiva automáticamente\n\nEl nodo `continueOnFail: true` evita que un error de Supabase bloquee todo el flujo.",
+                "height": 240,
+                "width": 480,
+                "color": 5
+            },
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -1800,
+                10440
+            ],
+            "typeVersion": 1,
+            "id": "note-0005-handoff-check",
+            "name": "📌 Verificación Handoff"
+        },
+        {
+            "parameters": {
+                "content": "## 🤖 FLUJO PRINCIPAL DE CHAT\n\n1. **📊 Guardar Msg Cliente** → Registra cada mensaje del cliente en Google Sheets (hoja \"Historial\")\n2. **🤖 Dify Alma** → Envía el mensaje a Alma (agente Dify) con el prefijo de canal\n3. **🔍 Verificar Respuesta** → Valida si Dify respondió OK, detecta marcador `[HANDOFF]`, limpia el marcador del texto\n4. **¿Dify OK?** → Si error → Fallback elegante. Si OK → continúa\n5. **📊 Guardar Resp Alma** → Registra la respuesta de Alma en Sheets\n6. **¿Tiene [HANDOFF]?** → Si Alma detectó intención de compra:\n   - **SÍ** → Activa flujo de Smart Handoff →\n   - **NO** → Responde normalmente al cliente ✅\n\n⚠️ Dify tiene `continueOnFail: true` para no romper el flujo si hay error de API",
+                "height": 340,
+                "width": 800,
+                "color": 7
+            },
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -1200,
+                10280
+            ],
+            "typeVersion": 1,
+            "id": "note-0006-flujo-chat",
+            "name": "📌 Flujo Principal Chat"
+        },
+        {
+            "parameters": {
+                "content": "## 🤝 SMART HANDOFF (Solo cuando Alma detecta compra)\n\n**Se activa SOLO cuando la respuesta de Alma contiene [HANDOFF]**\n\n1. **🤝 Resp Handoff** → Responde al cliente con el mensaje de Alma + link de WhatsApp (rápido, sin esperar)\n2. **📖 Leer Historial** → Lee todas las filas de esta conversación desde Google Sheets\n3. **📋 Formatear Historial** → Combina las filas en un texto legible para el LLM\n4. **🧠 LLM Resumen** → GPT-4.1-mini extrae datos estructurados: nombre, producto, ocasión, urgencia, preferencias, nivel de interés\n5. **📋 Procesar Resumen** → Parsea el JSON del LLM\n6. **📊 Guardar Prospecto** → Graba una fila en la hoja \"Prospectos\" (CRM)\n7. **📱 Enviar Resumen** → Envía UN mensaje limpio al vendedor por WhatsApp (Evolution API)\n8. **💾 Pausar IA** → Pausa la IA en Supabase por 30 min\n\n💡 El cliente NO espera por todo esto — ya recibió su respuesta en el paso 1",
+                "height": 400,
+                "width": 800,
+                "color": 2
+            },
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                0,
+                9880
+            ],
+            "typeVersion": 1,
+            "id": "note-0007-smart-handoff",
+            "name": "📌 Smart Handoff"
+        },
+        {
+            "parameters": {
+                "content": "## 📨 WHATSAPP ENTRANTE\n\nCuando un cliente escribe directo por WhatsApp, el mensaje se reenvía al chat web via HTTP POST.\n\nEsto permite ver los mensajes de WhatsApp en el panel web.\n\n🔜 **Próximo paso (v8.1):** Hacer que Alma también responda por WhatsApp directamente, usando el mismo flujo de Dify.",
+                "height": 200,
+                "width": 480,
+                "color": 1
+            },
+            "type": "n8n-nodes-base.stickyNote",
+            "position": [
+                -1800,
+                10680
+            ],
+            "typeVersion": 1,
+            "id": "note-0008-whatsapp-in",
+            "name": "📌 WhatsApp Entrante"
+        }
+    ],
+    "connections": {
+        "Webhook Chat v8": {
+            "main": [
+                [
+                    {
+                        "node": "Preparar Datos v8",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "Preparar Datos v8": {
+            "main": [
+                [
+                    {
+                        "node": "🔀 Router",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🔀 Router": {
+            "main": [
+                [
+                    {
+                        "node": "⏸️ Preparar Pausa",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "🎮 Procesar Comando",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "🔍 Consultar Handoff",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "📨 WhatsApp → Chat Web",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "⏸️ Preparar Pausa": {
+            "main": [
+                [
+                    {
+                        "node": "💾 Guardar Pausa",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "💾 Guardar Pausa": {
+            "main": [
+                [
+                    {
+                        "node": "✅ Resp: Pausa OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🎮 Procesar Comando": {
+            "main": [
+                [
+                    {
+                        "node": "💾 Guardar Estado",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "💾 Guardar Estado": {
+            "main": [
+                [
+                    {
+                        "node": "✅ Resp: Comando OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🔍 Consultar Handoff": {
+            "main": [
+                [
+                    {
+                        "node": "🧠 ¿IA Activa?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🧠 ¿IA Activa?": {
+            "main": [
+                [
+                    {
+                        "node": "¿IA Activa?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "¿IA Activa?": {
+            "main": [
+                [
+                    {
+                        "node": "📊 Guardar Msg Cliente",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "🤝 Resp: Vendedor Atendiendo",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📊 Guardar Msg Cliente": {
+            "main": [
+                [
+                    {
+                        "node": "🤖 Dify Alma",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🤖 Dify Alma": {
+            "main": [
+                [
+                    {
+                        "node": "🔍 Verificar Respuesta",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🔍 Verificar Respuesta": {
+            "main": [
+                [
+                    {
+                        "node": "¿Dify OK?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "¿Dify OK?": {
+            "main": [
+                [
+                    {
+                        "node": "📊 Guardar Resp Alma",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "⚠️ Responder Fallback",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📊 Guardar Resp Alma": {
+            "main": [
+                [
+                    {
+                        "node": "¿Tiene [HANDOFF]?",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "¿Tiene [HANDOFF]?": {
+            "main": [
+                [
+                    {
+                        "node": "🤝 Resp Handoff Cliente",
+                        "type": "main",
+                        "index": 0
+                    }
+                ],
+                [
+                    {
+                        "node": "✅ Responder OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🤝 Resp Handoff Cliente": {
+            "main": [
+                [
+                    {
+                        "node": "📖 Leer Historial",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📖 Leer Historial": {
+            "main": [
+                [
+                    {
+                        "node": "📋 Formatear Historial",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📋 Formatear Historial": {
+            "main": [
+                [
+                    {
+                        "node": "🧠 LLM Resumen",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "🧠 LLM Resumen": {
+            "main": [
+                [
+                    {
+                        "node": "📋 Procesar Resumen",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📋 Procesar Resumen": {
+            "main": [
+                [
+                    {
+                        "node": "📊 Guardar Prospecto",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📊 Guardar Prospecto": {
+            "main": [
+                [
+                    {
+                        "node": "📱 Enviar Resumen Vendedor",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📱 Enviar Resumen Vendedor": {
+            "main": [
+                [
+                    {
+                        "node": "💾 Pausar IA Handoff",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "📨 WhatsApp → Chat Web": {
+            "main": [
+                [
+                    {
+                        "node": "✅ Resp: WhatsApp OK",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "OpenAI Model": {
+            "ai_languageModel": [
+                [
+                    {
+                        "node": "🧠 LLM Resumen",
+                        "type": "ai_languageModel",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    },
+    "pinData": {},
+    "meta": {
+        "templateCredsSetupCompleted": true,
+        "instanceId": "48879120a3f3dc46e2394aadd0f93e174d47f6eef6bd3799c4f575c713076dca"
+    }
+}

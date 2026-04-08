@@ -1,0 +1,60 @@
+# Walkthrough: Integración Directa Dify + n8n Events
+
+## Cambios Realizados
+
+### Nueva arquitectura
+```
+chat-widget.tsx → POST /api/dify-chat → Dify API (directo)
+                                          ↓ (si detecta handoff)
+                                        n8n webhook (fire-and-forget)
+```
+
+### Archivos modificados/creados
+
+| Archivo | Cambio |
+|---------|--------|
+| [.env.local](file:///c:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/.env.local) | **[NEW]** Variables de entorno: `DIFY_API_KEY`, `DIFY_BASE_URL`, `N8N_EVENT_WEBHOOK_URL` |
+| [settings.ts](file:///c:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/src/lib/settings.ts) | Agente renombrado a "Alma" + nuevo `serverSettings` con config Dify |
+| [route.ts](file:///c:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/src/app/api/dify-chat/route.ts) | **[NEW]** API Route que llama Dify directamente + detección de handoff |
+| [chat-widget.tsx](file:///c:/Users/kript/OneDrive/Documentos/Antigravity01/joyeriawp/src/components/chat-widget.tsx) | Endpoint cambiado de `/api/send-message` a `/api/dify-chat` |
+
+### Detección de handoff (built-in)
+
+La API route `dify-chat` escanea las respuestas de Alma por señales de compra (ej: "me interesa", "wa.me", "forma de pago"). Cuando detecta una, **notifica a n8n automáticamente** vía webhook sin bloquear la respuesta al usuario.
+
+## Verificación
+
+- ✅ **Build:** `next build` exitoso (exit code 0, 24 páginas estáticas)
+- ⏳ **Testing manual:** Pendiente — ejecutar `npm run dev` y probar el chat
+
+## Próximos pasos
+
+1. **Ejecutar `npm run dev`** y probar el chat en vivo
+2. **Configurar HTTP Tool en Dify** (panel web) para que Alma dispare n8n directamente cuando detecte handoff
+3. **Crear webhook `/dify-events` en n8n** para recibir eventos de Dify y notificar al vendedor por WhatsApp
+Walkthrough: Integración Directa Dify + n8n Events
+Cambios Realizados
+Nueva arquitectura
+chat-widget.tsx → POST /api/dify-chat → Dify API (directo)
+                                          ↓ (si detecta handoff)
+                                        n8n webhook (fire-and-forget)
+Archivos modificados/creados
+Archivo	Cambio
+.env.local
+[NEW] Variables de entorno: DIFY_API_KEY, DIFY_BASE_URL, N8N_EVENT_WEBHOOK_URL
+settings.ts
+Agente renombrado a "Alma" + nuevo serverSettings con config Dify
+route.ts
+[NEW] API Route que llama Dify directamente + detección de handoff
+chat-widget.tsx
+Endpoint cambiado de /api/send-message a /api/dify-chat
+Detección de handoff (built-in)
+La API route dify-chat escanea las respuestas de Alma por señales de compra (ej: "me interesa", "wa.me", "forma de pago"). Cuando detecta una, notifica a n8n automáticamente vía webhook sin bloquear la respuesta al usuario.
+
+Verificación
+✅ Build: next build exitoso (exit code 0, 24 páginas estáticas)
+⏳ Testing manual: Pendiente — ejecutar npm run dev y probar el chat
+Próximos pasos
+Ejecutar npm run dev y probar el chat en vivo
+Configurar HTTP Tool en Dify (panel web) para que Alma dispare n8n directamente cuando detecte handoff
+Crear webhook /dify-events en n8n para recibir eventos de Dify y notificar al vendedor por WhatsApp
