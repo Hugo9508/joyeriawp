@@ -87,13 +87,12 @@ function CollectionsContent() {
           <div className="mb-8 md:mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-2">
               <h2 className="text-3xl md:text-4xl font-light text-foreground tracking-tight">
-                Colección <span className="font-serif italic text-primary">Eterna</span>
+                {categoryFilter ? (
+                  <>Colección <span className="font-serif italic text-primary">{allCategories.find(c => c.value === categoryFilter)?.name || categoryFilter}</span></>
+                ) : (
+                  <>Colección <span className="font-serif italic text-primary">JA</span></>
+                )}
               </h2>
-              {categoryFilter && (
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">
-                  Filtrando por: <span className="text-primary font-bold">{categoryFilter}</span>
-                </p>
-              )}
             </div>
           </div>
 
@@ -142,9 +141,14 @@ function CollectionsContent() {
                           </span>
                         </div>
                       </div>
-                      <WhatsAppProductButton product={product} className="mt-3 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] md:text-xs font-bold uppercase tracking-widest h-10">
-                        Consultar
-                      </WhatsAppProductButton>
+                      <div className="mt-3 flex gap-2">
+                        <WhatsAppProductButton product={product} className="flex-1 bg-transparent border border-primary text-primary hover:bg-primary hover:text-white text-[10px] md:text-xs font-bold uppercase tracking-widest h-10">
+                          Consultar
+                        </WhatsAppProductButton>
+                        <Button asChild className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] md:text-xs font-bold uppercase tracking-widest h-10">
+                          <Link href={`/products/${product.id}`}>Comprar</Link>
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))

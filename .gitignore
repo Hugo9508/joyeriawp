@@ -30,3 +30,5 @@ next-env.d.ts
 # Avoid nested git issues
 joyeriaalianza3/
 .git/
+
+.vercel

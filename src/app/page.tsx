@@ -1,36 +1,41 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getProducts } from '@/services/productService';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowDown, ArrowRight } from 'lucide-react';
-import { ProductCard } from '@/components/product-card';
 import { ReviewsCarousel } from '@/components/reviews-carousel';
 import { Button } from '@/components/ui/button';
-import { Product } from '@/lib/products';
+import { appSettings } from '@/lib/settings';
 
 const heroImage = PlaceHolderImages.find(p => p.id === 'hero-1');
 
+// Colecciones destacadas con videos locales
+const featuredCollections = [
+  {
+    id: 1,
+    name: 'Colección Luz Eterna',
+    price: 'USD 820',
+    video: '/videos/luz-eterna.mp4',
+    href: '/collections',
+  },
+  {
+    id: 2,
+    name: 'Colección Aurora',
+    price: 'USD 850',
+    video: '/videos/coleccion-aura.mp4',
+    href: '/collections',
+  },
+  {
+    id: 3,
+    name: 'Colección Alianzas',
+    price: 'USD 900',
+    video: '/videos/alianzas.mp4',
+    href: '/collections',
+  },
+];
+
 export default function Home() {
-  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadFeatured() {
-      try {
-        const allProducts = await getProducts({ per_page: 3 });
-        setFeaturedProducts(allProducts);
-      } catch (error) {
-        console.error("Error cargando destacados:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadFeatured();
-  }, []);
-
   return (
     <div className="flex flex-col overflow-x-hidden">
       {/* Hero Section */}
@@ -70,7 +75,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Products Section */}
+      {/* Featured Collections Section — Videos locales */}
       <section className="py-16 md:py-32 bg-background">
         <div className="max-w-screen-xl mx-auto px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 md:mb-16 gap-4 md:gap-6">
@@ -85,23 +90,43 @@ export default function Home() {
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 md:gap-y-16">
-            {!loading ? (
-              featuredProducts.length > 0 ? (
-                featuredProducts.map((product, index) => (
-                  <div key={product.id} className={index === 1 ? 'lg:mt-16' : ''}>
-                    <ProductCard product={product} />
+            {featuredCollections.map((collection, index) => (
+              <div key={collection.id} className={index === 1 ? 'lg:mt-16' : ''}>
+                <div className="group">
+                  <Link href={collection.href} className="block">
+                    <div className="relative aspect-[3/4] w-full overflow-hidden bg-secondary mb-4 rounded-2xl">
+                      <video
+                        src={collection.video}
+                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-500" />
+                    </div>
+                  </Link>
+                  <h3 className="text-sm md:text-base font-medium text-foreground tracking-wide">
+                    {collection.name}
+                  </h3>
+                  <p className="mt-1 text-sm text-primary font-medium">
+                    {collection.price}
+                  </p>
+                  <div className="mt-3 flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1 border-primary text-primary hover:bg-primary hover:text-white text-[10px] md:text-xs font-bold uppercase tracking-widest h-10"
+                      onClick={() => window.open(`https://wa.me/${appSettings.whatsAppNumber}?text=${encodeURIComponent(`Hola! Me interesa la ${collection.name}. ¿Podrían darme más información?`)}`, '_blank')}
+                    >
+                      Consultar
+                    </Button>
+                    <Button asChild className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] md:text-xs font-bold uppercase tracking-widest h-10">
+                      <Link href={collection.href}>Comprar</Link>
+                    </Button>
                   </div>
-                ))
-              ) : (
-                <div className="col-span-full py-20 text-center text-muted-foreground">
-                  Próximamente nuevas piezas en nuestro catálogo.
                 </div>
-              )
-            ) : (
-              <div className="col-span-full py-20 text-center text-muted-foreground animate-pulse">
-                Cargando piezas exclusivas...
               </div>
-            )}
+            ))}
           </div>
         </div>
       </section>

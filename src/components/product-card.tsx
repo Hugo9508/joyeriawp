@@ -47,11 +47,6 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
         <div className="absolute inset-x-0 bottom-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col gap-2">
-          <VirtualTryOn product={product}>
-            <Button variant="secondary" className="w-full backdrop-blur-sm bg-white/80 hover:bg-white text-foreground">
-              Prueba Virtual
-            </Button>
-          </VirtualTryOn>
           <WhatsAppProductButton
             product={product}
             variant="secondary"

@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
   const per_page = searchParams.get('per_page') || '20';
   const categorySlug = searchParams.get('category');
   const search = searchParams.get('search');
+  const featured = searchParams.get('featured');
 
   try {
     const params: any = { 
@@ -26,6 +27,7 @@ export async function GET(request: NextRequest) {
     };
     
     if (search) params.search = search;
+    if (featured) params.featured = featured;
     
     // Resolución de categoría si se provee slug
     if (categorySlug) {

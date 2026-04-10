@@ -6,10 +6,11 @@ import { Product, Category } from "@/lib/products";
  * Solo operaciones de LECTURA — la gestión se hace desde WordPress wp-admin.
  */
 
-export const getProducts = async (filters: { search?: string, category?: string, page?: number, per_page?: number } = {}): Promise<Product[]> => {
+export const getProducts = async (filters: { search?: string, category?: string, featured?: boolean, page?: number, per_page?: number } = {}): Promise<Product[]> => {
   const params = new URLSearchParams();
   if (filters.search) params.append('search', filters.search);
   if (filters.category) params.append('category', filters.category);
+  if (filters.featured !== undefined) params.append('featured', filters.featured.toString());
   if (filters.page) params.append('page', filters.page.toString());
   if (filters.per_page) params.append('per_page', filters.per_page.toString());
 
