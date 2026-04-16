@@ -37,8 +37,8 @@ export function ChatWidget() {
   const [needsInlineOnboarding, setNeedsInlineOnboarding] = useState(false);
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [onboardingForm, setOnboardingForm] = useState({ name: '', phone: '' });
-  const [conversationId, setConversationId] = useState<string>('');
-  const conversationIdRef = useRef<string>('');
+  // sessionId estable por visitante (basado en phone o uuid aleatorio)
+  const [sessionId, setSessionId] = useState<string>('');
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -59,12 +59,21 @@ export function ChatWidget() {
 
   useEffect(() => {
     const saved = localStorage.getItem('alianza_user_info');
-    if (saved) setUserInfo(JSON.parse(saved));
-    // ✅ Restaurar conversation_id de Dify de sesiones anteriores
-    const savedConvId = sessionStorage.getItem('dify_conversation_id');
-    if (savedConvId) {
-      setConversationId(savedConvId);
-      conversationIdRef.current = savedConvId;
+    if (saved) {
+      const parsedUser = JSON.parse(saved) as UserInfo;
+      setUserInfo(parsedUser);
+      // sessionId estable basado en el teléfono del usuario
+      setSessionId(`web_${parsedUser.phone}`);
+    } else {
+      // Visitante anónimo — generar sessionId persistente por sesión
+      const existingSession = sessionStorage.getItem('alma_session_id');
+      if (existingSession) {
+        setSessionId(existingSession);
+      } else {
+        const newSession = `web_anon_${Date.now()}`;
+        sessionStorage.setItem('alma_session_id', newSession);
+        setSessionId(newSession);
+      }
     }
 
     const handleOpenWithMsg = (e: any) => {
@@ -72,8 +81,10 @@ export function ChatWidget() {
       const msg = e.detail?.message;
       const product = e.detail?.product;
 
-      // ✅ Siempre mostrar datos del producto como mensaje del agente
+      // ✅ Guardar contexto del producto para enviarlo al agente
       if (product) {
+        // Guardar en sessionStorage para que processMessage lo use
+        sessionStorage.setItem('alma_product_context', product.name || '');
         const productInfoMsg = `📦 *Producto consultado:*\n\n🏷️ ${product.name}\n💰 USD ${product.price?.usd?.toLocaleString() || 'N/A'}${product.sku ? `\n🔖 SKU: ${product.sku}` : ''}${product.material ? `\n✨ Material: ${product.material}` : ''}`;
         setMessages(prev => [...prev, {
           id: 'product-' + Date.now(),
@@ -104,10 +115,8 @@ export function ChatWidget() {
 
     const handleOpenOnly = () => {
       setIsOpen(true);
-      // ✅ Resetear conversación de Dify para que no arrastre contexto de producto anterior
-      setConversationId('');
-      conversationIdRef.current = '';
-      sessionStorage.removeItem('dify_conversation_id');
+      // ✅ Limpiar contexto de producto al abrir chat genérico
+      sessionStorage.removeItem('alma_product_context');
       // Resetear mensajes al bienvenida para empezar limpio
       setMessages([{
         id: 'welcome',
@@ -188,6 +197,7 @@ export function ChatWidget() {
     const data = { name: onboardingForm.name.trim(), phone: onboardingForm.phone };
     localStorage.setItem('alianza_user_info', JSON.stringify(data));
     setUserInfo(data);
+    setSessionId(`web_${data.phone}`);
     setShowOnboarding(false);
 
     if (pendingText) {
@@ -203,6 +213,7 @@ export function ChatWidget() {
     const data = { name: onboardingForm.name.trim(), phone: onboardingForm.phone };
     localStorage.setItem('alianza_user_info', JSON.stringify(data));
     setUserInfo(data);
+    setSessionId(`web_${data.phone}`);
     setNeedsInlineOnboarding(false);
 
     // ✅ Confirmar en el chat que los datos fueron guardados
@@ -225,18 +236,19 @@ export function ChatWidget() {
     setIsTyping(true);
 
     try {
-      // ✅ Llamada directa a Dify — sin pasar por n8n
-      const res = await fetch('/api/dify-chat', {
+      // ✅ Llamada a n8n Alma Agent (Flujo 1)
+      const productoContexto = sessionStorage.getItem('alma_product_context') || '';
+      const res = await fetch('/api/alma-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          query: text,
-          user: `web-${user.phone}`,
-          conversationId: conversationIdRef.current,
+          mensaje: text,
+          sessionId: sessionId || `web_${user.phone}`,
           senderName: user.name,
-          senderPhone: user.phone,
+          canal: 'web',
+          productoContexto,
         }),
-        signal: AbortSignal.timeout(45000),
+        signal: AbortSignal.timeout(50000),
       });
 
       const result = await res.json();
@@ -244,19 +256,14 @@ export function ChatWidget() {
       addDebugLog(result.success, result.debug, result.error);
 
       if (result.success) {
-        if (result.botResponse) {
-          addMessage(result.botResponse, 'agent');
-        }
-        if (result.conversationId) {
-          setConversationId(result.conversationId);
-          conversationIdRef.current = result.conversationId;
-          sessionStorage.setItem('dify_conversation_id', result.conversationId);
+        if (result.response) {
+          addMessage(result.response, 'agent');
         }
       } else {
         toast({
           variant: 'destructive',
           title: 'Error de Envío',
-          description: result.error,
+          description: result.error || 'Alma no pudo responder.',
         });
       }
     } catch (error: any) {
@@ -290,15 +297,6 @@ export function ChatWidget() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setShowDebug(!showDebug)}
-            className={cn("h-8 w-8 hover:bg-white/10", showDebug ? "text-white" : "text-white/50")}
-            title="Consola Técnica"
-          >
-            <Terminal className="h-4 w-4" />
-          </Button>
           <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} className="hover:bg-white/10 text-white h-8 w-8">
             <X className="h-4 w-4" />
           </Button>
@@ -432,7 +430,7 @@ export function ChatWidget() {
                     </form>
                   </div>
                 )}
-                {/* ✅ Typing indicator mientras Dify procesa */}
+                {/* ✅ Typing indicator mientras Alma procesa */}
                 {isTyping && (
                   <div className="mr-auto bg-card border border-primary/5 rounded-2xl rounded-tl-none p-3 flex items-center gap-1.5 shadow-sm">
                     <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />

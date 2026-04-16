@@ -6,6 +6,7 @@ import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { ChevronRight, Truck, ShieldCheck, Tag } from 'lucide-react';
 import { WhatsAppProductButton } from '@/components/whatsapp-product-button';
+import { BuyButton } from '@/components/buy-button';
 
 async function getProduct(id: string) {
   try {
@@ -105,6 +106,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
           )}
 
           <div className="flex flex-col gap-4 mt-auto">
+            <BuyButton product={product} />
             <WhatsAppProductButton product={product} size="lg" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-14 shadow-lg shadow-primary/20">
               <span className="text-sm font-bold uppercase tracking-widest">Consultar</span>
             </WhatsAppProductButton>

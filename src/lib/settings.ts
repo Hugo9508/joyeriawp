@@ -8,11 +8,17 @@ export const appSettings = {
   whatsAppNumber: "59895435644",
   chatAgentName: "Alma",
 
-  // Integración con n8n (Web -> WhatsApp) — legacy, se mantiene para flujo WhatsApp
+  // n8n Alma Agent (Flujo 1) — el chat web se comunica SOLO con este endpoint
+  almaWebhookUrl: "https://n8n.axion380.com.br/webhook/alma-agent",
+
+  // Legacy: webhook anterior (WhatsApp flow) — se mantiene por retrocompatibilidad
   n8nWebhookUrl: "https://n8n.axion380.com.br/webhook/jaflujodev",
 
-  // URL de la boutique para recibir respuestas (n8n -> Web)
-  siteUrl: "https://joyeria.a380.com.br"
+  // URL de la boutique
+  siteUrl: "https://joyeria.a380.com.br",
+
+  // Mercado Pago Checkout — webhook n8n que crea la preferencia de pago
+  checkoutWebhookUrl: "https://n8n.axion380.com.br/webhook/ja-checkout",
 };
 
 /** Decodifica un valor Base64 (usado para secretos hardcoded). */
