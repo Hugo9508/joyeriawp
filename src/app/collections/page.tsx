@@ -7,12 +7,13 @@ import { Product, Category } from '@/lib/products';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { LayoutGrid, Eye, Package, Tag, Loader2 } from 'lucide-react';
+import { LayoutGrid, Eye, Package, Tag, Loader2, SlidersHorizontal } from 'lucide-react';
 import { VirtualTryOn } from '@/components/virtual-try-on';
 import { WhatsAppProductButton } from '@/components/whatsapp-product-button';
 import { Badge } from '@/components/ui/badge';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 
-function FilterContent({ categories }: { categories: Category[] }) {
+function FilterContent({ categories, onSelect }: { categories: Category[]; onSelect?: () => void }) {
   return (
     <div className="space-y-8">
       <div className="flex items-baseline justify-between">
@@ -27,7 +28,7 @@ function FilterContent({ categories }: { categories: Category[] }) {
         <ul className="space-y-2 pl-2">
           {categories.map((cat) => (
             <li key={cat.value}>
-              <Link className="block text-sm text-muted-foreground hover:text-primary transition-colors py-1" href={`/collections?category=${cat.value}`}>
+              <Link className="block text-sm text-muted-foreground hover:text-primary transition-colors py-1" href={`/collections?category=${cat.value}`} onClick={onSelect}>
                 {cat.name}
               </Link>
             </li>
@@ -43,6 +44,7 @@ function CollectionsContent() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   const categoryFilter = searchParams.get('category');
 
@@ -94,6 +96,23 @@ function CollectionsContent() {
                 )}
               </h2>
             </div>
+          </div>
+
+          {/* Mobile Filter */}
+          <div className="lg:hidden mb-6">
+            <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2 text-xs uppercase tracking-widest border-primary/30 hover:border-primary hover:text-primary">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Filtros
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-[300px] bg-background">
+                <div className="pt-8">
+                  <FilterContent categories={allCategories} onSelect={() => setFilterOpen(false)} />
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">

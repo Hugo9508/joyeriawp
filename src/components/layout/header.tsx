@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const navLinks = [
   { href: "/", label: "Inicio" },
@@ -39,8 +39,8 @@ export function Header() {
   );
   
   const logoClasses = cn(
-    "font-headline tracking-[0.2em] uppercase font-light transition-all duration-300",
-    isHome && !isScrolled ? "text-2xl md:text-3xl" : "text-lg md:text-xl"
+    "font-headline tracking-[0.2em] uppercase font-light transition-all duration-300 text-center",
+    isHome && !isScrolled ? "text-xl md:text-3xl" : "text-base md:text-xl"
   );
 
   return (
@@ -68,13 +68,15 @@ export function Header() {
                     <div className="flex flex-col h-full pt-4">
                         <Link href="/" className="flex items-center gap-2 mb-10">
                             <Gem className="text-primary h-6 w-6" />
-                            <span className="font-headline text-2xl tracking-widest uppercase">Joyeria Alianza</span>
+                            <span className="font-headline text-2xl tracking-widest uppercase">Joyeria Alianzas</span>
                         </Link>
                         <nav className="flex flex-col gap-8">
                             {navLinks.map(link => (
-                                <Link key={link.href} href={link.href} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-primary transition-colors border-b border-muted pb-4">
-                                    {link.label}
-                                </Link>
+                                <SheetClose asChild key={link.href}>
+                                    <Link href={link.href} className="text-sm font-bold tracking-[0.2em] uppercase hover:text-primary transition-colors border-b border-muted pb-4">
+                                        {link.label}
+                                    </Link>
+                                </SheetClose>
                             ))}
                         </nav>
                         <div className="mt-auto pb-10">
@@ -88,7 +90,7 @@ export function Header() {
           <div className="flex-shrink-0 flex items-center justify-center absolute left-1/2 transform -translate-x-1/2">
             <Link href="/" className="flex flex-col items-center group/logo transition-all duration-300">
                 <span className={logoClasses}>
-                    Joyeria Alianza
+                    Joyeria Alianzas
                 </span>
             </Link>
           </div>

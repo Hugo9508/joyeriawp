@@ -89,7 +89,7 @@ export function mapWooCommerceProduct(wooProduct: any): Product {
   return {
     id: wooProduct.id.toString(),
     name: wooProduct.name || 'Sin nombre',
-    brand: 'Joyeria Alianza',
+    brand: 'Joyeria Alianzas',
     description: processDescription(wooProduct.description || ''),
     shortDescription: processDescription(wooProduct.short_description || ''),
     price: {

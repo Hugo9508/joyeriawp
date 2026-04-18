@@ -46,7 +46,7 @@ export function Footer() {
 
   const handleSubscribe = () => {
     if (!subName.trim() || !subPhone.trim() || !subAccept) return;
-    const message = `🔔 *Suscripción a Promociones*%0A%0A👤 Nombre: ${subName.trim()}%0A📱 WhatsApp: ${subPhone.trim()}%0A📍 Barrio: ${subBarrio.trim() || 'No especificado'}%0A%0A✅ Acepto recibir promociones y novedades de Joyería Alianza.`;
+    const message = `🔔 *Suscripción a Promociones*%0A%0A👤 Nombre: ${subName.trim()}%0A📱 WhatsApp: ${subPhone.trim()}%0A📍 Barrio: ${subBarrio.trim() || 'No especificado'}%0A%0A✅ Acepto recibir promociones y novedades de Joyería Alianzas.`;
     window.open(`https://wa.me/${appSettings.whatsAppNumber}?text=${message}`, '_blank');
     setSubSent(true);
   };
@@ -81,7 +81,7 @@ export function Footer() {
           <div className="flex flex-col lg:flex-row justify-between gap-16 mb-20">
             <div className="lg:w-1/3">
               <Link className="font-headline text-3xl tracking-[0.1em] uppercase mb-8 block" href="/">
-                Joyeria Alianza
+                Joyeria Alianzas
               </Link>
 
               {!subSent ? (
@@ -123,7 +123,7 @@ export function Footer() {
                         className="mt-0.5 w-4 h-4 rounded border-white/20 bg-white/5 text-primary focus:ring-primary accent-primary"
                       />
                       <span className="text-[11px] text-white/50 leading-relaxed">
-                        Acepto recibir promociones y novedades de Joyería Alianza por WhatsApp.
+                        Acepto recibir promociones y novedades de Joyería Alianzas por WhatsApp.
                       </span>
                     </label>
                     <Button
@@ -204,7 +204,7 @@ export function Footer() {
           </div>
           <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-white/10 gap-4">
             <p className="text-[10px] text-white/30 uppercase tracking-widest">
-              © 2026 Joyeria Alianza. Todos los derechos reservados. Desarrollado por{" "}
+              © 2026 Joyeria Alianzas. Todos los derechos reservados. Desarrollado por{" "}
               <a
                 href="https://axion380.com.br"
                 target="_blank"
@@ -240,7 +240,7 @@ export function Footer() {
               <div className="flex items-center gap-3">
                 <MapPin className="w-5 h-5 text-primary" />
                 <div>
-                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Joyería Alianza</h3>
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">Joyería Alianzas</h3>
                   <p className="text-[11px] text-white/50">Mercedes 1211, Montevideo 11100</p>
                 </div>
               </div>
@@ -259,7 +259,7 @@ export function Footer() {
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="Ubicación Joyería Alianza"
+                title="Ubicación Joyería Alianzas"
                 style={{ pointerEvents: 'auto' }}
               />
             </div>

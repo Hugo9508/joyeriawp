@@ -14,13 +14,13 @@ export function middleware(request: NextRequest) {
         <head>
            <meta charset="UTF-8">
            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-           <title>Joyería Alianza - En Mantenimiento</title>
+           <title>Joyería Alianzas - En Mantenimiento</title>
         </head>
         <body style="display:flex; justify-content:center; align-items:center; height:100vh; background:#1a170f; color:#e8c547; font-family: 'Georgia', sans-serif; text-align:center; margin: 0;">
           <div style="padding: 2rem;">
             <h1 style="margin-bottom: 20px; font-size: 2.5rem;">Sitio en Mantenimiento</h1>
             <p style="font-size: 1.2rem; max-width: 600px; margin: 0 auto; line-height: 1.6; color: #ffffff;">
-              Estamos trabajando para mejorar tu experiencia en Joyería Alianza. <br/> 
+              Estamos trabajando para mejorar tu experiencia en Joyería Alianzas. <br/> 
               Volveremos a estar en línea muy pronto.
             </p>
           </div>

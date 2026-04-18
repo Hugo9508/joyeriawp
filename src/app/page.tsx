@@ -58,7 +58,7 @@ export default function Home() {
             Unión Eternamente <span className="italic font-light">Brillante</span>
           </h1>
           <p className="mb-8 md:mb-12 max-w-sm md:max-w-lg text-xs md:text-sm font-light leading-relaxed md:leading-loose tracking-wide text-gray-200 md:text-base animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-            En Joyeria Alianza, cada pieza es una promesa de amor y excelencia. Descubra nuestra colección curada en el corazón de Carrasco.
+            En Joyeria Alianzas, cada pieza es una promesa de amor y excelencia. Descubra nuestra colección curada en el corazón de Carrasco.
           </p>
           <div className="flex animate-fade-in-up flex-col gap-4 md:flex-row" style={{ animationDelay: '0.6s' }}>
             <Button asChild size="lg" variant="outline" className="bg-white text-foreground hover:bg-primary hover:text-white border-none uppercase tracking-[0.2em] font-bold text-[10px] md:text-xs">
@@ -152,10 +152,10 @@ export default function Home() {
             </div>
 
             <div className="w-full lg:w-1/2 text-center lg:text-left z-10">
-              <span className="block text-primary text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase mb-4">Legado Alianza</span>
+              <span className="block text-primary text-[10px] md:text-xs font-bold tracking-[0.2em] uppercase mb-4">Legado Alianzas</span>
               <h2 className="font-headline text-3xl md:text-5xl lg:text-6xl text-foreground leading-tight mb-8">El arte de la orfebrería</h2>
               <p className="text-base md:text-xl font-light leading-relaxed mb-8 md:mb-12 text-muted-foreground max-w-xl mx-auto lg:mx-0">
-                Cada pieza en Joyeria Alianza es seleccionada por su calidad excepcional y su capacidad para contar una historia de unión. Nuestro compromiso es brindarle no solo una joya, sino un símbolo eterno.
+                Cada pieza en Joyeria Alianzas es seleccionada por su calidad excepcional y su capacidad para contar una historia de unión. Nuestro compromiso es brindarle no solo una joya, sino un símbolo eterno.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button asChild size="lg" className="bg-foreground text-background hover:bg-primary uppercase tracking-[0.2em] font-bold text-[10px] h-14 px-10 transition-all duration-300">

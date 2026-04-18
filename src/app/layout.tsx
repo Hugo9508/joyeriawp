@@ -21,8 +21,8 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: 'Joyeria Alianza - Alta Joyería en Montevideo',
-  description: 'Descubra piezas únicas que celebran la unión y el brillo eterno. Joyeria Alianza: tradición y elegancia en el corazón de Carrasco.',
+  title: 'Joyeria Alianzas - Alta Joyería en Montevideo',
+  description: 'Descubra piezas únicas que celebran la unión y el brillo eterno. Joyeria Alianzas: tradición y elegancia en el corazón de Carrasco.',
 };
 
 export default function RootLayout({
